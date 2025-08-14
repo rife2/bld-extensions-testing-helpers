@@ -16,29 +16,33 @@
 
 package rife.bld.extension.testing;
 
-import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.logging.Handler;
 import java.util.logging.Level;
 import java.util.logging.LogRecord;
+import java.util.regex.Pattern;
 
 /**
- * Custom log handler for capturing log messages during tests
+ * Thread-safe custom log handler for capturing log messages during tests.
  *
  * @author <a href="https://erik.thauvin.net/">Erik C. Thauvin</a>
  * @since 1.0
  */
 @SuppressWarnings("PMD.TestClassWithoutTestCases")
 public class TestLogHandler extends Handler {
-    private final List<String> logMessages = new ArrayList<>();
-    private final List<LogRecord> logRecords = new ArrayList<>();
+    private final List<LogRecord> logRecords = new CopyOnWriteArrayList<>();
+    private final AtomicBoolean closed = new AtomicBoolean(false);
 
     /**
-     * Clears the log messages and records.
+     * Clears all captured log records and messages.
+     * <p>
+     * Thread-safe operation.
      */
     public void clear() {
         logRecords.clear();
-        logMessages.clear();
     }
 
     /**
@@ -48,17 +52,29 @@ public class TestLogHandler extends Handler {
      * @return {@code true} if the log contains the message, {@code false} otherwise
      */
     public boolean containsExactMessage(String message) {
-        return logMessages.stream().anyMatch(msg -> msg != null && msg.equals(message));
+        return message != null && logRecords.stream().anyMatch(record -> message.equals(record.getMessage()));
     }
 
     /**
      * Checks if the log contains a message containing the given text.
      *
      * @param message the text to check for
-     * @return {@code true} if the log contains the message, {@code false} otherwise
+     * @return {@code true} if the log contains a message with the text, {@code false} otherwise
      */
     public boolean containsMessage(String message) {
-        return message != null && logMessages.stream().anyMatch(msg -> msg != null && msg.contains(message));
+        return message != null && logRecords.stream().anyMatch(record ->
+                record.getMessage() != null && record.getMessage().contains(message));
+    }
+
+    /**
+     * Checks if the log contains a message matching the given regex pattern.
+     *
+     * @param pattern the regex pattern to match against
+     * @return {@code true} if any message matches the pattern, {@code false} otherwise
+     */
+    public boolean containsMessageMatching(Pattern pattern) {
+        return pattern != null && logRecords.stream().anyMatch(record ->
+                record.getMessage() != null && pattern.matcher(record.getMessage()).find());
     }
 
     /**
@@ -71,8 +87,24 @@ public class TestLogHandler extends Handler {
         if (message == null || message.isEmpty()) {
             return 0;
         }
-        return logMessages.stream()
-                .filter(msg -> msg != null && msg.contains(message))
+        return logRecords.stream()
+                .filter(record ->
+                        record.getMessage() != null && record.getMessage().contains(message))
+                .count();
+    }
+
+    /**
+     * Counts the number of log records at the specified level.
+     *
+     * @param level the log level to count
+     * @return the number of records at the specified level
+     */
+    public long countRecordsAtLevel(Level level) {
+        if (level == null) {
+            return 0;
+        }
+        return logRecords.stream()
+                .filter(record -> level.equals(record.getLevel()))
                 .count();
     }
 
@@ -87,27 +119,86 @@ public class TestLogHandler extends Handler {
             return null;
         }
         return logRecords.stream()
-                .filter(record -> record.getMessage() != null && record.getMessage().contains(message))
+                .filter(record ->
+                        record.getMessage() != null && record.getMessage().contains(message))
                 .findFirst()
                 .orElse(null);
     }
 
     /**
-     * Gets the log messages.
+     * Gets the most recent log record, if any.
      *
-     * @return the log messages
+     * @return the most recent log record, or {@code null} if no records exist
      */
-    public List<String> getLogMessages() {
-        return new ArrayList<>(logMessages);
+    public LogRecord getLastRecord() {
+        return logRecords.isEmpty() ? null : logRecords.get(logRecords.size() - 1);
     }
 
     /**
-     * Gets the log records.
+     * Gets the last log record containing the given text.
      *
-     * @return the log records
+     * @param message the text to check for
+     * @return the last log record containing the given text, or {@code null} if not found
+     */
+    public LogRecord getLastRecordContaining(String message) {
+        if (message == null || message.isEmpty()) {
+            return null;
+        }
+        LogRecord lastRecord = null;
+        for (LogRecord record : logRecords) {
+            if (record.getMessage() != null && record.getMessage().contains(message)) {
+                lastRecord = record;
+            }
+        }
+        return lastRecord;
+    }
+
+    /**
+     * Gets all captured log messages as strings.
+     * <p>
+     * Returns an immutable snapshot of current messages.
+     *
+     * @return immutable list of log messages
+     */
+    public List<String> getLogMessages() {
+        return logRecords.stream()
+                .map(LogRecord::getMessage)
+                .toList();
+    }
+
+    /**
+     * Gets all captured log records.
+     * <p>
+     * Returns an immutable snapshot of current records.
+     *
+     * @return immutable list of log records
      */
     public List<LogRecord> getLogRecords() {
-        return new ArrayList<>(logRecords);
+        return List.copyOf(logRecords);
+    }
+
+    /**
+     * Gets the total number of captured log records.
+     *
+     * @return the number of log records
+     */
+    public int getRecordCount() {
+        return logRecords.size();
+    }
+
+    /**
+     * Gets all log records at or above the specified level.
+     *
+     * @param level the minimum log level
+     * @return immutable list of log records at or above the specified level
+     */
+    public List<LogRecord> getRecordsAtOrAboveLevel(Level level) {
+        if (level == null) {
+            return Collections.emptyList();
+        }
+        return logRecords.stream()
+                .filter(record -> record.getLevel().intValue() >= level.intValue())
+                .toList();
     }
 
     /**
@@ -117,39 +208,58 @@ public class TestLogHandler extends Handler {
      * @return {@code true} if the log contains a record with the given level, {@code false} otherwise
      */
     public boolean hasLogLevel(Level level) {
-        return logRecords.stream().anyMatch(record -> record.getLevel().equals(level));
+        return level != null && logRecords.stream().anyMatch(record -> level.equals(record.getLevel()));
     }
 
     /**
-     * Publishes a log record.
+     * Checks if this handler has been closed.
+     *
+     * @return {@code true} if the handler is closed, {@code false} otherwise
+     */
+    public boolean isClosed() {
+        return closed.get();
+    }
+
+    /**
+     * Checks if any log records have been captured.
+     *
+     * @return {@code true} if no records have been captured, {@code false} otherwise
+     */
+    public boolean isEmpty() {
+        return logRecords.isEmpty();
+    }
+
+    /**
+     * Publishes a log record if the handler is not closed.
      *
      * @param record description of the log event. A null record is silently ignored and is not published
      */
     @Override
     public void publish(LogRecord record) {
-        if (record == null) {
+        if (record == null || closed.get() || !isLoggable(record)) {
             return;
         }
-
         logRecords.add(record);
-        logMessages.add(record.getMessage());
     }
 
     /**
      * Flushes this log handler.
+     * <p>
+     * No-op implementation as records are immediately available.
      */
     @Override
     public void flush() {
-        // no-op
+        // no-op - records are immediately available
     }
 
     /**
-     * Closes this log handler.
-     *
-     * @throws SecurityException if a security manager exists and its {@code checkPermission} method denies
+     * Closes this log handler and prevents further logging.
+     * <p>
+     * Thread-safe operation.
      */
     @Override
-    public void close() throws SecurityException {
-        //no-op
+    public void close() {
+        closed.set(true);
+        logRecords.clear();
     }
 }
