@@ -30,9 +30,12 @@ import java.lang.annotation.Target;
  *
  * <p>Example usage:</p>
  * <pre>{@code
- * @Test
- * void testWithRandomNumber(@RandomRange(min = 1, max = 10) int randomNum) {
- *     // randomNum will be a random integer between 1 and 10 (inclusive)
+ * @ExtendWith(RandomRangeParameterResolver.class)
+ * public class MyTest {
+ *     @Test
+ *     public void testMethod(@RandomRange(min = 1, max = 10) int randomValue) {
+ *         // randomNum will be a random integer between 1 and 10 (inclusive)
+ *     }
  * }
  * }</pre>
  *
