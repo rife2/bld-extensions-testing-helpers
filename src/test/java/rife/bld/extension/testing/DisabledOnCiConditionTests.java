@@ -22,17 +22,17 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 
-class DisableOnCiConditionTests {
+class DisabledOnCiConditionTests {
     @Test
     @DisabledOnCi
     void shouldBeDisabledOnCi() {
-        assertFalse(DisableOnCiCondition.isCi());
+        assertFalse(DisabledOnCiCondition.isCi());
     }
 
     @Test
     void shouldBeEnabledOnNonCi() {
         if (System.getenv("CI") != null) {
-            assertTrue(DisableOnCiCondition.isCi());
+            assertTrue(DisabledOnCiCondition.isCi());
         }
     }
 }

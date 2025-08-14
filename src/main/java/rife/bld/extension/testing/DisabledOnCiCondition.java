@@ -26,7 +26,22 @@ import org.junit.jupiter.api.extension.ExtensionContext;
  * @author <a href="https://erik.thauvin.net/">Erik C. Thauvin</a>
  * @since 1.0
  */
-public class DisableOnCiCondition implements ExecutionCondition {
+public class DisabledOnCiCondition implements ExecutionCondition {
+    /**
+     * Returns {@code true} if the environment variable {@code CI} is set.
+     *
+     * @return {@code true} if the environment variable {@code CI} is set, {@code false} otherwise
+     */
+    public static boolean isCi() {
+        return System.getenv("CI") != null;
+    }
+
+    /**
+     * Evaluates the execution condition.
+     *
+     * @param context the current extension context; never {@code null}
+     * @return the condition evaluation result
+     */
     @Override
     public ConditionEvaluationResult evaluateExecutionCondition(ExtensionContext context) {
         if (isCi()) {
@@ -34,9 +49,5 @@ public class DisableOnCiCondition implements ExecutionCondition {
         } else {
             return ConditionEvaluationResult.enabled("Test enabled on CI");
         }
-    }
-
-    public static boolean isCi() {
-        return System.getenv("CI") != null;
     }
 }

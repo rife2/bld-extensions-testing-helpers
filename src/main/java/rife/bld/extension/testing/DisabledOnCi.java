@@ -31,6 +31,6 @@ import java.lang.annotation.Target;
  */
 @Target({ElementType.TYPE, ElementType.METHOD})
 @Retention(RetentionPolicy.RUNTIME)
-@ExtendWith(DisableOnCiCondition.class)
+@ExtendWith(DisabledOnCiCondition.class)
 public @interface DisabledOnCi {
 }

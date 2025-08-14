@@ -25,6 +25,7 @@ import java.util.logging.LogRecord;
 /**
  * Custom log handler for capturing log messages during tests
  *
+ * @author <a href="https://erik.thauvin.net/">Erik C. Thauvin</a>
  * @since 1.0
  */
 @SuppressWarnings("PMD.TestClassWithoutTestCases")
