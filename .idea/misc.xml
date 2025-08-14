@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="EntryPointsManager">
+    <pattern value="rife.bld.extension.testing.TestLogHandlerTests.ClearFunctionalityTests" />
+    <pattern value="rife.bld.extension.testing.DisabledOnCi" />
+    <pattern value="rife.bld.extension.testing.DisableOnCiCondition" />
+    <pattern value="rife.bld.extension.testing.TestLogHandlerTests.EdgeCasesTests" />
+    <pattern value="rife.bld.extension.testing.TestLogHandlerTests.HandlerInterfaceTests" />
+    <pattern value="rife.bld.extension.testing.TestLogHandlerTests.LogLevelTests" />
+    <pattern value="rife.bld.extension.TestingHelpersBuild" method="main" />
+    <pattern value="rife.bld.extension.testing.TestLogHandlerTests.MessagePublishingTests" />
+    <pattern value="rife.bld.extension.testing.TestLogHandlerTests.MessageSearchingTests" />
+    <pattern value="rife.bld.extension.testing.TestLogHandlerTests.NullValueHandlingTests" />
+    <pattern value="rife.bld.extension.TestingHelpersBuild" method="pmd" />
+    <pattern value="rife.bld.extension.testing.TestLogHandlerTests.RecordRetrievalTests" />
+    <pattern value="rife.bld.extension.testing.TestLogHandlerTests" method="setUp" />
+    <pattern value="rife.bld.extension.testing.TestLogHandlerTests.MessageSearchingTests" method="setUpMessages" />
+    <pattern value="rife.bld.extension.testing.TestLogHandlerTests.ClearFunctionalityTests" method="shouldClearAllMessagesAndRecords" />
+    <pattern value="rife.bld.extension.testing.TestLogHandlerTests.MessageSearchingTests" method="shouldCountMessagesContainingText" />
+    <pattern value="rife.bld.extension.testing.TestLogHandlerTests.LogLevelTests" method="shouldDetectLogLevelsCorrectly" />
+    <pattern value="rife.bld.extension.testing.TestLogHandlerTests.EdgeCasesTests" method="shouldFindCaseSensitiveMessages" />
+    <pattern value="rife.bld.extension.testing.TestLogHandlerTests.MessageSearchingTests" method="shouldFindExactMessages" />
+    <pattern value="rife.bld.extension.testing.TestLogHandlerTests.MessageSearchingTests" method="shouldFindMessagesContainingText" />
+    <pattern value="rife.bld.extension.testing.TestLogHandlerTests.RecordRetrievalTests" method="shouldGetFirstRecordContainingText" />
+    <pattern value="rife.bld.extension.testing.TestLogHandlerTests.ClearFunctionalityTests" method="shouldHandleClearOnEmptyHandler" />
+    <pattern value="rife.bld.extension.testing.TestLogHandlerTests.NullValueHandlingTests" method="shouldHandleCountingWithNullMessages" />
+    <pattern value="rife.bld.extension.testing.TestLogHandlerTests.NullValueHandlingTests" method="shouldHandleExactMessageSearchWithNullMessagesPresent" />
+    <pattern value="rife.bld.extension.testing.TestLogHandlerTests.NullValueHandlingTests" method="shouldHandleGetFirstRecordContainingWithNullMessagesPresent" />
+    <pattern value="rife.bld.extension.testing.TestLogHandlerTests.NullValueHandlingTests" method="shouldHandleLogRecordWithNullMessage" />
+    <pattern value="rife.bld.extension.testing.TestLogHandlerTests.NullValueHandlingTests" method="shouldHandleMixedNullAndNonNullMessages" />
+    <pattern value="rife.bld.extension.testing.TestLogHandlerTests.RecordRetrievalTests" method="shouldHandleNullAndEmptySearchTermsInRecordRetrieval" />
+    <pattern value="rife.bld.extension.testing.TestLogHandlerTests.NullValueHandlingTests" method="shouldHandleNullLogLevelInHasLogLevel" />
+    <pattern value="rife.bld.extension.testing.TestLogHandlerTests.NullValueHandlingTests" method="shouldHandleNullLogRecord" />
+    <pattern value="rife.bld.extension.testing.TestLogHandlerTests.RecordRetrievalTests" method="shouldHandleNullMessagesInGetFirstRecordContaining" />
+    <pattern value="rife.bld.extension.testing.TestLogHandlerTests.NullValueHandlingTests" method="shouldHandleNullSearchTermsInContainsExactMessage" />
+    <pattern value="rife.bld.extension.testing.TestLogHandlerTests.NullValueHandlingTests" method="shouldHandleNullSearchTermsInContainsMessage" />
+    <pattern value="rife.bld.extension.testing.TestLogHandlerTests.NullValueHandlingTests" method="shouldHandleNullSearchTermsInCountMessagesContaining" />
+    <pattern value="rife.bld.extension.testing.TestLogHandlerTests.NullValueHandlingTests" method="shouldHandleNullSearchTermsInGetFirstRecordContaining" />
+    <pattern value="rife.bld.extension.testing.TestLogHandlerTests.EdgeCasesTests" method="shouldHandleVeryLongMessage" />
+    <pattern value="rife.bld.extension.testing.TestLogHandlerTests.HandlerInterfaceTests" method="shouldImplementHandlerMethodsWithoutExceptions" />
+    <pattern value="rife.bld.extension.testing.TestLogHandlerTests.EdgeCasesTests" method="shouldNotFindLowercaseInCaseSensitiveSearch" />
+    <pattern value="rife.bld.extension.testing.TestLogHandlerTests.MessageSearchingTests" method="shouldNotFindNonExistentTextInMessages" />
+    <pattern value="rife.bld.extension.testing.TestLogHandlerTests.MessageSearchingTests" method="shouldNotFindPartialMatchesAsExactMessages" />
+    <pattern value="rife.bld.extension.testing.TestLogHandlerTests.MessagePublishingTests" method="shouldPublishLogRecordAndCaptureMessage" />
+    <pattern value="rife.bld.extension.testing.TestLogHandlerTests.MessagePublishingTests" method="shouldPublishMultipleLogRecords" />
+    <pattern value="rife.bld.extension.testing.TestLogHandlerTests.RecordRetrievalTests" method="shouldReturnDefensiveCopiesOfLists" />
+    <pattern value="rife.bld.extension.testing.TestLogHandlerTests.LogLevelTests" method="shouldReturnFalseForNonExistentLogLevel" />
+    <pattern value="rife.bld.extension.testing.TestLogHandlerTests.LogLevelTests" method="shouldReturnFalseForNonExistentLogLevelOnEmptyHandler" />
+    <pattern value="rife.bld.extension.testing.TestLogHandlerTests.RecordRetrievalTests" method="shouldReturnNullWhenNoRecordContainsText" />
+    <pattern value="rife.bld.extension.TestingHelpersBuild" />
+    <pattern value="rife.bld.extension.testing.TestLogHandlerTests" />
+  </component>
+  <component name="ProjectRootManager" version="2" languageLevel="JDK_17" project-jdk-name="17" project-jdk-type="JavaSDK">
+    <output url="file://$PROJECT_DIR$/build" />
+  </component>
+</project>
