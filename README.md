@@ -24,10 +24,18 @@ scope(compile).include(
 
 The following annotations are provided:
 
-| Annotation                                                                                                            | Description                                          |
-|:----------------------------------------------------------------------------------------------------------------------|:-----------------------------------------------------|
-| [`DisabledOnCi`](https://rife2.github.io/bld-extensions-testing-helpers/rife/bld/extension/testing/DisabledOnCi.html) | Disables a test when running on a CI/CD environment |
-| [`RandomRange`](https://rife2.github.io/bld-extensions-testing-helpers/rife/bld/extension/testing/RandomRange.html)   | Generates a random integer within a specified range  | Requires a specific Java version. |
+| Annotation                                                                                                                    | Description                                          |
+|:------------------------------------------------------------------------------------------------------------------------------|:-----------------------------------------------------|
+| [`DisabledOnCi`](https://rife2.github.io/bld-extensions-testing-helpers/rife/bld/extension/testing/DisabledOnCi.html)         | Disables a test when running on a CI/CD environment |
+| [`RandomRange`](https://rife2.github.io/bld-extensions-testing-helpers/rife/bld/extension/testing/RandomRange.html)           | Generates a random integer within a specified range  | Requires a specific Java version. |
+
+## JUnit Extensions
+
+The following extensions are provided:
+
+| Extension                                                                                                                     | Description                                         |
+|:------------------------------------------------------------------------------------------------------------------------------|:----------------------------------------------------|
+| [`LoggingExtension`](https://rife2.github.io/bld-extensions-testing-helpers/rife/bld/extension/testing/LoggingExtension.html) | Configures console logging for test suites.         |
 
 ## Helpers
 
