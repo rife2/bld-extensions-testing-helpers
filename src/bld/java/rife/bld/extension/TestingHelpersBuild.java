@@ -28,6 +28,7 @@ import static rife.bld.dependencies.Repository.MAVEN_CENTRAL;
 import static rife.bld.dependencies.Repository.RIFE2_RELEASES;
 import static rife.bld.dependencies.Scope.provided;
 import static rife.bld.dependencies.Scope.test;
+import static rife.bld.operations.JavadocOptions.DocLinkOption.NO_MISSING;
 
 public class TestingHelpersBuild extends Project {
     public TestingHelpersBuild() {
@@ -52,6 +53,11 @@ public class TestingHelpersBuild extends Project {
         scope(test)
                 .include(junit)
                 .include(junitPlatform);
+        javadocOperation()
+                .javadocOptions()
+                .author()
+                .docLint(NO_MISSING)
+                .link("https://docs.junit.org/current/api/");
 
         publishOperation()
                 .repository(version.isSnapshot() ?
