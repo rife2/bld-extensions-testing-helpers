@@ -7,8 +7,8 @@
 
 # Testing Helpers for [b<span style="color:orange">l</span>d Extensions](https://github.com/rife2/bld/wiki/Extensions)
 
-This project provides a collection of testing helpers used by
-various [b<span style="color:orange">l</span>d extensions](https://github.com/rife2/bld/wiki/Extensions).
+This project provides a collection of testing helpers used by various
+[bld extensions](https://github.com/rife2/bld/wiki/Extensions).
 
 To use, include the following in your `bld` build file:
 
@@ -16,9 +16,11 @@ To use, include the following in your `bld` build file:
 repositories =List.of(RIFE2_RELEASES, RIFE2_SNAPSHOTS);
 
 scope(compile).include(
-    dependency("com.uwyn.rife2", "bld-extensions-testing-helpers",version(0, 9,0,"SNAPSHOT"))
+    dependency("com.uwyn.rife2", "bld-extensions-testing-helpers", version(0, 9,0,"SNAPSHOT"))
 );
 ```
+Please check the [documentation](https://rife2.github.io/bld-extensions-testing-helpers)
+for more information.
 
 ## JUnit Annotations
 
@@ -27,7 +29,7 @@ The following annotations are provided:
 | Annotation                                                                                                                    | Description                                          |
 |:------------------------------------------------------------------------------------------------------------------------------|:-----------------------------------------------------|
 | [`DisabledOnCi`](https://rife2.github.io/bld-extensions-testing-helpers/rife/bld/extension/testing/DisabledOnCi.html)         | Disables a test when running on a CI/CD environment |
-| [`RandomRange`](https://rife2.github.io/bld-extensions-testing-helpers/rife/bld/extension/testing/RandomRange.html)           | Generates a random integer within a specified range  | Requires a specific Java version. |
+| [`RandomRange`](https://rife2.github.io/bld-extensions-testing-helpers/rife/bld/extension/testing/RandomRange.html)           | Generates a random integer within a specified range. Requires a specific Java version. |
 
 ## JUnit Extensions
 
@@ -44,5 +46,3 @@ The following helpers are provided:
 | Helper                                                                                                                  | Description                              |
 |:------------------------------------------------------------------------------------------------------------------------|:-----------------------------------------|
 | [`TestLogHandler`](https://rife2.github.io/bld-extensions-testing-helpers/rife/bld/extension/testing/TestLogHandler.html) | A log handler that captures log messages |
-
-Please check the [documentation](https://rife2.github.io/bld-extensions-testing-helpers) for more information.
