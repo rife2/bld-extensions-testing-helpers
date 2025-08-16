@@ -54,7 +54,7 @@ public class TestingHelpersBuild extends Project {
                 .include(junit)
                 .include(junitPlatform)
                 .include(dependency("org.mockito", "mockito-junit-jupiter",
-                        version(5, 18, 0)));
+                        version(5, 19, 0)));
 
         javadocOperation()
                 .javadocOptions()
