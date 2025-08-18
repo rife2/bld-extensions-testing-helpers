@@ -32,11 +32,10 @@ import java.util.logging.Logger;
  * only once per logger across all test classes.
  * <p>
  * The logger is configured to output directly to the console without using parent handlers.
- * </p>
  *
  * <h3>Usage Examples:</h3>
- * <pre>{@code
- * // Default configuration (uses LoggingExtension logger with Level.ALL)
+ *
+ * <pre>{@code // Default configuration (uses LoggingExtension logger with Level.ALL)
  * @ExtendWith(LoggingExtension.class)
  * class MyTestClass {
  *     @Test void myTest() { ... }
@@ -44,9 +43,7 @@ import java.util.logging.Logger;
  *
  * // Custom logger with default level
  * @RegisterExtension
- * static LoggingExtension extension = new LoggingExtension(
- *     Logger.getLogger("MyCustomLogger")
- * );
+ * private static final LOGGING_EXTENSION extension = new LoggingExtension("MyCustomLogger"));
  *
  * // Custom logger and level
  * @RegisterExtension
@@ -115,6 +112,25 @@ public class LoggingExtension implements BeforeAllCallback {
     public LoggingExtension(Logger logger, Level level) {
         this.logger = logger;
         this.level = level;
+    }
+
+    /**
+     * Creates a LoggingExtension with a custom logger name and {@link Level#ALL}.
+     *
+     * @param loggerName the fully qualified logger name to configure for console output
+     */
+    public LoggingExtension(String loggerName) {
+        this(Logger.getLogger(loggerName));
+    }
+
+    /**
+     * Creates a LoggingExtension with a custom logger name and logging level.
+     *
+     * @param loggerName the fully qualified logger name to configure for console output
+     * @param level      the logging level to set for both logger and console handler
+     */
+    public LoggingExtension(String loggerName, Level level) {
+        this(Logger.getLogger(loggerName), level);
     }
 
     /**

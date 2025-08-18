@@ -336,6 +336,45 @@ class LoggingExtensionTests {
     }
 
     @Test
+    void stringConstructorWithLoggerNameAndLevel() {
+        var loggerName = "TestLogger-" + System.currentTimeMillis();
+        var testLevel = Level.WARNING;
+        extension = new LoggingExtension(loggerName, testLevel);
+
+        assertNotNull(extension);
+        extension.beforeAll(mockContext);
+
+        // Verify the logger was created and configured with a specified level
+        var createdLogger = Logger.getLogger(loggerName);
+        assertEquals(testLevel, createdLogger.getLevel());
+        assertFalse(createdLogger.getUseParentHandlers());
+        assertTrue(createdLogger.getHandlers().length > 0);
+
+        var consoleHandler = findConsoleHandler(createdLogger.getHandlers());
+        assertNotNull(consoleHandler, "ConsoleHandler should be added");
+        assertEquals(testLevel, consoleHandler.getLevel());
+    }
+
+    @Test
+    void stringConstructorWithLoggerNameOnly() {
+        var loggerName = "TestLogger-" + System.currentTimeMillis();
+        extension = new LoggingExtension(loggerName);
+
+        assertNotNull(extension);
+        extension.beforeAll(mockContext);
+
+        // Verify the logger was created and configured with default Level.ALL
+        var createdLogger = Logger.getLogger(loggerName);
+        assertEquals(Level.ALL, createdLogger.getLevel());
+        assertFalse(createdLogger.getUseParentHandlers());
+        assertTrue(createdLogger.getHandlers().length > 0);
+
+        var consoleHandler = findConsoleHandler(createdLogger.getHandlers());
+        assertNotNull(consoleHandler, "ConsoleHandler should be added");
+        assertEquals(Level.ALL, consoleHandler.getLevel());
+    }
+
+    @Test
     void withRealLoggerShouldNotThrow() {
         var realLogger = Logger.getLogger("TestLogger-" + System.currentTimeMillis());
         extension = new LoggingExtension(realLogger, Level.FINE);
