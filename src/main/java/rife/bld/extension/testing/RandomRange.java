@@ -22,15 +22,14 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Annotation for generating random integer values within a specified range.
+ * JUnit annotation for generating random integer values within a specified range.
  * <p>
  * This annotation can be applied to test method parameters of type {@code int} to automatically
  * inject random values during test execution.
- * </p>
  *
- * <p>Example usage:</p>
- * <pre>{@code
- * @ExtendWith(RandomRangeParameterResolver.class)
+ * <h3>Example usage:</h3>
+ *
+ * <pre>{@code @ExtendWith(RandomRangeParameterResolver.class)
  * public class MyTest {
  *     @Test
  *     public void testMethod(@RandomRange(min = 1, max = 10) int randomValue) {

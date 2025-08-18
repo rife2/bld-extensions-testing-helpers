@@ -24,25 +24,13 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Annotation for disabling tests on CI/CD environments.
+ * JUnit annotation for disabling tests on CI/CD environments.
  *
  * <p>
  * The decision is made by checking whether the {@code CI} environment variable is defined. It can be set manually
  * but is set automatically by most CI/CD environments, such as
  * <a href="https://docs.github.com/en/actions/reference/workflows-and-actions/variables#default-environment-variables">GitHub Actions</a>,
  * <a href="https://docs.gitlab.com/ci/variables/predefined_variables/">GitLab</a>, etc.
- * </p>
- *
- * <p>Example usage:</p>
- * <pre>{@code
- * @ExtendWith(RandomRangeParameterResolver.class)
- * public class MyTest {
- *     @Test
- *     public void testMethod(@RandomRange(min = 1, max = 100) int randomValue) {
- *         // randomNum will be a random integer between 1 and 10 (inclusive)
- *     }
- * }
- * }</pre>
  *
  * @author <a href="https://erik.thauvin.net/">Erik C. Thauvin</a>
  * @since 1.0

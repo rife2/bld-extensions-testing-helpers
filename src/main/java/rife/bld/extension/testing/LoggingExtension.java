@@ -26,12 +26,12 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
- * Extension for configuring console logging for test suites.
+ * JUnit Extension for configuring console logging for test suites.
  * <p>
- * This extension sets up a console handler with a configurable logging level
- * and ensures the configuration is applied only once per logger across all test classes.
- * The logger is configured to output directly to the console without using
- * parent handlers.
+ * This extension sets up a console handler with a configurable logging level and ensures the configuration is applied
+ * only once per logger across all test classes.
+ * <p>
+ * The logger is configured to output directly to the console without using parent handlers.
  * </p>
  *
  * <h3>Usage Examples:</h3>
@@ -50,8 +50,8 @@ import java.util.logging.Logger;
  *
  * // Custom logger and level
  * @RegisterExtension
- * static LoggingExtension extension = new LoggingExtension(
- *     Logger.getLogger("MyLogger"),
+ * private static final LOGGING_EXTENSION extension = new LoggingExtension(
+ *     MyClass.getLogger(),
  *     Level.INFO
  * );
  * }</pre>

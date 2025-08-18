@@ -61,6 +61,14 @@ class LoggingExtensionTests {
         );
     }
 
+    @BeforeEach
+    void beforeEach() {
+        MockitoAnnotations.openMocks(this);
+        // Set up default behavior for mock logger
+        when(mockLogger.getName()).thenReturn("MockLogger");
+        resetConfiguredLoggers();
+    }
+
     @Test
     @SuppressWarnings("PMD.DoNotUseThreads")
     void concurrentAccessShouldBeSafe() throws InterruptedException {
@@ -195,14 +203,6 @@ class LoggingExtensionTests {
         } catch (Exception e) {
             fail("Could not reset CONFIGURED_LOGGERS: " + e.getMessage());
         }
-    }
-
-    @BeforeEach
-    void setUp() {
-        MockitoAnnotations.openMocks(this);
-        // Set up default behavior for mock logger
-        when(mockLogger.getName()).thenReturn("MockLogger");
-        resetConfiguredLoggers();
     }
 
     @Test

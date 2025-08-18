@@ -28,13 +28,50 @@ import java.util.regex.Pattern;
 /**
  * Thread-safe custom log handler for capturing log messages during tests.
  *
+ * <h3>Usage Examples:</h3>
+ *
+ * <pre>{@code // In a test class
+ * class MyTest {
+ *     private final Logger logger = Logger.getLogger(MyClass.class.getName());
+ *     private TestLogHandler logHandler;
+ *
+ *     @AfterEach
+ *     void afterEach() {
+ *         if (logHandler != null) {
+ *             logger.removeHandler(logHandler);
+ *         }
+ *     }
+ *
+ *     @BeforeEach
+ *     void beforeEach() {
+ *         logHandler = new TestLogHandler();
+ *         logger.addHandler(logHandler);
+ *         logger.setLevel(Level.ALL);
+ *     }
+ * }
+ *
+ * // In a test method
+ * @Test
+ * void testMethod() {
+ *     var logger = Logger.getLogger(MyClass.class.getName());
+ *     var logHandler = new TestLogHandler();
+ *
+ *     logger.addHandler(logHandler);
+ *     logger.setLevel(Level.ALL);
+ *
+ *     // ...
+ *
+ *     logger.removeHandler(logHandler);
+ *  }
+ * }</pre>
+ *
  * @author <a href="https://erik.thauvin.net/">Erik C. Thauvin</a>
  * @since 1.0
  */
 @SuppressWarnings("PMD.TestClassWithoutTestCases")
 public class TestLogHandler extends Handler {
-    private final List<LogRecord> logRecords = new CopyOnWriteArrayList<>();
     private final AtomicBoolean closed = new AtomicBoolean(false);
+    private final List<LogRecord> logRecords = new CopyOnWriteArrayList<>();
 
     /**
      * Clears all captured log records and messages.
