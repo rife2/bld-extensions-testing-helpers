@@ -22,6 +22,7 @@ import rife.bld.publish.PublishDeveloper;
 import rife.bld.publish.PublishLicense;
 import rife.bld.publish.PublishScm;
 
+import java.io.File;
 import java.util.List;
 
 import static rife.bld.dependencies.Repository.MAVEN_CENTRAL;
@@ -101,5 +102,21 @@ public class TestingHelpersBuild extends Project {
                 .failOnViolation(true)
                 .ruleSets("config/pmd.xml")
                 .execute();
+    }
+
+    @BuildCommand(summary = "Runs the JUnit reporter")
+    public void reporter() throws Exception {
+        new JUnitReporterOperation()
+                .fromProject(this)
+                .failOnSummary(true)
+                .execute();
+    }
+
+    @Override
+    public void test() throws Exception {
+        var op = testOperation().fromProject(this);
+        // Set the reports directory
+        op.testToolOptions().reportsDir(new File("build/test-results/test/"));
+        op.execute();
     }
 }
