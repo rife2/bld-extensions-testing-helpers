@@ -26,6 +26,7 @@ import org.junit.jupiter.api.extension.ParameterContext;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;
 import java.util.Optional;
 
@@ -34,8 +35,200 @@ import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.when;
 
 @ExtendWith({RandomStringResolver.class, MockitoExtension.class})
-@SuppressWarnings("PMD.AvoidDuplicateLiterals")
+@SuppressWarnings({"PMD.AvoidDuplicateLiterals", "PMD.AvoidAccessibilityAlteration"})
 class RandomStringResolverTests {
+    @Nested
+    @DisplayName("Field Injection Integration")
+    class FieldInjection {
+        @Test
+        @DisplayName("should allow access to injected value even if field is private")
+        void allowInjectedValueOnPrivateField() throws Exception {
+            class TestClass {
+                @RandomString(length = 7)
+                private String field;
+
+                String getField() {
+                    return field;
+                }
+            }
+            var testInstance = new TestClass();
+
+            var resolver = new RandomStringResolver();
+            resolver.postProcessTestInstance(testInstance, null);
+
+            // Access via getter, since accessibility guarantees are JVM dependent
+            var value = testInstance.getField();
+            assertNotNull(value);
+            assertEquals(7, value.length());
+        }
+
+        @Test
+        @DisplayName("should inject random string into private field")
+        void injectRandomStringField() throws Exception {
+            class TestClass {
+                @RandomString(length = 8, characters = TestingUtils.UPPERCASE_CHARACTERS)
+                private String injected;
+
+                String getInjected() {
+                    return injected;
+                }
+            }
+            var testInstance = new TestClass();
+            var resolver = new RandomStringResolver();
+
+            resolver.postProcessTestInstance(testInstance, null);
+
+            assertNotNull(testInstance.getInjected());
+            assertEquals(8, testInstance.getInjected().length());
+            assertTrue(testInstance.getInjected().matches("[A-Z]+"), "Injected field: " + testInstance.getInjected());
+        }
+
+        @Test
+        @DisplayName("should inject random string into multiple annotated fields including inherited ones")
+        void injectRandomStringMultipleAndInheritedFields() throws Exception {
+            class SubClass extends SuperClass {
+                @RandomString(length = 12)
+                private String subField;
+
+                String getSubField() {
+                    return subField;
+                }
+            }
+            var testInstance = new SubClass();
+            var resolver = new RandomStringResolver();
+
+            resolver.postProcessTestInstance(testInstance, null);
+
+            assertNotNull(testInstance.getSubField());
+            assertEquals(12, testInstance.getSubField().length());
+            assertTrue(testInstance.getSubField().matches("[A-Za-z0-9]+"),
+                    "Sub field: " + testInstance.getSubField());
+
+            assertNotNull(testInstance.getSuperField());
+            assertEquals(5, testInstance.getSuperField().length());
+            assertTrue(testInstance.getSuperField().matches("[0-9]+"),
+                    "Super field: " + testInstance.getSuperField());
+        }
+
+        @Test
+        @DisplayName("should not inject into fields that aren't String or not annotated")
+        void skipNonStringOrUnannotatedFields() throws Exception {
+            class TestClass {
+                @SuppressWarnings("PMD.UnusedPrivateField")
+                private static final int notAString = 123;
+
+                @RandomString
+                @SuppressWarnings({"PMD.MutableStaticState"})
+                public static String staticField;
+
+                @SuppressWarnings({"unused"})
+                private String fieldNotAnnotated;
+
+                @RandomString
+                private String fieldAnnotated;
+            }
+            var testInstance = new TestClass();
+            var resolver = new RandomStringResolver();
+
+            resolver.postProcessTestInstance(testInstance, null);
+
+            // should inject only to annotated field
+            var field = TestClass.class.getDeclaredField("fieldAnnotated");
+            field.setAccessible(true);
+            String injected = (String) field.get(testInstance);
+            assertNotNull(injected);
+            assertEquals(10, injected.length());
+
+            // notAString and notAnnotated should remain unchanged
+            var notAStringField = TestClass.class.getDeclaredField("notAString");
+            notAStringField.setAccessible(true);
+            assertEquals(123, notAStringField.getInt(testInstance));
+
+            var notAnnotatedField = TestClass.class.getDeclaredField("fieldNotAnnotated");
+            notAnnotatedField.setAccessible(true);
+            assertNull(notAnnotatedField.get(testInstance));
+
+            // static field should not be injected (not handled by instance processor)
+            var staticField = TestClass.class.getDeclaredField("staticField");
+            staticField.setAccessible(true);
+            assertNull(staticField.get(null));
+        }
+
+        static class SuperClass {
+            @RandomString(length = 5, characters = TestingUtils.NUMERIC_CHARACTERS)
+            private String superField;
+
+            String getSuperField() {
+                return superField;
+            }
+        }
+    }
+
+    @Nested
+    @DisplayName("Method-Level Annotation Integration")
+    class MethodLevelAnnotation {
+        @RepeatedTest(3)
+        @DisplayName("should inject custom character set from method-level annotation")
+        @RandomString(length = 8, characters = TestingUtils.UPPERCASE_CHARACTERS)
+        void injectCustomCharactersFromMethodLevel(String randomStr) {
+            assertNotNull(randomStr);
+            assertEquals(8, randomStr.length());
+            assertTrue(randomStr.matches("[A-Z]+"), "Result: " + randomStr);
+        }
+
+        @RepeatedTest(3)
+        @DisplayName("should inject string from method-level annotation")
+        @RandomString(length = 5)
+        void injectFromMethodLevelAnnotation(String randomStr) {
+            assertNotNull(randomStr);
+            assertEquals(5, randomStr.length());
+            assertTrue(randomStr.matches("[A-Za-z0-9]+"), "Result: " + randomStr);
+        }
+
+        @RepeatedTest(3)
+        @DisplayName("should apply method-level annotation to all String parameters")
+        @RandomString(length = 6, characters = "ABC123")
+        void injectToMultipleParameters(String first, String second) {
+            assertNotNull(first);
+            assertEquals(6, first.length());
+            assertTrue(first.matches("[ABC123]+"), "First result: " + first);
+
+            assertNotNull(second);
+            assertEquals(6, second.length());
+            assertTrue(second.matches("[ABC123]+"), "Second result: " + second);
+
+            // Should be different strings
+            assertNotEquals(first, second);
+        }
+
+        @RepeatedTest(3)
+        @DisplayName("should use method-level characters with parameter-level length override")
+        @RandomString(characters = "XYZ")
+        void mixedAnnotationAttributes(String methodChars, @RandomString(length = 15) String mixedConfig) {
+            assertNotNull(methodChars);
+            assertEquals(10, methodChars.length()); // Default length from method annotation
+            assertTrue(methodChars.matches("[XYZ]+"), "Method chars result: " + methodChars);
+
+            assertNotNull(mixedConfig);
+            assertEquals(15, mixedConfig.length()); // Override length, but uses default characters
+            assertTrue(mixedConfig.matches("[A-Za-z0-9]+"), "Mixed config result: " + mixedConfig);
+        }
+
+        @RepeatedTest(3)
+        @DisplayName("should allow parameter-level annotation to override method-level")
+        @RandomString(length = 11)
+        void parameterOverridesMethodLevel(String methodDefault, @RandomString(length = 3) String paramOverride) {
+            assertNotNull(methodDefault);
+            assertEquals(11, methodDefault.length());
+            assertTrue(methodDefault.matches("[A-Za-z0-9]+"), "Method default result: " + methodDefault);
+
+            assertNotNull(paramOverride);
+            assertEquals(3, paramOverride.length());
+            assertTrue(paramOverride.matches("[A-Za-z0-9]+"),
+                    "Parameter override result: " + paramOverride);
+        }
+    }
+
     @Nested
     @DisplayName("Parameter Injection Integration")
     class ParameterInjection {
@@ -121,6 +314,8 @@ class RandomStringResolverTests {
         private Parameter parameter;
         @Mock
         private ParameterContext parameterContext;
+        @Mock
+        private Method testMethod;
 
         private RandomString createMockAnnotation(int length, String characters) {
             return new RandomString() {
@@ -148,9 +343,8 @@ class RandomStringResolverTests {
 
             when(parameterContext.getParameter()).thenReturn(parameter);
             doReturn(Integer.class).when(parameter).getType();
-            // Remove the unnecessary stubbing for isAnnotated() since it's never called
 
-            boolean result = extension.supportsParameter(parameterContext, extensionContext);
+            var result = extension.supportsParameter(parameterContext, extensionContext);
 
             assertFalse(result);
         }
@@ -163,10 +357,29 @@ class RandomStringResolverTests {
             when(parameterContext.getParameter()).thenReturn(parameter);
             doReturn(String.class).when(parameter).getType();
             when(parameterContext.isAnnotated(RandomString.class)).thenReturn(false);
+            when(extensionContext.getTestMethod()).thenReturn(Optional.empty());
 
-            boolean result = extension.supportsParameter(parameterContext, extensionContext);
+            var result = extension.supportsParameter(parameterContext, extensionContext);
 
             assertFalse(result);
+        }
+
+        @Test
+        @DisplayName("should prioritize parameter annotation over method annotation")
+        void prioritizeParameterAnnotationOverMethod() {
+            var extension = new RandomStringResolver();
+            var parameterAnnotation = createMockAnnotation(3, "ABC");
+
+            when(parameterContext.findAnnotation(RandomString.class)).thenReturn(Optional.of(parameterAnnotation));
+
+            // No need to mock method-level annotation since parameter annotation takes precedence
+            // and the resolver won't even check the method annotation
+
+            var result = (String) extension.resolveParameter(parameterContext, extensionContext);
+
+            assertNotNull(result);
+            assertEquals(3, result.length()); // Parameter annotation length
+            assertTrue(result.matches("[ABC]+"), "Result: " + result); // Parameter annotation characters
         }
 
         @Test
@@ -175,8 +388,7 @@ class RandomStringResolverTests {
             var extension = new RandomStringResolver();
             var annotation = createMockAnnotation(5, "XYZ");
 
-            when(parameterContext.findAnnotation(RandomString.class))
-                    .thenReturn(Optional.of(annotation));
+            when(parameterContext.findAnnotation(RandomString.class)).thenReturn(Optional.of(annotation));
 
             var result = (String) extension.resolveParameter(parameterContext, extensionContext);
 
@@ -202,18 +414,54 @@ class RandomStringResolverTests {
         }
 
         @Test
-        @DisplayName("should resolve parameter with fallback when annotation not found")
+        @DisplayName("should resolve parameter with fallback when no annotations found")
         void resolveParameterWithFallback() {
             var extension = new RandomStringResolver();
 
             when(parameterContext.findAnnotation(RandomString.class))
                     .thenReturn(Optional.empty());
+            when(extensionContext.getTestMethod()).thenReturn(Optional.of(testMethod));
+            when(testMethod.getAnnotation(RandomString.class)).thenReturn(null);
 
             var result = (String) extension.resolveParameter(parameterContext, extensionContext);
 
             assertNotNull(result);
             assertEquals(10, result.length());
             assertTrue(result.matches("[A-Za-z0-9]+"), "Result: " + result);
+        }
+
+        @Test
+        @DisplayName("should resolve parameter with fallback when test method is not present")
+        void resolveParameterWithFallbackWhenNoTestMethod() {
+            var extension = new RandomStringResolver();
+
+            when(parameterContext.findAnnotation(RandomString.class))
+                    .thenReturn(Optional.empty());
+            when(extensionContext.getTestMethod()).thenReturn(Optional.empty());
+
+            var result = (String) extension.resolveParameter(parameterContext, extensionContext);
+
+            assertNotNull(result);
+            assertEquals(10, result.length());
+            assertTrue(result.matches("[A-Za-z0-9]+"), "Result: " + result);
+        }
+
+        @Test
+        @DisplayName("should resolve parameter with method-level annotation when no parameter annotation")
+        void resolveParameterWithMethodLevelAnnotation() {
+            var extension = new RandomStringResolver();
+            var methodAnnotation = createMockAnnotation(7, "123");
+
+            when(parameterContext.findAnnotation(RandomString.class))
+                    .thenReturn(Optional.empty());
+            when(extensionContext.getTestMethod()).thenReturn(Optional.of(testMethod));
+            when(testMethod.getAnnotation(RandomString.class)).thenReturn(methodAnnotation);
+
+            var result = (String) extension.resolveParameter(parameterContext, extensionContext);
+
+            assertNotNull(result);
+            assertEquals(7, result.length());
+            assertTrue(result.matches("[123]+"), "Result: " + result);
         }
 
         @Test
@@ -225,7 +473,23 @@ class RandomStringResolverTests {
             doReturn(String.class).when(parameter).getType();
             when(parameterContext.isAnnotated(RandomString.class)).thenReturn(true);
 
-            boolean result = extension.supportsParameter(parameterContext, extensionContext);
+            var result = extension.supportsParameter(parameterContext, extensionContext);
+
+            assertTrue(result);
+        }
+
+        @Test
+        @DisplayName("should support String parameters with method-level RandomString annotation")
+        void supportStringParametersWithMethodLevelAnnotation() {
+            var extension = new RandomStringResolver();
+
+            when(parameterContext.getParameter()).thenReturn(parameter);
+            doReturn(String.class).when(parameter).getType();
+            when(parameterContext.isAnnotated(RandomString.class)).thenReturn(false);
+            when(extensionContext.getTestMethod()).thenReturn(Optional.of(testMethod));
+            when(testMethod.isAnnotationPresent(RandomString.class)).thenReturn(true);
+
+            var result = extension.supportsParameter(parameterContext, extensionContext);
 
             assertTrue(result);
         }

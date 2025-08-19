@@ -1128,6 +1128,21 @@ class TestLogHandlerTests {
             assertEquals(1, handler.getLogRecords().size());
         }
 
+        @Test
+        @DisplayName("Should return null in getLastRecordContaining when record.getMessage() is null")
+        void shouldReturnNullInGetLastRecordContainingWhenRecordMessageIsNull() {
+            var nullMessageRecord = new LogRecord(Level.INFO, null);
+            var anotherNullMessageRecord = new LogRecord(Level.WARNING, null);
+
+            handler.publish(nullMessageRecord);
+            handler.publish(anotherNullMessageRecord);
+
+            // No non-null message should always return null for any search
+            assertNull(handler.getLastRecordContaining("anything"));
+            assertNull(handler.getLastRecordContaining(""));
+            assertNull(handler.getLastRecordContaining(null));
+        }
+
         @ParameterizedTest
         @ValueSource(strings = {"nonexistent", "missing", "notfound"})
         @DisplayName("Should return null when no record contains text")

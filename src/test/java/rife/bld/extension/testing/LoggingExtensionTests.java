@@ -103,7 +103,7 @@ class LoggingExtensionTests {
         @Test
         void loggerAndNullHandlerConstructorUsesAllLevel() {
             var logger = getRandomLogger();
-            LoggingExtension extension = new LoggingExtension(logger, (Handler) null);
+            var extension = new LoggingExtension(logger, (Handler) null);
             assertEquals(Level.ALL, getPrivateField(extension, "level"));
         }
 

@@ -28,13 +28,14 @@ import java.lang.annotation.Target;
  *
  * <h3>Example usage:</h3>
  *
- * <pre>{@code public class MyTest {
- *     @Test
- *     @DisabledOnCi
+ * <blockquote><pre>
+ * public class MyTest {
+ *     &#64;Test
+ *     &#64;DisabledOnCi
  *     public void testMethod() {
  *         // This test will be disabled on CI/CD environments
  *     }
- * }}</pre>
+ * }</pre></blockquote>
  *
  * <p>
  * The decision is made by checking whether the {@code CI} environment variable is defined. It can be set manually

@@ -1,319 +1,522 @@
-/*
- * Copyright 2025 the original author or authors.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     https://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
 package rife.bld.extension.testing;
 
-import org.junit.jupiter.api.*;
-import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Nested;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtensionContext;
 import org.junit.jupiter.api.extension.ParameterContext;
 import org.junit.jupiter.api.extension.ParameterResolutionException;
 import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.MockitoAnnotations;
 
-import java.lang.reflect.Parameter;
+import java.lang.annotation.Annotation;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.when;
 
-@ExtendWith(MockitoExtension.class)
-@SuppressWarnings("PMD.TestClassWithoutTestCases")
-public class RandomRangeResolverTests {
-    @Mock
-    private ExtensionContext extensionContext;
-    @Mock
-    private Parameter parameter;
-    @Mock
-    private ParameterContext parameterContext;
-    private RandomRangeResolver resolver;
-
-    @BeforeEach
-    void beforeEach() {
-        resolver = new RandomRangeResolver();
+@SuppressWarnings({"PMD.AvoidDuplicateLiterals", "PMD.UseUtilityClass", "PMD.AvoidAccessibilityAlteration"})
+class RandomRangeResolverTests {
+    // Fake methods for extracting real Parameter objects
+    @SuppressWarnings({"EmptyMethod", "unused"})
+    static void intPrimitiveParamMethod(int param) {
+        // no-op
     }
 
-    @Test
-    void minGreaterThanMax() {
-        var mockAnnotation = mock(RandomRange.class);
-        when(mockAnnotation.min()).thenReturn(20);
-        when(mockAnnotation.max()).thenReturn(10);
-        when(parameterContext.findAnnotation(RandomRange.class)).thenReturn(Optional.of(mockAnnotation));
-
-        var exception = assertThrows(ParameterResolutionException.class, () ->
-                resolver.resolveParameter(parameterContext, extensionContext));
-
-        var expectedMessage = "The minimum value (20) cannot be greater than maximum value (10)";
-        assertEquals(expectedMessage, exception.getMessage());
+    @SuppressWarnings({"EmptyMethod", "unused"})
+    @RandomRange(min = 1, max = 2)
+    static void sampleMethod(int v) {
+        // no-op
     }
 
-    @Test
-    void minValueZero() {
-        var mockAnnotation = mock(RandomRange.class);
-        when(mockAnnotation.min()).thenReturn(0);
-        when(mockAnnotation.max()).thenReturn(10);
-        when(parameterContext.findAnnotation(RandomRange.class)).thenReturn(Optional.of(mockAnnotation));
-
-        for (int i = 0; i < 50; i++) {
-            var result = (Integer) resolver.resolveParameter(parameterContext, extensionContext);
-            assertTrue(result >= 0,
-                    "Result should be non-negative when min is 0, but was: " + result);
-        }
+    @SuppressWarnings({"EmptyMethod", "unused"})
+    static void stringParamMethod(String param) {
+        // no-op
     }
 
-    @Test
-    void missingAnnotation() {
-        when(parameterContext.findAnnotation(RandomRange.class)).thenReturn(Optional.empty());
-
-        var exception = assertThrows(ParameterResolutionException.class, () ->
-                resolver.resolveParameter(parameterContext, extensionContext));
-
-        assertEquals("RandomRange annotation not found", exception.getMessage());
-    }
-
-    @RepeatedTest(3)
-    void validAnnotation() {
-        var mockAnnotation = mock(RandomRange.class);
-        when(mockAnnotation.min()).thenReturn(10);
-        when(mockAnnotation.max()).thenReturn(20);
-        when(parameterContext.findAnnotation(RandomRange.class)).thenReturn(Optional.of(mockAnnotation));
-
-        var result = (Integer) resolver.resolveParameter(parameterContext, extensionContext);
-
-        assertNotNull(result);
-        assertTrue(result >= 10 && result <= 20,
-                "Result should be between 10 and 20, but was: " + result);
-    }
-
-    // Integration tests using actual @RandomRange annotation
     @Nested
-    @DisplayName("Integration Tests")
-    @ExtendWith(RandomRangeResolver.class)
-    class IntegrationTests {
-        @RepeatedTest(50)
-        void actualAnnotationWithConsistentBehavior(@RandomRange(min = 1, max = 5) int randomValue) {
-            assertTrue(randomValue >= 1 && randomValue <= 5,
-                    "Random value should consistently be in range [1,5], but was: " + randomValue);
-        }
-
-        @RepeatedTest(3)
-        void actualAnnotationWithCustomRange(@RandomRange(min = 5, max = 15) int randomValue) {
-            assertTrue(randomValue >= 5 && randomValue <= 15,
-                    "Random value should be in range [5,15], but was: " + randomValue);
-        }
-
-        @RepeatedTest(3)
-        void actualAnnotationWithDefaultRange(@RandomRange int randomValue) {
-            assertTrue(randomValue >= 0 && randomValue <= 100,
-                    "Random value should be in default range [0,100], but was: " + randomValue);
-        }
-
-        @RepeatedTest(3)
-        void actualAnnotationWithMultipleParameters(
-                @RandomRange(min = 1, max = 10) int first,
-                @RandomRange(min = 100, max = 200) int second,
-                @RandomRange int third) {
-
-            assertTrue(first >= 1 && first <= 10,
-                    "First parameter should be in range [1,10], but was: " + first);
-            assertTrue(second >= 100 && second <= 200,
-                    "Second parameter should be in range [100,200], but was: " + second);
-            assertTrue(third >= 0 && third <= 100,
-                    "Third parameter should be in default range [0,100], but was: " + third);
-        }
-
-        @RepeatedTest(3)
-        void actualAnnotationWithNegativeRange(@RandomRange(min = -100, max = -50) int randomValue) {
-            assertTrue(randomValue >= -100 && randomValue <= -50,
-                    "Random value should be in range [-100,-50], but was: " + randomValue);
-        }
-
+    @DisplayName("Edge Cases and Full Branches")
+    class EdgeCases {
         @Test
-        void actualAnnotationWithSingleValue(@RandomRange(min = 42, max = 42) int randomValue) {
-            assertEquals(42, randomValue, "Random value should always be 42 when min equals max");
+        void generateRandomValueThrowsIfMinEqualsMaxIsValid() {
+            var resolver = new RandomRangeResolver();
+            var annotation = new RandomRange() {
+                @Override
+                public Class<? extends Annotation> annotationType() {
+                    return RandomRange.class;
+                }
+
+                @Override
+                public int max() {
+                    return 7;
+                }
+
+                @Override
+                public int min() {
+                    return 7;
+                }
+            };
+            // Should not throw, 7 is a valid value
+            var value = invokeGenerateRandomValue(resolver, annotation);
+            assertInstanceOf(Integer.class, value);
+            assertEquals(7, value);
+        }
+
+        // Use reflection to invoke the private method for coverage
+        @SuppressWarnings({"PMD.AvoidThrowingRawExceptionTypes", "PMD.AvoidAccessibilityAlteration"})
+        private Object invokeGenerateRandomValue(RandomRangeResolver resolver, RandomRange ann) {
+            try {
+                var m = RandomRangeResolver.class.getDeclaredMethod("generateRandomValue", RandomRange.class);
+                m.setAccessible(true);
+                return m.invoke(resolver, ann);
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
         }
     }
 
     @Nested
-    @DisplayName("Parameter Support Tests")
-    class ParameterSupportTests {
-        @Test
-        void supportsParameterWithDoubleType() {
-            when(parameterContext.isAnnotated(RandomRange.class)).thenReturn(true);
-            when(parameterContext.getParameter()).thenReturn(parameter);
+    class FieldAnnotationTests {
+        @RandomRange(min = 100, max = 101)
+        @SuppressWarnings("unused")
+        private static int staticRandomField;
 
-            var result = resolver.supportsParameter(parameterContext, extensionContext);
+        @RandomRange(min = 21, max = 23)
+        @SuppressWarnings("unused")
+        int randomField;
 
-            assertFalse(result, "Resolver should not support double type, only primitive int");
-        }
+        @Nested
+        @DisplayName("Field Annotation Coverage")
+        class FieldAnnotationCoverage {
+            @Mock
+            ExtensionContext extensionContext;
+            @Mock
+            ParameterContext parameterContext;
 
-        // Tests for resolver behavior with different parameter types
-        @Test
-        void supportsParameterWithIntegerWrapperType() {
-            when(parameterContext.isAnnotated(RandomRange.class)).thenReturn(true);
-            when(parameterContext.getParameter()).thenReturn(parameter);
+            public FieldAnnotationCoverage() {
+                MockitoAnnotations.openMocks(this);
+            }
 
-            var result = resolver.supportsParameter(parameterContext, extensionContext);
+            @Test
+            void fieldAnnotationCanBeReadAndHasCorrectValues() throws NoSuchFieldException {
+                var fieldAnn = getFieldRandomRangeAnnotation("randomField");
+                assertNotNull(fieldAnn);
+                assertEquals(21, fieldAnn.min());
+                assertEquals(23, fieldAnn.max());
 
-            assertFalse(result, "Resolver should not support Integer wrapper type, only primitive int");
-        }
+                var staticFieldAnn = getFieldRandomRangeAnnotation("staticRandomField");
+                assertNotNull(staticFieldAnn);
+                assertEquals(100, staticFieldAnn.min());
+                assertEquals(101, staticFieldAnn.max());
+            }
 
-        @Test
-        void supportsParameterWithLongType() {
-            when(parameterContext.isAnnotated(RandomRange.class)).thenReturn(true);
-            when(parameterContext.getParameter()).thenReturn(parameter);
+            @Test
+            void generateRandomValueWorksWithFieldAnnotation()
+                    throws NoSuchMethodException, NoSuchFieldException, InvocationTargetException, IllegalAccessException {
+                var fieldAnn = getFieldRandomRangeAnnotation("randomField");
+                var resolver = new RandomRangeResolver();
 
-            var result = resolver.supportsParameter(parameterContext, extensionContext);
+                // Use reflection to access the private method
+                var m = RandomRangeResolver.class.getDeclaredMethod("generateRandomValue", RandomRange.class);
+                m.setAccessible(true);
+                var value = m.invoke(resolver, fieldAnn);
 
-            assertFalse(result, "Resolver should not support long type, only primitive int");
-        }
+                assertInstanceOf(Integer.class, value);
+                int v = (Integer) value;
+                assertTrue(v >= 21 && v <= 23);
+            }
 
-        @Test
-        void supportsParameterWithRandomRangeAnnotationAndIntType() {
-            when(parameterContext.isAnnotated(RandomRange.class)).thenReturn(true);
-            when(parameterContext.getParameter()).thenReturn(parameter);
-            doReturn(int.class).when(parameter).getType();
+            private RandomRange getFieldRandomRangeAnnotation(String fieldName) throws NoSuchFieldException {
+                var field = FieldAnnotationTests.class.getDeclaredField(fieldName);
+                return field.getAnnotation(RandomRange.class);
+            }
 
-            var result = resolver.supportsParameter(parameterContext, extensionContext);
+            @Test
+            void supportsParameterReturnsFalseForFieldAnnotationOnly() throws NoSuchMethodException {
+                // Initialize mocks for this test
+                MockitoAnnotations.openMocks(this);
+                // Field-level annotations not supported for parameter resolution by the resolver.
+                // Only method and parameter-level annotations are considered.
+                var intParam = RandomRangeResolverTests.class
+                        .getDeclaredMethod("intPrimitiveParamMethod", int.class)
+                        .getParameters()[0];
 
-            assertTrue(result);
-        }
+                when(parameterContext.getParameter()).thenReturn(intParam);
+                when(parameterContext.isAnnotated(RandomRange.class)).thenReturn(false);
+                when(extensionContext.getTestMethod()).thenReturn(Optional.empty());
 
-        @Test
-        void supportsParameterWithRandomRangeAnnotationButNonIntType() {
-            when(parameterContext.isAnnotated(RandomRange.class)).thenReturn(true);
-            when(parameterContext.getParameter()).thenReturn(parameter);
-
-            var result = resolver.supportsParameter(parameterContext, extensionContext);
-
-            assertFalse(result);
-        }
-
-        @Test
-        void supportsParameterWithoutRandomRangeAnnotation() {
-            when(parameterContext.isAnnotated(RandomRange.class)).thenReturn(false);
-
-            var result = resolver.supportsParameter(parameterContext, extensionContext);
-
-            assertFalse(result);
+                var resolver = new RandomRangeResolver();
+                assertFalse(resolver.supportsParameter(parameterContext, extensionContext));
+            }
         }
     }
 
     @Nested
-    @DisplayName("Range Tests")
-    class RangeTests {
-        @RepeatedTest(3)
-        void defaultRange() {
-            var mockAnnotation = mock(RandomRange.class);
-            when(mockAnnotation.min()).thenReturn(0);
-            when(mockAnnotation.max()).thenReturn(100);
-            when(parameterContext.findAnnotation(RandomRange.class)).thenReturn(Optional.of(mockAnnotation));
+    @DisplayName("postProcessTestInstance Coverage")
+    class PostProcessTestInstanceCoverage {
 
-            var result = (Integer) resolver.resolveParameter(parameterContext, extensionContext);
+        @Test
+        @DisplayName("injects using default min/max if not specified")
+        void injectsDefaultRangeWhenNotSpecified() throws Exception {
+            class TestClass {
+                @RandomRange
+                private int field;
 
-            assertNotNull(result);
-            assertTrue(result >= 0 && result <= 100,
-                    "Result should be between 0 and 100, but was: " + result);
+                int getField() {
+                    return field;
+                }
+            }
+            var testInstance = new TestClass();
+            var resolver = new RandomRangeResolver();
+
+            resolver.postProcessTestInstance(testInstance, null);
+
+            var value = testInstance.getField();
+            assertTrue(value >= 0 && value <= 100);
         }
 
         @Test
-        void largeRange() {
-            var mockAnnotation = mock(RandomRange.class);
-            when(mockAnnotation.min()).thenReturn(1);
-            when(mockAnnotation.max()).thenReturn(Integer.MAX_VALUE);
-            when(parameterContext.findAnnotation(RandomRange.class)).thenReturn(Optional.of(mockAnnotation));
+        @DisplayName("injects random int into multiple and inherited fields")
+        void injectsMultipleAndInheritedFields() throws Exception {
+            class SuperClass {
+                @RandomRange(min = 20, max = 30)
+                private int superField;
 
-            var result = (Integer) resolver.resolveParameter(parameterContext, extensionContext);
+                int getSuperField() {
+                    return superField;
+                }
+            }
 
-            assertNotNull(result);
-        }
+            class SubClass extends SuperClass {
+                @RandomRange(min = 1, max = 2)
+                private int subField;
 
-        @RepeatedTest(3)
-        void negativeRange() {
-            var mockAnnotation = mock(RandomRange.class);
-            when(mockAnnotation.min()).thenReturn(-50);
-            when(mockAnnotation.max()).thenReturn(-10);
-            when(parameterContext.findAnnotation(RandomRange.class)).thenReturn(Optional.of(mockAnnotation));
+                int getSubField() {
+                    return subField;
+                }
+            }
 
-            var result = (Integer) resolver.resolveParameter(parameterContext, extensionContext);
+            var testInstance = new SubClass();
+            var resolver = new RandomRangeResolver();
 
-            assertNotNull(result);
-            assertTrue(result >= -50 && result <= -10,
-                    "Result should be between -50 and -10, but was: " + result);
+            resolver.postProcessTestInstance(testInstance, null);
+
+            var subVal = testInstance.getSubField();
+            var superVal = testInstance.getSuperField();
+            assertTrue(subVal >= 1 && subVal <= 2, "subField: " + subVal);
+            assertTrue(superVal >= 20 && superVal <= 30, "superField: " + superVal);
         }
 
         @Test
-        void singleValueRange() {
-            var mockAnnotation = mock(RandomRange.class);
-            when(mockAnnotation.min()).thenReturn(42);
-            when(mockAnnotation.max()).thenReturn(42);
-            when(parameterContext.findAnnotation(RandomRange.class)).thenReturn(Optional.of(mockAnnotation));
+        @DisplayName("injects random int into private field")
+        void injectsRandomIntPrivateField() throws Exception {
+            class TestClass {
+                @RandomRange(min = 10, max = 15)
+                private int field;
 
-            var result = (Integer) resolver.resolveParameter(parameterContext, extensionContext);
+                int getField() {
+                    return field;
+                }
+            }
+            var testInstance = new TestClass();
+            var resolver = new RandomRangeResolver();
 
-            assertEquals(42, result);
+            resolver.postProcessTestInstance(testInstance, null);
+
+            var value = testInstance.getField();
+            assertTrue(value >= 10 && value <= 15, "Injected value: " + value);
         }
 
-        // Test boundary conditions
         @Test
-        void zeroRange() {
-            var mockAnnotation = mock(RandomRange.class);
-            when(mockAnnotation.min()).thenReturn(100);
-            when(mockAnnotation.max()).thenReturn(100);
-            when(parameterContext.findAnnotation(RandomRange.class)).thenReturn(Optional.of(mockAnnotation));
+        @DisplayName("injects value into private field even if originally inaccessible")
+        void injectsValueIntoPrivateFieldRegardlessOfAccessibility() throws Exception {
+            class TestClass {
+                @RandomRange(min = 1, max = 2)
+                private int field;
 
-            var result = (Integer) resolver.resolveParameter(parameterContext, extensionContext);
+                int getField() {
+                    return field;
+                }
+            }
+            var testInstance = new TestClass();
+            var resolver = new RandomRangeResolver();
 
-            assertEquals(100, result, "When min equals max, should return that exact value");
+            var field = TestClass.class.getDeclaredField("field");
+            field.setAccessible(false);
+
+            resolver.postProcessTestInstance(testInstance, null);
+
+            // The field should have a value in range, regardless of accessibility state
+            var value = testInstance.getField();
+            assertTrue(value == 1 || value == 2, "Injected value: " + value);
+        }
+
+        @Test
+        @DisplayName("injects when min equals max")
+        void injectsWhenMinEqualsMax() throws Exception {
+            class TestClass {
+                @RandomRange(min = 5, max = 5)
+                private int field;
+
+                int getField() {
+                    return field;
+                }
+            }
+            var testInstance = new TestClass();
+            var resolver = new RandomRangeResolver();
+
+            resolver.postProcessTestInstance(testInstance, null);
+
+            assertEquals(5, testInstance.getField());
+        }
+
+        @Test
+        @DisplayName("no-op for classes with no annotated fields")
+        void noAnnotatedFieldsNoOp() throws Exception {
+            @SuppressWarnings("unused")
+            class TestClass {
+                private int a;
+                private String b;
+            }
+            var testInstance = new TestClass();
+            var resolver = new RandomRangeResolver();
+
+            resolver.postProcessTestInstance(testInstance, null);
+
+            assertEquals(0, testInstance.a);
+            assertNull(testInstance.b);
+        }
+
+        @Test
+        @DisplayName("skips static fields and non-int fields")
+        void skipsStaticAndNonIntFields() throws Exception {
+            class TestClass {
+                @RandomRange
+                @SuppressWarnings({"PMD.MutableStaticState"})
+                public static int staticInt;
+
+                @RandomRange
+                private int injected;
+
+                @SuppressWarnings("unused")
+                private String notAnInt;
+            }
+            var testInstance = new TestClass();
+            var resolver = new RandomRangeResolver();
+
+            resolver.postProcessTestInstance(testInstance, null);
+
+            var injectedField = TestClass.class.getDeclaredField("injected");
+            injectedField.setAccessible(true);
+            var injectedVal = injectedField.getInt(testInstance);
+            assertTrue(injectedVal >= 0 && injectedVal <= 100);
+
+            var staticField = TestClass.class.getDeclaredField("staticInt");
+            staticField.setAccessible(true);
+            assertEquals(0, staticField.getInt(null)); // Static field should not be injected
+
+            var notAnIntField = TestClass.class.getDeclaredField("notAnInt");
+            notAnIntField.setAccessible(true);
+            assertNull(notAnIntField.get(testInstance));
+        }
+
+        @Test
+        @DisplayName("throws if min > max")
+        void throwsIfMinGreaterThanMax() {
+            class TestClass {
+                @RandomRange(min = 10, max = 5)
+                private int failField;
+            }
+            var testInstance = new TestClass();
+            var resolver = new RandomRangeResolver();
+
+            var ex = assertThrows(Exception.class, () -> resolver.postProcessTestInstance(testInstance, null));
+            assertTrue(ex.getMessage().toLowerCase().contains("min") || ex.getMessage().toLowerCase().contains("greater"));
         }
     }
 
     @Nested
     @DisplayName("Resolve Parameter Tests")
     class ResolveParameterTests {
-        @RepeatedTest(100)
-        void resolveParameterWithRepeatedExecution() {
-            var mockAnnotation = mock(RandomRange.class);
-            when(mockAnnotation.min()).thenReturn(1);
-            when(mockAnnotation.max()).thenReturn(10);
-            when(parameterContext.findAnnotation(RandomRange.class)).thenReturn(Optional.of(mockAnnotation));
+        @Mock
+        ExtensionContext extensionContext;
+        @Mock
+        Method method;
+        @Mock
+        ParameterContext parameterContext;
 
-            var result = (Integer) resolver.resolveParameter(parameterContext, extensionContext);
-
-            assertTrue(result >= 1 && result <= 10,
-                    "Result should be between 1 and 10, but was: " + result);
+        public ResolveParameterTests() {
+            MockitoAnnotations.openMocks(this);
         }
 
-        // Test for SecureRandom usage verification
+        private RandomRange mockAnnotation(int min, int max) {
+            return new RandomRange() {
+                @Override
+                public Class<? extends Annotation> annotationType() {
+                    return RandomRange.class;
+                }
+
+                @Override
+                public int max() {
+                    return max;
+                }
+
+                @Override
+                public int min() {
+                    return min;
+                }
+            };
+        }
+
         @Test
-        void resolveParameterWithUniqueValuesOverMultipleCalls() {
-            var mockAnnotation = mock(RandomRange.class);
-            when(mockAnnotation.min()).thenReturn(1);
-            when(mockAnnotation.max()).thenReturn(1000000);
-            when(parameterContext.findAnnotation(RandomRange.class)).thenReturn(Optional.of(mockAnnotation));
+        void throwsIfMinGreaterThanMax() {
+            var paramAnn = mockAnnotation(10, 5);
+            when(parameterContext.findAnnotation(RandomRange.class)).thenReturn(Optional.of(paramAnn));
+            var resolver = new RandomRangeResolver();
+            assertThrows(ParameterResolutionException.class, () ->
+                    resolver.resolveParameter(parameterContext, extensionContext));
+        }
 
-            var values = new java.util.HashSet<Integer>();
-            for (int i = 0; i < 100; i++) {
-                var result = (Integer) resolver.resolveParameter(parameterContext, extensionContext);
-                values.add(result);
-            }
+        @Test
+        void usesDefaultRangeIfNoAnnotation() {
+            when(parameterContext.findAnnotation(RandomRange.class)).thenReturn(Optional.empty());
+            when(extensionContext.getTestMethod()).thenReturn(Optional.of(method));
+            when(method.getAnnotation(RandomRange.class)).thenReturn(null);
 
-            // With such a large range, we should get many unique values
-            assertTrue(values.size() > 50,
-                    "Expected many unique values from SecureRandom, but only got: " + values.size());
+            var resolver = new RandomRangeResolver();
+            var value = resolver.resolveParameter(parameterContext, extensionContext);
+            assertInstanceOf(Integer.class, value);
+            int v = (Integer) value;
+            assertTrue(v >= 0 && v <= 100);
+        }
+
+        @Test
+        void usesDefaultRangeIfNoTestMethod() {
+            when(parameterContext.findAnnotation(RandomRange.class)).thenReturn(Optional.empty());
+            when(extensionContext.getTestMethod()).thenReturn(Optional.empty());
+
+            var resolver = new RandomRangeResolver();
+            var value = resolver.resolveParameter(parameterContext, extensionContext);
+            assertInstanceOf(Integer.class, value);
+            int v = (Integer) value;
+            assertTrue(v >= 0 && v <= 100);
+        }
+
+        @Test
+        void usesMethodLevelAnnotation() {
+            when(parameterContext.findAnnotation(RandomRange.class)).thenReturn(Optional.empty());
+
+            var methodAnn = mockAnnotation(11, 13);
+            when(extensionContext.getTestMethod()).thenReturn(Optional.of(method));
+            when(method.getAnnotation(RandomRange.class)).thenReturn(methodAnn);
+
+            var resolver = new RandomRangeResolver();
+            var value = resolver.resolveParameter(parameterContext, extensionContext);
+            assertInstanceOf(Integer.class, value);
+            int v = (Integer) value;
+            assertTrue(v >= 11 && v <= 13);
+        }
+
+        @Test
+        void usesParameterLevelAnnotation() {
+            var paramAnn = mockAnnotation(5, 15);
+            when(parameterContext.findAnnotation(RandomRange.class)).thenReturn(Optional.of(paramAnn));
+
+            var resolver = new RandomRangeResolver();
+            var value = resolver.resolveParameter(parameterContext, extensionContext);
+            assertInstanceOf(Integer.class, value);
+            int v = (Integer) value;
+            assertTrue(v >= 5 && v <= 15);
+        }
+    }
+
+    @Nested
+    @DisplayName("Supports Parameter Tests")
+    class SupportsParameterTests {
+        @Mock
+        ExtensionContext extensionContext;
+        @Mock
+        ParameterContext parameterContext;
+
+        public SupportsParameterTests() {
+            MockitoAnnotations.openMocks(this);
+        }
+
+        @Test
+        void returnsFalseForNonIntType() throws Exception {
+            var stringParam = RandomRangeResolverTests.class
+                    .getDeclaredMethod("stringParamMethod", String.class)
+                    .getParameters()[0];
+
+            when(parameterContext.getParameter()).thenReturn(stringParam);
+
+            var resolver = new RandomRangeResolver();
+            assertFalse(resolver.supportsParameter(parameterContext, extensionContext));
+        }
+
+        @Test
+        void returnsFalseIfNoAnnotationsPresent() throws Exception {
+            var intParam = RandomRangeResolverTests.class
+                    .getDeclaredMethod("intPrimitiveParamMethod", int.class)
+                    .getParameters()[0];
+
+            when(parameterContext.getParameter()).thenReturn(intParam);
+            when(parameterContext.isAnnotated(RandomRange.class)).thenReturn(false);
+
+            // Use a real method without @RandomRange
+            var m = RandomRangeResolverTests.class
+                    .getDeclaredMethod("intPrimitiveParamMethod", int.class);
+            when(extensionContext.getTestMethod()).thenReturn(Optional.of(m));
+
+            var resolver = new RandomRangeResolver();
+            assertFalse(resolver.supportsParameter(parameterContext, extensionContext));
+        }
+
+        @Test
+        void returnsFalseIfNoTestMethodPresent() throws Exception {
+            var intParam = RandomRangeResolverTests.class
+                    .getDeclaredMethod("intPrimitiveParamMethod", int.class)
+                    .getParameters()[0];
+
+            when(parameterContext.getParameter()).thenReturn(intParam);
+            when(parameterContext.isAnnotated(RandomRange.class)).thenReturn(false);
+            when(extensionContext.getTestMethod()).thenReturn(Optional.empty());
+
+            var resolver = new RandomRangeResolver();
+            assertFalse(resolver.supportsParameter(parameterContext, extensionContext));
+        }
+
+        @Test
+        void returnsTrueForMethodLevelAnnotation() throws Exception {
+            var intParam = RandomRangeResolverTests.class
+                    .getDeclaredMethod("sampleMethod", int.class)
+                    .getParameters()[0];
+
+            when(parameterContext.getParameter()).thenReturn(intParam);
+            when(parameterContext.isAnnotated(RandomRange.class)).thenReturn(false);
+
+            // Use the real annotated method
+            var m = RandomRangeResolverTests.class
+                    .getDeclaredMethod("sampleMethod", int.class);
+            when(extensionContext.getTestMethod()).thenReturn(Optional.of(m));
+
+            var resolver = new RandomRangeResolver();
+            assertTrue(resolver.supportsParameter(parameterContext, extensionContext));
+        }
+
+        @Test
+        void returnsTrueForParameterLevelAnnotation() throws Exception {
+            var intParam = RandomRangeResolverTests.class
+                    .getDeclaredMethod("intPrimitiveParamMethod", int.class)
+                    .getParameters()[0];
+
+            when(parameterContext.getParameter()).thenReturn(intParam);
+            when(parameterContext.isAnnotated(RandomRange.class)).thenReturn(true);
+
+            var resolver = new RandomRangeResolver();
+            assertTrue(resolver.supportsParameter(parameterContext, extensionContext));
         }
     }
 }

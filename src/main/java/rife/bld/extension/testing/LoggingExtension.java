@@ -28,7 +28,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
- * JUnit Extension for configuring console logging for test suites.
+ * JUnit extension for configuring console logging for test suites.
  * <p>
  * This extension sets up a console handler with a configurable logging level before each test method and restores
  * the original logger configuration after each test method completes. This provides maximum isolation between
@@ -38,41 +38,42 @@ import java.util.logging.Logger;
  *
  * <h3>Usage Examples:</h3>
  *
- * <pre>{@code // Default configuration (uses LoggingExtension logger with Level.ALL)
- * @ExtendWith(LoggingExtension.class)
+ * <blockquote><pre>
+ * &#64;ExtendWith(LoggingExtension.class)
  * class MyTestClass {
- *     @Test
+ *     // Default configuration (uses LoggingExtension logger with Level.ALL)
+ *     &#64;Test
  *     void myTest() { ... }
- * }
  *
- * // Custom logger with default level
- * @RegisterExtension
- * private static final LOGGING_EXTENSION extension = new LoggingExtension("MyCustomLogger"));
+ *     // Custom logger with default level
+ *     &#64;RegisterExtension
+ *     private static final LOGGING_EXTENSION extension = new LoggingExtension("MyCustomLogger"));
  *
- * // Custom logger and level
- * @RegisterExtension
- * private static final LOGGING_EXTENSION extension = new LoggingExtension(
- *     MyClass.getLogger(),
- *     Level.INFO
- * );
+ *     // Custom logger and level
+ *     &#64;RegisterExtension
+ *     private static final LOGGING_EXTENSION extension = new LoggingExtension(
+ *         MyClass.getLogger(),
+ *         Level.INFO
+ *     );
  *
- * // Custom logger with test log handler
- * private static final Logger LOGGER = Logger.getLogger(MyClass.class.getName());
- * private static final TestLogHandler TEST_LOG_HANDLER = new TestLogHandler();
+ *     // Custom logger with test log handler
+ *     private static final Logger LOGGER = Logger.getLogger(MyClass.class.getName());
+ *     private static final TestLogHandler TEST_LOG_HANDLER = new TestLogHandler();
  *
- * @RegisterExtension
- * private static final LOGGING_EXTENSION extension = new LoggingExtension(
- *     LOGGER,
- *     TEST_LOG_HANDLER,
- * );
+ *     &#64;RegisterExtension
+ *     private static final LOGGING_EXTENSION extension = new LoggingExtension(
+ *         LOGGER,
+ *         TEST_LOG_HANDLER,
+ *     );
  *
- * // Custom logger with existing handler and level override
- * @RegisterExtension
- * private static final LOGGING_EXTENSION extension = new LoggingExtension(
- *     MyClass.getLogger(),
- *     myExistingHandler,
- *     Level.WARNING
- * );}</pre>
+ *     // Custom logger with existing handler and level override
+ *     &#64;RegisterExtension
+ *     private static final LOGGING_EXTENSION extension = new LoggingExtension(
+ *         MyClass.getLogger(),
+ *         myExistingHandler,
+ *         Level.WARNING
+ *     );
+ * }</pre></blockquote>
  *
  * @author <a href="https://erik.thauvin.net/">Erik C. Thauvin</a>
  * @see AfterEachCallback

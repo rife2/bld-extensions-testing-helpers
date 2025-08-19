@@ -1,6 +1,14 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="EntryPointsManager">
+    <entry_points version="2.0">
+      <entry_point TYPE="field" FQNAME="rife.bld.extension.testing.RandomStringResolverTests.FieldInjection$4TestClass fieldAnnotated" />
+      <entry_point TYPE="field" FQNAME="rife.bld.extension.testing.RandomStringResolverTests.FieldInjection$4TestClass notAString" />
+      <entry_point TYPE="field" FQNAME="rife.bld.extension.testing.RandomStringResolverTests.FieldInjection$4TestClass staticField" />
+    </entry_points>
+    <list size="1">
+      <item index="0" class="java.lang.String" itemvalue="rife.bld.extension.testing.RandomRange" />
+    </list>
     <pattern value="rife.bld.extension.testing.TestLogHandlerTests.ClearFunctionalityTests" />
     <pattern value="rife.bld.extension.testing.DisabledOnCi" />
     <pattern value="rife.bld.extension.testing.DisableOnCiCondition" />
@@ -50,6 +58,44 @@
     <pattern value="rife.bld.extension.TestingHelpersBuild" />
     <pattern value="rife.bld.extension.testing.TestLogHandlerTests" />
     <pattern value="rife.bld.extension.TestingHelpersBuild" method="reporter" />
+    <pattern value="rife.bld.extension.testing.RandomStringResolverTests.FieldInjection" method="allowInjectedValueOnPrivateField" />
+    <pattern value="rife.bld.extension.testing.RandomStringResolverTests.FieldInjection" />
+    <pattern value="rife.bld.extension.testing.RandomStringResolverTests.FieldInjection" method="injectRandomStringField" />
+    <pattern value="rife.bld.extension.testing.RandomStringResolverTests.FieldInjection" method="injectRandomStringMultipleAndInheritedFields" />
+    <pattern value="rife.bld.extension.testing.RandomStringResolverTests.FieldInjection" method="skipNonStringOrUnannotatedFields" />
+    <pattern value="rife.bld.extension.testing.RandomStringResolverTests.FieldInjection$3SubClass" />
+    <pattern value="rife.bld.extension.testing.RandomStringResolverTests.FieldInjection$1TestClass" />
+    <pattern value="rife.bld.extension.testing.RandomStringResolverTests.FieldInjection$2TestClass" />
+    <pattern value="rife.bld.extension.testing.RandomStringResolverTests.FieldInjection$4TestClass" />
+    <pattern value="rife.bld.extension.testing.RandomRangeResolverTests.PostProcessTestInstanceCoverage" method="injectsDefaultRangeWhenNotSpecified" />
+    <pattern value="rife.bld.extension.testing.RandomRangeResolverTests.PostProcessTestInstanceCoverage" method="injectsMultipleAndInheritedFields" />
+    <pattern value="rife.bld.extension.testing.RandomRangeResolverTests.PostProcessTestInstanceCoverage" method="injectsRandomIntPrivateField" />
+    <pattern value="rife.bld.extension.testing.RandomRangeResolverTests.PostProcessTestInstanceCoverage" method="injectsValueIntoPrivateFieldRegardlessOfAccessibility" />
+    <pattern value="rife.bld.extension.testing.RandomRangeResolverTests.PostProcessTestInstanceCoverage" method="injectsWhenMinEqualsMax" />
+    <pattern value="rife.bld.extension.testing.RandomRangeResolverTests.PostProcessTestInstanceCoverage" method="noAnnotatedFieldsNoOp" />
+    <pattern value="rife.bld.extension.testing.RandomRangeResolverTests.PostProcessTestInstanceCoverage" />
+    <pattern value="rife.bld.extension.testing.RandomRangeResolverTests" />
+    <pattern value="rife.bld.extension.testing.RandomRangeResolverTests.PostProcessTestInstanceCoverage" method="skipsStaticAndNonIntFields" />
+    <pattern value="rife.bld.extension.testing.RandomRangeResolverTests.PostProcessTestInstanceCoverage$3SubClass" />
+    <pattern value="rife.bld.extension.testing.RandomRangeResolverTests.PostProcessTestInstanceCoverage$2SuperClass" />
+    <pattern value="rife.bld.extension.testing.RandomRangeResolverTests.PostProcessTestInstanceCoverage$1TestClass" />
+    <pattern value="rife.bld.extension.testing.RandomRangeResolverTests.PostProcessTestInstanceCoverage$4TestClass" />
+    <pattern value="rife.bld.extension.testing.RandomRangeResolverTests.PostProcessTestInstanceCoverage$5TestClass" />
+    <pattern value="rife.bld.extension.testing.RandomRangeResolverTests.PostProcessTestInstanceCoverage$6TestClass" />
+    <pattern value="rife.bld.extension.testing.RandomRangeResolverTests.PostProcessTestInstanceCoverage$7TestClass" />
+    <pattern value="rife.bld.extension.testing.RandomRangeResolverTests.PostProcessTestInstanceCoverage$8TestClass" />
+    <pattern value="rife.bld.extension.testing.RandomRangeResolverTests.PostProcessTestInstanceCoverage$9TestClass" />
+    <pattern value="rife.bld.extension.testing.RandomRangeResolverTests.PostProcessTestInstanceCoverage" method="throwsIfMinGreaterThanMax" />
+    <pattern value="rife.bld.extension.testing.RandomStringResolverTests.FieldInjection$1TestClass" method="getField" />
+    <pattern value="rife.bld.extension.testing.RandomStringResolverTests.FieldInjection$2TestClass" method="getInjected" />
+    <pattern value="rife.bld.extension.testing.RandomStringResolverTests.FieldInjection$3SubClass" method="getSubField" />
+    <pattern value="rife.bld.extension.testing.RandomStringResolverTests.FieldInjection.SuperClass" method="getSuperField" />
+    <pattern value="rife.bld.extension.testing.RandomStringResolverTests" />
+    <pattern value="rife.bld.extension.testing.RandomStringResolverTests.FieldInjection.SuperClass" />
+    <writeAnnotations>
+      <writeAnnotation name="rife.bld.extension.testing.RandomRange" />
+      <writeAnnotation name="rife.bld.extension.testing.RandomString" />
+    </writeAnnotations>
   </component>
   <component name="ProjectRootManager" version="2" languageLevel="JDK_17" project-jdk-name="17" project-jdk-type="JavaSDK">
     <output url="file://$PROJECT_DIR$/build" />

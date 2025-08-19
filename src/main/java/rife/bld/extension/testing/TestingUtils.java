@@ -21,43 +21,40 @@ import java.security.SecureRandom;
 @SuppressWarnings("PMD.TestClassWithoutTestCases")
 public final class TestingUtils {
     /**
-     * A string containing the uppercase and lowercase letters of the English alphabet,
-     * as well as numeric digits 0 through 9.
+     * A string constant containing all uppercase letters, lowercase letters, and numeric digits.
      */
     public static final String ALPHANUMERIC_CHARACTERS =
             "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
     /**
-     * A string containing the set of characters used in hexadecimal notation.
+     * A string constant containing all hexadecimal digits and letters.
      */
     public static final String HEXADECIMAL_CHARACTERS = "0123456789ABCDEF";
     /**
-     * A string containing all lowercase alphabetical characters.
+     * A string constant containing all lowercase letters.
      */
     public static final String LOWERCASE_CHARACTERS = "abcdefghijklmnopqrstuvwxyz";
     /**
-     * A string containing all numeric characters.
+     * A string constant containing all numeric digits.
      */
     public static final String NUMERIC_CHARACTERS = "0123456789";
     /**
-     * A string containing all uppercase alphabetical characters.
+     * A string constant containing all uppercase letters.
      */
     public static final String UPPERCASE_CHARACTERS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
     /**
-     * A string containing the set of characters used in URL-safe Base64 notation.
+     * A string constant representing a set of characters that are safe for use in URLs.
+     * <p>
+     * It includes uppercase and lowercase letters, digits, and the symbols {@code -} and {@code _}.
      */
     public static final String URL_SAFE_CHARACTERS =
             "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_";
     private static final SecureRandom SECURE_RANDOM = new SecureRandom();
 
     private TestingUtils() {
-        // no-op
     }
 
     /**
      * Generates a random integer within the specified range.
-     * <p>
-     * This method uses a secure random generator to generate a number inclusively
-     * between {@code min} and {@code max}.
      *
      * @param min the minimum value (inclusive) of the random number
      * @param max the maximum value (inclusive) of the random number
@@ -69,49 +66,36 @@ public final class TestingUtils {
             throw new IllegalArgumentException(
                     String.format("The minimum value (%d) cannot be greater than maximum value (%d)", min, max));
         }
-        return SECURE_RANDOM.nextInt(max - min + 1) + min;
+        return SECURE_RANDOM.nextInt((max - min) + 1) + min;
     }
 
     /**
      * Generates a random string with specified parameters.
      *
-     * <p>
-     * This method uses {@link SecureRandom} to generate random bytes, which are then
-     * mapped to the provided character set using modulo operation. The resulting string
-     * has a uniform distribution across the character set.
-     *
-     * <h4>Algorithm:</h4>
-     * <ol>
-     *   <li>Generate {@code length} random bytes using {@link SecureRandom}</li>
-     *   <li>For each byte, compute {@code Math.abs(byte) % characters.length()}</li>
-     *   <li>Use the result as an index into the character set</li>
-     *   <li>Append the selected character to the result</li>
-     * </ol>
-     *
      * @param length     the desired length of the generated string
      * @param characters the character set to use
      * @return a randomly generated string of the specified length
      * @throws IllegalArgumentException if the length is non-positive or the character set is null/empty
-     * @see SecureRandom#nextBytes(byte[])
      */
     public static String generateRandomString(int length, String characters) {
         if (length <= 0) {
             throw new IllegalArgumentException("Length must be greater than 0");
         }
-
         if (characters == null || characters.isEmpty()) {
             throw new IllegalArgumentException("Characters cannot be null or empty");
         }
 
         var result = new StringBuilder(length);
+        var charLen = characters.length();
         var randomBytes = new byte[length];
+
         SECURE_RANDOM.nextBytes(randomBytes);
 
         for (int i = 0; i < length; i++) {
-            var randomIndex = Math.abs(randomBytes[i]) % characters.length();
-            result.append(characters.charAt(randomIndex));
+            // Mask to byte range [0,255], then reduce to [0, charLen)
+            int idx = (randomBytes[i] & 0xFF) % charLen;
+            result.append(characters.charAt(idx));
         }
-
         return result.toString();
     }
 
@@ -119,7 +103,6 @@ public final class TestingUtils {
      * Generates a random string with default parameters.
      *
      * @return a 10-character random alphanumeric string
-     * @see #generateRandomString(int, String)
      */
     public static String generateRandomString() {
         return generateRandomString(10, ALPHANUMERIC_CHARACTERS);
@@ -131,7 +114,6 @@ public final class TestingUtils {
      * @param length the desired length of the generated string
      * @return a random alphanumeric string of the specified length
      * @throws IllegalArgumentException if length is non-positive
-     * @see #generateRandomString(int, String)
      */
     public static String generateRandomString(int length) {
         return generateRandomString(length, ALPHANUMERIC_CHARACTERS);

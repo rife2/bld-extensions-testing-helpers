@@ -30,12 +30,13 @@ import java.util.regex.Pattern;
  *
  * <h3>Usage Examples:</h3>
  *
- * <pre>{@code // Using the LoggingExtension
+ * <blockquote><pre>
+ * // Using the LoggingExtension
  * private static final Logger LOGGER = Logger.getLogger(MyClass.class.getName());
  * private static final TestLogHandler TEST_LOG_HANDLER = new TestLogHandler();
  *
- * @RegisterExtension
- * @SuppressWarnings("unused")
+ * &#64;RegisterExtension
+ * &#64;SuppressWarnings("unused")
  * private static final LoggingExtension LOGGING_EXTENSION = new LoggingExtension(
  *     LOGGER,
  *     TEST_LOG_HANDLER,
@@ -43,7 +44,7 @@ import java.util.regex.Pattern;
  * );
  *
  * // Manually, in a test method
- * @Test
+ * &#64;Test
  * void testMethod() {
  *     var logger = Logger.getLogger(MyClass.class.getName());
  *     var logHandler = new TestLogHandler();
@@ -54,7 +55,7 @@ import java.util.regex.Pattern;
  *     // ...
  *
  *     logger.removeHandler(logHandler);
- * }}</pre>
+ * }</pre></blockquote>
  *
  * @author <a href="https://erik.thauvin.net/">Erik C. Thauvin</a>
  * @see LoggingExtension
@@ -81,9 +82,7 @@ public class TestLogHandler extends Handler {
      * @return {@code true} if the log contains the message, {@code false} otherwise
      */
     public boolean containsExactMessage(String message) {
-        return message != null &&
-                logRecords.stream().anyMatch(record ->
-                        message.equals(record.getMessage()));
+        return message != null && logRecords.stream().anyMatch(record -> message.equals(record.getMessage()));
     }
 
     /**
@@ -93,9 +92,8 @@ public class TestLogHandler extends Handler {
      * @return {@code true} if the log contains a message with the text, {@code false} otherwise
      */
     public boolean containsMessage(String message) {
-        return message != null &&
-                logRecords.stream().anyMatch(record ->
-                        record.getMessage() != null && record.getMessage().contains(message));
+        return message != null && logRecords.stream().anyMatch(record ->
+                record.getMessage() != null && record.getMessage().contains(message));
     }
 
     /**
@@ -105,9 +103,8 @@ public class TestLogHandler extends Handler {
      * @return {@code true} if any message matches the pattern, {@code false} otherwise
      */
     public boolean containsMessageMatching(Pattern pattern) {
-        return pattern != null &&
-                logRecords.stream().anyMatch(record ->
-                        record.getMessage() != null && pattern.matcher(record.getMessage()).find());
+        return pattern != null && logRecords.stream().anyMatch(record ->
+                record.getMessage() != null && pattern.matcher(record.getMessage()).find());
     }
 
     /**
@@ -117,13 +114,9 @@ public class TestLogHandler extends Handler {
      * @return the number of messages containing the given text
      */
     public long countMessagesContaining(String message) {
-        if (message == null || message.isEmpty()) {
-            return 0;
-        }
-        return logRecords.stream()
-                .filter(record ->
-                        record.getMessage() != null && record.getMessage().contains(message))
-                .count();
+        return message == null || message.isEmpty() ? 0 :
+                logRecords.stream().filter(record ->
+                        record.getMessage() != null && record.getMessage().contains(message)).count();
     }
 
     /**
@@ -133,13 +126,8 @@ public class TestLogHandler extends Handler {
      * @return the number of records at the specified level
      */
     public long countRecordsAtLevel(Level level) {
-        if (level == null) {
-            return 0;
-        }
-        return logRecords.stream()
-                .filter(record ->
-                        level.equals(record.getLevel()))
-                .count();
+        return level == null ? 0 :
+                logRecords.stream().filter(record -> level.equals(record.getLevel())).count();
     }
 
     /**
@@ -149,14 +137,14 @@ public class TestLogHandler extends Handler {
      * @return the first log record containing the given text, or {@code null} if not found
      */
     public LogRecord getFirstRecordContaining(String message) {
-        if (message == null || message.isEmpty()) {
+        if (message != null && !message.isEmpty()) {
+            return logRecords.stream()
+                    .filter(record -> record.getMessage() != null && record.getMessage().contains(message))
+                    .findFirst()
+                    .orElse(null);
+        } else {
             return null;
         }
-        return logRecords.stream()
-                .filter(record ->
-                        record.getMessage() != null && record.getMessage().contains(message))
-                .findFirst()
-                .orElse(null);
     }
 
     /**
@@ -165,7 +153,8 @@ public class TestLogHandler extends Handler {
      * @return the most recent log record, or {@code null} if no records exist
      */
     public LogRecord getLastRecord() {
-        return logRecords.isEmpty() ? null : logRecords.get(logRecords.size() - 1);
+        int size = logRecords.size();
+        return size == 0 ? null : logRecords.get(size - 1);
     }
 
     /**
@@ -178,13 +167,14 @@ public class TestLogHandler extends Handler {
         if (message == null || message.isEmpty()) {
             return null;
         }
-        LogRecord lastRecord = null;
-        for (LogRecord record : logRecords) {
+        // Iterate backwards for efficiency
+        for (int i = logRecords.size() - 1; i >= 0; i--) {
+            LogRecord record = logRecords.get(i);
             if (record.getMessage() != null && record.getMessage().contains(message)) {
-                lastRecord = record;
+                return record;
             }
         }
-        return lastRecord;
+        return null;
     }
 
     /**
@@ -229,11 +219,11 @@ public class TestLogHandler extends Handler {
     public List<LogRecord> getRecordsAtOrAboveLevel(Level level) {
         if (level == null) {
             return Collections.emptyList();
+        } else {
+            return logRecords.stream()
+                    .filter(record -> record.getLevel().intValue() >= level.intValue())
+                    .toList();
         }
-        return logRecords.stream()
-                .filter(record ->
-                        record.getLevel().intValue() >= level.intValue())
-                .toList();
     }
 
     /**
@@ -243,9 +233,7 @@ public class TestLogHandler extends Handler {
      * @return {@code true} if the log contains a record with the given level, {@code false} otherwise
      */
     public boolean hasLogLevel(Level level) {
-        return level != null &&
-                logRecords.stream().anyMatch(record ->
-                        level.equals(record.getLevel()));
+        return level != null && logRecords.stream().anyMatch(record -> level.equals(record.getLevel()));
     }
 
     /**

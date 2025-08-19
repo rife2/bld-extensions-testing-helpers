@@ -28,34 +28,63 @@ import java.lang.annotation.Target;
  * inject randomly generated strings. The extension will resolve these parameters during
  * test execution.
  *
- * <h4>Usage examples:</h4>
+ * <p>This annotation can also be applied at the method level to configure default settings
+ * for all String parameters in that method.
  *
- * <pre>{@code @ExtendWith(RandomRangeResolver.class)
+ * <h4>Usage examples:</h4>
+ * 
+ * <blockquote><pre>
+ * &#64;ExtendWith(RandomStringResolver.class)
+ * public class MyTest {
  *     // Default: 10 alphanumeric characters
- *     @Test
- *     void test(@RandomString String str) { ... }
+ *     &#64;Test
+ *     void test(&#64;RandomString String str) { ... }
  *
  *     // Custom length: 15 characters
- *     @Test
- *     void test(@RandomString(length = 15) String str) { ... }
+ *     &#64;Test
+ *     void test(&#64;RandomString(length = 15) String str) { ... }
  *
  *     // Custom character set: only uppercase letters
- *     @Test
- *     void test(@RandomString(characters = TestingUtils.UPPERCASE_CHARACTERS) String str) { ... }
+ *     &#64;Test
+ *     void test(&#64;RandomString(characters = TestingUtils.UPPERCASE_CHARACTERS) String str) { ... }
  *
  *     // Both custom length and characters: 8-character hex string
- *     void test(@RandomString(length = 8, characters = TestingUtils.HEXADECIMAL_CHARACTERS) String hexStr) { ... }
+ *     void test(&#64;RandomString(length = 8, characters = TestingUtils.HEXADECIMAL_CHARACTERS) String hexStr) { ... }
  *
  *     // Multiple parameters
- *     @Test
- *     void test(@RandomString(characters = "ABC123") String str1, @RandomString(length = 5) String str2) { ... }
- * }}</pre>
+ *     &#64;Test
+ *     void test(&#64;RandomString(characters = "ABC123") String str1, &#64;RandomString(length = 5) String str2) { ... }
+ *
+ *     // Method-level annotation for single parameter
+ *     &#64;Test
+ *     &#64;RandomString(length = 5)
+ *     void test(String random) { ... }
+ *
+ *     // Method-level annotation applies to all String parameters
+ *     &#64;Test
+ *     &#64;RandomString(length = 8, characters = TestingUtils.URL_SAFE_CHARACTERS)
+ *     void test(String url1, String url2) { ... }
+ *
+ *     // Parameter-level annotation overrides method-level
+ *     &#64;Test
+ *     &#64;RandomString(length = 5)
+ *     void test(String defaultRandom, &#64;RandomString(length = 3) String shortRandom) { ... }
+ *
+ *     // Field injection
+ *     &#64;RandomString
+ *     private String myRandomString;
+ *
+ *     &#64;Test
+ *     void test() {
+ *         // myRandomString is initialized before test
+ *     }
+ * }</pre></blockquote>
  *
  * @author <a href="https://erik.thauvin.net/">Erik C. Thauvin</a>
  * @see RandomStringResolver
  * @since 1.0
  */
-@Target(ElementType.PARAMETER)
+@Target({ElementType.PARAMETER, ElementType.METHOD, ElementType.FIELD})
 @Retention(RetentionPolicy.RUNTIME)
 public @interface RandomString {
     /**

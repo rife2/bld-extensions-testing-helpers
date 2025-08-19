@@ -19,51 +19,90 @@ package rife.bld.extension.testing;
 import org.junit.jupiter.api.extension.ExtensionContext;
 import org.junit.jupiter.api.extension.ParameterContext;
 import org.junit.jupiter.api.extension.ParameterResolver;
+import org.junit.jupiter.api.extension.TestInstancePostProcessor;
+
+import java.lang.reflect.Modifier;
 
 /**
- * Parameter resolver for the {@link RandomString} annotation.
+ * Parameter and field resolver for the {@link RandomString} annotation.
+ * <p>
+ * This resolver automatically injects random string values into test method parameters that are annotated with
+ * {@code @RandomString} or are part of test methods annotated with {@code @RandomString} at the method level.
  *
- * <h3>Usage examples:</h3>
- *
- * <pre>{@code @ExtendWith(RandomStringResolver.class)
- * class MyTest {
- *     // Default: 10 alphanumeric characters
- *     @Test
- *     void test(@RandomString String randomStr) { ... }
- *
- *     // Custom length and characters
- *     @Test
- *     void test(@RandomString(length = 8, characters = "ABC123") String hexStr) { ... }
- *
- *     // Multiple parameters
- *     @Test
- *     void test(@RandomString String str1, @RandomString(length = 5) String str2) { ... }
- * }}</pre>
+ * <h3>Resolution Priority:</h3>
+ * <p>
+ * Parameter-level annotation takes precedence over method-level.
  *
  * <h3>Security:</h3>
  * <p>
- * Uses {@link java.security.SecureRandom SecureRandom} for cryptographically strong random number generation, making
- * it suitable for generating test data that mimics security-sensitive strings like passwords, tokens, or API keys.
+ * Uses {@link java.security.SecureRandom} for cryptographically strong random number generation.
  *
  * <h3>Default Configuration:</h3>
+ * <p>
  * <ul>
  *   <li><strong>Length:</strong> 10 characters</li>
  *   <li><strong>Character Set:</strong> Alphanumeric (A-Z, a-z, 0-9)</li>
  * </ul>
  *
- * <h3>Thread Safety:</h3>
- * <p>
- * This extension is thread-safe and can be used in parallel test execution. The underlying
- * {@link java.security.SecureRandom SecureRandom} instance is thread-safe.
- *
  * @author <a href="https://erik.thauvin.net/">Erik C. Thauvin</a>
  * @see ParameterResolver
  * @see RandomString
+ * @see TestInstancePostProcessor
  * @since 1.0
  */
-public class RandomStringResolver implements ParameterResolver {
+public class RandomStringResolver implements ParameterResolver, TestInstancePostProcessor {
     /**
-     * Resolves the parameter by generating a random string based on the annotation configuration.
+     * Processes fields of the test instance annotated with {@link RandomString}.
+     * <p>
+     * Enables field injection for random strings. Field must be of type {@code String}.
+     *
+     * @param testInstance the test class instance
+     * @param context      the current extension context
+     */
+    @Override
+    @SuppressWarnings("PMD.AvoidAccessibilityAlteration")
+    public void postProcessTestInstance(Object testInstance, ExtensionContext context) throws Exception {
+        for (var clazz = testInstance.getClass(); clazz != Object.class; clazz = clazz.getSuperclass()) {
+            for (var field : clazz.getDeclaredFields()) {
+                if (Modifier.isStatic(field.getModifiers())) {
+                    continue;
+                }
+                if (field.getType() == String.class && field.isAnnotationPresent(RandomString.class)) {
+                    var annotation = field.getAnnotation(RandomString.class);
+                    var randomValue = TestingUtils.generateRandomString(annotation.length(), annotation.characters());
+                    boolean wasAccessible = field.canAccess(testInstance);
+                    field.setAccessible(true);
+                    field.set(testInstance, randomValue);
+                    field.setAccessible(wasAccessible);
+                }
+            }
+        }
+    }
+
+    /**
+     * Determines if this resolver can resolve a parameter.
+     * <p>
+     * Supports String parameters annotated with {@link RandomString} at parameter or method level.
+     *
+     * @param parameterContext information about the parameter to be resolved
+     * @param extensionContext the current extension context
+     * @return {@code true} if the parameter can be resolved by this extension, {@code false} otherwise
+     */
+    @Override
+    public boolean supportsParameter(ParameterContext parameterContext, ExtensionContext extensionContext) {
+        if (parameterContext.getParameter().getType() != String.class) {
+            return false;
+        }
+        return parameterContext.isAnnotated(RandomString.class) ||
+                extensionContext.getTestMethod()
+                        .map(m -> m.isAnnotationPresent(RandomString.class))
+                        .orElse(false);
+    }
+
+    /**
+     * Resolves the parameter by generating a random string based on annotation configuration.
+     * <p>
+     * Priority: Parameter-level > Method-level > Default (10, alphanumeric).
      *
      * @param parameterContext information about the parameter to be resolved
      * @param extensionContext the current extension context
@@ -71,28 +110,19 @@ public class RandomStringResolver implements ParameterResolver {
      * @throws IllegalArgumentException if the annotation specifies invalid parameters
      */
     @Override
-    public boolean supportsParameter(ParameterContext parameterContext, ExtensionContext extensionContext) {
-        return parameterContext.getParameter().getType() == String.class
-                && parameterContext.isAnnotated(RandomString.class);
-    }
-
-    /**
-     * Determines if this extension can resolve the given parameter.
-     *
-     * @param parameterContext information about the parameter to be resolved
-     * @param extensionContext the current extension context
-     * @return {@code true} if the parameter is a String annotated with {@link RandomString @RandomString}
-     */
-    @Override
     public Object resolveParameter(ParameterContext parameterContext, ExtensionContext extensionContext) {
-        var annotation = parameterContext.findAnnotation(RandomString.class).orElse(null);
-
-        if (annotation == null) {
-            return TestingUtils.generateRandomString(10, TestingUtils.ALPHANUMERIC_CHARACTERS);
+        var parameterAnnotation = parameterContext.findAnnotation(RandomString.class);
+        if (parameterAnnotation.isPresent()) {
+            var annotation = parameterAnnotation.get();
+            return TestingUtils.generateRandomString(annotation.length(), annotation.characters());
         }
-
-        return TestingUtils.generateRandomString(annotation.length(), annotation.characters());
+        var testMethod = extensionContext.getTestMethod();
+        if (testMethod.isPresent()) {
+            var methodAnnotation = testMethod.get().getAnnotation(RandomString.class);
+            if (methodAnnotation != null) {
+                return TestingUtils.generateRandomString(methodAnnotation.length(), methodAnnotation.characters());
+            }
+        }
+        return TestingUtils.generateRandomString();
     }
-
 }
-
