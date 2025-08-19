@@ -16,22 +16,22 @@
 
 package rife.bld.extension.testing;
 
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.RepeatedTest;
 import org.junit.jupiter.api.extension.ExtendWith;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-@ExtendWith(RandomRangeParameterResolver.class)
+@ExtendWith(RandomRangeResolver.class)
 @SuppressWarnings("PMD.SystemPrintln")
 class RandomRangeTests {
-    @Test
+    @RepeatedTest(3)
     void defaultRange(@RandomRange int randomNum) {
         assertTrue(randomNum >= 0 && randomNum <= 100,
                 "Random number should be between 0 and 100, but was: " + randomNum);
         System.out.println("Generated random number (default range): " + randomNum);
     }
 
-    @Test
+    @RepeatedTest(3)
     void multipleRandomParameters(@RandomRange(min = 1, max = 5) int first,
                                   @RandomRange(min = 10, max = 20) int second) {
         assertTrue(first >= 1 && first <= 5);
@@ -39,14 +39,14 @@ class RandomRangeTests {
         System.out.println("First: " + first + ", Second: " + second);
     }
 
-    @Test
+    @RepeatedTest(3)
     void negativeRange(@RandomRange(min = -50, max = -10) int randomNum) {
         assertTrue(randomNum >= -50 && randomNum <= -10,
                 "Random number should be between -50 and -10, but was: " + randomNum);
         System.out.println("Generated random number (negative range): " + randomNum);
     }
 
-    @Test
+    @RepeatedTest(3)
     void randomNumber(@RandomRange(min = 1, max = 10) int randomNum) {
         assertTrue(randomNum >= 1 && randomNum <= 10,
                 "Random number should be between 1 and 10, but was: " + randomNum);

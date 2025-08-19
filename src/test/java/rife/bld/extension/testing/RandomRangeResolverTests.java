@@ -32,18 +32,18 @@ import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 @SuppressWarnings("PMD.TestClassWithoutTestCases")
-public class RandomRangeParameterResolverTests {
+public class RandomRangeResolverTests {
     @Mock
     private ExtensionContext extensionContext;
     @Mock
     private Parameter parameter;
     @Mock
     private ParameterContext parameterContext;
-    private RandomRangeParameterResolver resolver;
+    private RandomRangeResolver resolver;
 
     @BeforeEach
     void beforeEach() {
-        resolver = new RandomRangeParameterResolver();
+        resolver = new RandomRangeResolver();
     }
 
     @Test
@@ -56,7 +56,7 @@ public class RandomRangeParameterResolverTests {
         var exception = assertThrows(ParameterResolutionException.class, () ->
                 resolver.resolveParameter(parameterContext, extensionContext));
 
-        var expectedMessage = "Min value (20) cannot be greater than max value (10)";
+        var expectedMessage = "The minimum value (20) cannot be greater than maximum value (10)";
         assertEquals(expectedMessage, exception.getMessage());
     }
 
@@ -69,7 +69,8 @@ public class RandomRangeParameterResolverTests {
 
         for (int i = 0; i < 50; i++) {
             var result = (Integer) resolver.resolveParameter(parameterContext, extensionContext);
-            assertTrue(result >= 0, "Result should be non-negative when min is 0, but was: " + result);
+            assertTrue(result >= 0,
+                    "Result should be non-negative when min is 0, but was: " + result);
         }
     }
 
@@ -83,7 +84,7 @@ public class RandomRangeParameterResolverTests {
         assertEquals("RandomRange annotation not found", exception.getMessage());
     }
 
-    @Test
+    @RepeatedTest(3)
     void validAnnotation() {
         var mockAnnotation = mock(RandomRange.class);
         when(mockAnnotation.min()).thenReturn(10);
@@ -93,13 +94,14 @@ public class RandomRangeParameterResolverTests {
         var result = (Integer) resolver.resolveParameter(parameterContext, extensionContext);
 
         assertNotNull(result);
-        assertTrue(result >= 10 && result <= 20, "Result should be between 10 and 20, but was: " + result);
+        assertTrue(result >= 10 && result <= 20,
+                "Result should be between 10 and 20, but was: " + result);
     }
 
     // Integration tests using actual @RandomRange annotation
     @Nested
     @DisplayName("Integration Tests")
-    @ExtendWith(RandomRangeParameterResolver.class)
+    @ExtendWith(RandomRangeResolver.class)
     class IntegrationTests {
         @RepeatedTest(50)
         void actualAnnotationWithConsistentBehavior(@RandomRange(min = 1, max = 5) int randomValue) {
@@ -107,19 +109,19 @@ public class RandomRangeParameterResolverTests {
                     "Random value should consistently be in range [1,5], but was: " + randomValue);
         }
 
-        @Test
+        @RepeatedTest(3)
         void actualAnnotationWithCustomRange(@RandomRange(min = 5, max = 15) int randomValue) {
             assertTrue(randomValue >= 5 && randomValue <= 15,
                     "Random value should be in range [5,15], but was: " + randomValue);
         }
 
-        @Test
+        @RepeatedTest(3)
         void actualAnnotationWithDefaultRange(@RandomRange int randomValue) {
             assertTrue(randomValue >= 0 && randomValue <= 100,
                     "Random value should be in default range [0,100], but was: " + randomValue);
         }
 
-        @Test
+        @RepeatedTest(3)
         void actualAnnotationWithMultipleParameters(
                 @RandomRange(min = 1, max = 10) int first,
                 @RandomRange(min = 100, max = 200) int second,
@@ -133,7 +135,7 @@ public class RandomRangeParameterResolverTests {
                     "Third parameter should be in default range [0,100], but was: " + third);
         }
 
-        @Test
+        @RepeatedTest(3)
         void actualAnnotationWithNegativeRange(@RandomRange(min = -100, max = -50) int randomValue) {
             assertTrue(randomValue >= -100 && randomValue <= -50,
                     "Random value should be in range [-100,-50], but was: " + randomValue);
@@ -213,7 +215,7 @@ public class RandomRangeParameterResolverTests {
     @Nested
     @DisplayName("Range Tests")
     class RangeTests {
-        @Test
+        @RepeatedTest(3)
         void defaultRange() {
             var mockAnnotation = mock(RandomRange.class);
             when(mockAnnotation.min()).thenReturn(0);
@@ -239,7 +241,7 @@ public class RandomRangeParameterResolverTests {
             assertNotNull(result);
         }
 
-        @Test
+        @RepeatedTest(3)
         void negativeRange() {
             var mockAnnotation = mock(RandomRange.class);
             when(mockAnnotation.min()).thenReturn(-50);
@@ -249,7 +251,8 @@ public class RandomRangeParameterResolverTests {
             var result = (Integer) resolver.resolveParameter(parameterContext, extensionContext);
 
             assertNotNull(result);
-            assertTrue(result >= -50 && result <= -10, "Result should be between -50 and -10, but was: " + result);
+            assertTrue(result >= -50 && result <= -10,
+                    "Result should be between -50 and -10, but was: " + result);
         }
 
         @Test
@@ -290,7 +293,8 @@ public class RandomRangeParameterResolverTests {
 
             var result = (Integer) resolver.resolveParameter(parameterContext, extensionContext);
 
-            assertTrue(result >= 1 && result <= 10, "Result should be between 1 and 10, but was: " + result);
+            assertTrue(result >= 1 && result <= 10,
+                    "Result should be between 1 and 10, but was: " + result);
         }
 
         // Test for SecureRandom usage verification

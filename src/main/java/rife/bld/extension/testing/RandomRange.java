@@ -29,17 +29,16 @@ import java.lang.annotation.Target;
  *
  * <h3>Example usage:</h3>
  *
- * <pre>{@code @ExtendWith(RandomRangeParameterResolver.class)
+ * <pre>{@code @ExtendWith(RandomRangeResolver.class)
  * public class MyTest {
  *     @Test
  *     public void testMethod(@RandomRange(min = 1, max = 10) int randomValue) {
  *         // randomNum will be a random integer between 1 and 10 (inclusive)
  *     }
- * }
- * }</pre>
+ * }}</pre>
  *
  * @author <a href="https://erik.thauvin.net/">Erik C. Thauvin</a>
- * @see RandomRangeParameterResolver
+ * @see RandomRangeResolver
  * @since 1.0
  */
 @Target(ElementType.PARAMETER)

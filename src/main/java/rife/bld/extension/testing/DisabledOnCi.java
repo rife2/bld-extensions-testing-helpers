@@ -26,6 +26,16 @@ import java.lang.annotation.Target;
 /**
  * JUnit annotation for disabling tests on CI/CD environments.
  *
+ * <h3>Example usage:</h3>
+ *
+ * <pre>{@code public class MyTest {
+ *     @Test
+ *     @DisabledOnCi
+ *     public void testMethod() {
+ *         // This test will be disabled on CI/CD environments
+ *     }
+ * }}</pre>
+ *
  * <p>
  * The decision is made by checking whether the {@code CI} environment variable is defined. It can be set manually
  * but is set automatically by most CI/CD environments, such as

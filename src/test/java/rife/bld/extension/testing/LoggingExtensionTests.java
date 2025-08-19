@@ -17,373 +17,322 @@
 package rife.bld.extension.testing;
 
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtensionContext;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.MethodSource;
-import org.junit.jupiter.params.provider.NullSource;
-import org.junit.jupiter.params.provider.ValueSource;
-import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
 
+import java.lang.reflect.Field;
+import java.util.Arrays;
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.logging.ConsoleHandler;
-import java.util.logging.Handler;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-import java.util.stream.Stream;
+import java.util.logging.*;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.mock;
 
+@SuppressWarnings({"PMD.AvoidAccessibilityAlteration", "PMD.AvoidDuplicateLiterals"})
 class LoggingExtensionTests {
-    private LoggingExtension extension;
-    @Mock
-    private ExtensionContext mockContext;
-    @Mock
-    private Logger mockLogger;
+    @SuppressWarnings("PMD.AvoidThrowingRawExceptionTypes")
+    private static Object getPrivateField(Object obj, String field) {
+        try {
+            var f = LoggingExtension.class.getDeclaredField(field);
+            f.setAccessible(true);
+            return f.get(obj);
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to get field: " + field, e);
+        }
+    }
 
-    /**
-     * Provides various logging levels for parameterized tests.
-     */
-    static Stream<Level> provideLoggingLevels() {
-        return Stream.of(
-                Level.OFF,
-                Level.SEVERE,
-                Level.WARNING,
-                Level.INFO,
-                Level.CONFIG,
-                Level.FINE,
-                Level.FINER,
-                Level.FINEST,
-                Level.ALL
-        );
+    private static Logger getRandomLogger() {
+        return Logger.getLogger(TestingUtils.generateRandomString());
+    }
+
+    @SuppressWarnings("unchecked")
+    private static Map<String, ?> getTestConfigsForTestClass(Class<?> testClass) throws ReflectiveOperationException {
+        var field = LoggingExtension.class.getDeclaredField("TEST_METHOD_CONFIGS");
+        field.setAccessible(true);
+        var configs = (Map<Class<?>, Map<String, ?>>) field.get(null);
+        return configs.getOrDefault(testClass, new ConcurrentHashMap<>());
+    }
+
+    private static ExtensionContext mockExtensionContext(Class<?> testClass) {
+        var context = mock(ExtensionContext.class);
+        // ExtensionContext.getRequiredTestClass() is a final method, so use doReturn...when... syntax
+        doReturn(testClass).when(context).getRequiredTestClass();
+        return context;
     }
 
     @BeforeEach
-    void beforeEach() {
-        MockitoAnnotations.openMocks(this);
-        // Set up default behavior for mock logger
-        when(mockLogger.getName()).thenReturn("MockLogger");
-        resetConfiguredLoggers();
+    void beforeEach() throws ReflectiveOperationException {
+        var field = LoggingExtension.class.getDeclaredField("TEST_METHOD_CONFIGS");
+        field.setAccessible(true);
+        var configs = (Map<?, ?>) field.get(null);
+        configs.clear();
     }
 
-    @Test
-    @SuppressWarnings("PMD.DoNotUseThreads")
-    void concurrentAccessShouldBeSafe() throws InterruptedException {
-        // mockLogger already has name set in setUp()
-        var numThreads = 10;
-        var threads = new Thread[numThreads];
-        var exceptions = new Exception[numThreads];
-
-        for (int i = 0; i < numThreads; i++) {
-            int threadIndex = i;
-            threads[i] = new Thread(() -> {
-                try {
-                    var ext = new LoggingExtension(mockLogger, Level.INFO);
-                    ext.beforeAll(mockContext);
-                } catch (Exception e) {
-                    exceptions[threadIndex] = e;
-                }
-            });
+    @Nested
+    @DisplayName("Constructor Tests")
+    class ConstructorTests {
+        @Test
+        void defaultConstructorUsesDefaultLoggerAndAllLevel() {
+            var extension = new LoggingExtension();
+            assertNotNull(getPrivateField(extension, "logger"));
+            assertEquals(Level.ALL, getPrivateField(extension, "level"));
         }
 
-        for (var thread : threads) {
-            thread.start();
+        @Test
+        void loggerAndHandlerConstructorSetsLoggerAndHandler() {
+            var logger = getRandomLogger();
+            var handler = new ConsoleHandler();
+            var extension = new LoggingExtension(logger, handler);
+            assertSame(logger, getPrivateField(extension, "logger"));
+            assertSame(handler, getPrivateField(extension, "handler"));
+            assertEquals(handler.getLevel(), getPrivateField(extension, "level"));
         }
 
-        for (var thread : threads) {
-            thread.join();
+        @Test
+        void loggerAndLevelConstructorSetsLoggerAndLevel() {
+            var logger = getRandomLogger();
+            var extension = new LoggingExtension(logger, Level.WARNING);
+            assertSame(logger, getPrivateField(extension, "logger"));
+            assertEquals(Level.WARNING, getPrivateField(extension, "level"));
         }
 
-        for (var exception : exceptions) {
-            assertNull(exception, "No exceptions should occur during concurrent access");
+        @Test
+        void loggerAndNullHandlerConstructorUsesAllLevel() {
+            var logger = getRandomLogger();
+            LoggingExtension extension = new LoggingExtension(logger, (Handler) null);
+            assertEquals(Level.ALL, getPrivateField(extension, "level"));
         }
-        verify(mockLogger, times(1)).addHandler(any(ConsoleHandler.class));
-    }
 
-    @ParameterizedTest
-    @NullSource
-    void constructorWithNullLevel(Level nullLevel) {
-        assertThrows(NullPointerException.class, () -> {
-            extension = new LoggingExtension(mockLogger, nullLevel);
-            extension.beforeAll(mockContext);
-        });
-    }
-
-    @ParameterizedTest
-    @NullSource
-    void constructorWithNullLogger(Logger nullLogger) {
-        assertThrows(NullPointerException.class, () -> {
-            extension = new LoggingExtension(nullLogger);
-            extension.beforeAll(mockContext);
-        });
-    }
-
-    @Test
-    void defaultConstructor() {
-        extension = new LoggingExtension();
-
-        assertNotNull(extension);
-        // We can't directly access private fields, but we can test behavior
-        extension.beforeAll(mockContext);
-        // The fact that no exception is thrown indicates proper initialization
-    }
-
-    /**
-     * Helper method to find ConsoleHandler in the array of handlers.
-     */
-    private ConsoleHandler findConsoleHandler(Handler... handlers) {
-        for (var handler : handlers) {
-            if (handler instanceof ConsoleHandler consoleHandler) {
-                return consoleHandler;
-            }
+        @Test
+        void loggerHandlerLevelConstructorSetsAllFields() {
+            var logger = getRandomLogger();
+            var handler = new ConsoleHandler();
+            var extension = new LoggingExtension(logger, handler, Level.SEVERE);
+            assertSame(logger, getPrivateField(extension, "logger"));
+            assertSame(handler, getPrivateField(extension, "handler"));
+            assertEquals(Level.SEVERE, getPrivateField(extension, "level"));
         }
-        return null;
+
+        @Test
+        void loggerOnlyConstructorSetsLoggerAndAllLevel() {
+            var logger = getRandomLogger();
+            var extension = new LoggingExtension(logger);
+            assertSame(logger, getPrivateField(extension, "logger"));
+            assertEquals(Level.ALL, getPrivateField(extension, "level"));
+        }
+
+        @Test
+        void stringLoggerAndHandlerConstructorCreatesLoggerWithHandler() {
+            var testLoggerName = TestingUtils.generateRandomString();
+            var handler = new ConsoleHandler();
+            var extension = new LoggingExtension(testLoggerName, handler);
+            var logger = (Logger) getPrivateField(extension, "logger");
+            assertEquals(testLoggerName, logger.getName());
+            assertSame(handler, getPrivateField(extension, "handler"));
+        }
+
+        @Test
+        void stringLoggerAndLevelConstructorCreatesLoggerWithLevel() {
+            var testLoggerName = TestingUtils.generateRandomString();
+            var extension = new LoggingExtension(testLoggerName, Level.FINE);
+            var logger = (Logger) getPrivateField(extension, "logger");
+            assertEquals(testLoggerName, logger.getName());
+            assertEquals(Level.FINE, getPrivateField(extension, "level"));
+        }
+
+        @Test
+        void stringLoggerConstructorCreatesLogger() {
+            var testLoggerName = TestingUtils.generateRandomString();
+            var extension = new LoggingExtension(testLoggerName);
+            var logger = (Logger) getPrivateField(extension, "logger");
+            assertEquals(testLoggerName, logger.getName());
+        }
+
+        @Test
+        void stringLoggerHandlerLevelConstructorCreatesLoggerWithHandlerAndLevel() {
+            var testLoggerName = TestingUtils.generateRandomString();
+            var handler = new ConsoleHandler();
+            var extension = new LoggingExtension(testLoggerName, handler, Level.OFF);
+            var logger = (Logger) getPrivateField(extension, "logger");
+            assertEquals(testLoggerName, logger.getName());
+            assertSame(handler, getPrivateField(extension, "handler"));
+            assertEquals(Level.OFF, getPrivateField(extension, "level"));
+        }
     }
 
-    @ParameterizedTest
-    @MethodSource("provideLoggingLevels")
-    void fullConstructor(Level level) {
-        extension = new LoggingExtension(mockLogger, level);
+    @Nested
+    @DisplayName("Coverage Edge Cases")
+    class CoverageEdgeCases {
+        @Test
+        void afterEachWithNullAddedHandlerAndNullOriginalHandlerLevel() throws ReflectiveOperationException {
+            var logger = getRandomLogger();
+            var extension = new LoggingExtension(logger);
+            var context = mockExtensionContext(this.getClass());
 
-        assertNotNull(extension);
-        extension.beforeAll(mockContext);
+            // Create LoggerState instance with null handler via reflection
+            var loggerStateClass = Class.forName("rife.bld.extension.testing.LoggingExtension$LoggerState");
+            var ctor = loggerStateClass.getDeclaredConstructor(Logger.class, Handler.class);
+            ctor.setAccessible(true);
+            Object loggerState = ctor.newInstance(logger, null);
 
-        verify(mockLogger).addHandler(any(ConsoleHandler.class));
-        verify(mockLogger).setLevel(level);
-        verify(mockLogger).setUseParentHandlers(false);
-    }
-
-    @ParameterizedTest
-    @MethodSource("provideLoggingLevels")
-    void integrationWithVariousLevels(Level testLevel) {
-        // Use the unique logger name to avoid conflicts between parameterized test runs
-        var testLogger = Logger.getLogger("IntegrationTest-" + testLevel.getName() + "-" + System.currentTimeMillis());
-        extension = new LoggingExtension(testLogger, testLevel);
-
-        extension.beforeAll(mockContext);
-
-        assertEquals(testLevel, testLogger.getLevel());
-        assertFalse(testLogger.getUseParentHandlers());
-
-        // Verify handler was added and configured
-        var handlers = testLogger.getHandlers();
-        assertTrue(handlers.length > 0);
-
-        var consoleHandler = findConsoleHandler(handlers);
-        assertNotNull(consoleHandler, "ConsoleHandler should be added");
-        assertEquals(testLevel, consoleHandler.getLevel());
-    }
-
-    @Test
-    void loggerConstructor() {
-        extension = new LoggingExtension(mockLogger);
-
-        assertNotNull(extension);
-        extension.beforeAll(mockContext);
-
-        verify(mockLogger).addHandler(any(ConsoleHandler.class));
-        verify(mockLogger).setLevel(Level.ALL);
-        verify(mockLogger).setUseParentHandlers(false);
-    }
-
-    /**
-     * Helper method to reset the static CONFIGURED_LOGGERS map using reflection.
-     * This ensures each test starts with a clean state.
-     */
-    @SuppressWarnings({"PMD.AvoidAccessibilityAlteration", "unchecked"})
-    private void resetConfiguredLoggers() {
-        try {
-            var field = LoggingExtension.class.getDeclaredField("CONFIGURED_LOGGERS");
+            // Insert into TEST_METHOD_CONFIGS
+            var field = LoggingExtension.class.getDeclaredField("TEST_METHOD_CONFIGS");
             field.setAccessible(true);
-            var configuredLoggers = (ConcurrentHashMap<String, Boolean>) field.get(null);
-            configuredLoggers.clear();
-        } catch (Exception e) {
-            fail("Could not reset CONFIGURED_LOGGERS: " + e.getMessage());
+            @SuppressWarnings("unchecked")
+            var configs = (Map<Class<?>, Map<String, Object>>) field.get(null);
+
+            Map<String, Object> map = new ConcurrentHashMap<>();
+            map.put(logger.getName(), loggerState);
+            configs.put(this.getClass(), map);
+
+            // Should not throw, covers (addedHandler == null) and (originalHandlerLevel == null)
+            assertDoesNotThrow(() -> extension.afterEach(context));
         }
     }
 
-    @Test
-    void shouldAllowDifferentLoggersWithDifferentConfigurations() {
-        var mockLogger1 = mock(Logger.class);
-        var mockLogger2 = mock(Logger.class);
-        when(mockLogger1.getName()).thenReturn("Logger1");
-        when(mockLogger2.getName()).thenReturn("Logger2");
+    @Nested
+    @DisplayName("After Each Tests")
+    class afterEachTests {
+        @Test
+        void afterEachRestoresLoggerAndHandlerState() throws ReflectiveOperationException {
+            var logger = getRandomLogger();
+            var handler = new ConsoleHandler();
+            logger.addHandler(handler);
+            logger.setUseParentHandlers(true);
+            logger.setLevel(Level.SEVERE);
 
-        var extension1 = new LoggingExtension(mockLogger1, Level.INFO);
-        var extension2 = new LoggingExtension(mockLogger2, Level.FINE);
+            var extension = new LoggingExtension(logger, Level.INFO);
 
-        extension1.beforeAll(mockContext);
-        extension2.beforeAll(mockContext);
+            var context = mockExtensionContext(this.getClass());
 
-        verify(mockLogger1).addHandler(any(ConsoleHandler.class));
-        verify(mockLogger1).setLevel(Level.INFO);
-        verify(mockLogger1).setUseParentHandlers(false);
+            extension.beforeEach(context);
 
-        verify(mockLogger2).addHandler(any(ConsoleHandler.class));
-        verify(mockLogger2).setLevel(Level.FINE);
-        verify(mockLogger2).setUseParentHandlers(false);
-    }
+            assertEquals(Level.INFO, logger.getLevel());
+            assertFalse(logger.getUseParentHandlers());
 
-    @Test
-    void shouldConfigureConsoleHandler() {
-        extension = new LoggingExtension(mockLogger, Level.INFO);
+            extension.afterEach(context);
 
-        extension.beforeAll(mockContext);
+            assertTrue(Arrays.asList(logger.getHandlers()).contains(handler));
+            assertEquals(Level.SEVERE, logger.getLevel());
+            assertTrue(logger.getUseParentHandlers());
 
-        var handlerCaptor = org.mockito.ArgumentCaptor.forClass(Handler.class);
-        verify(mockLogger).addHandler(handlerCaptor.capture());
-
-        var capturedHandler = handlerCaptor.getValue();
-        assertInstanceOf(ConsoleHandler.class, capturedHandler);
-        assertEquals(Level.INFO, capturedHandler.getLevel());
-    }
-
-    @Test
-    void shouldConfigureEachLoggerOnlyOnce() {
-        // mockLogger already has name set in setUp()
-        var extension1 = new LoggingExtension(mockLogger, Level.INFO);
-        var extension2 = new LoggingExtension(mockLogger, Level.FINE);
-
-        extension1.beforeAll(mockContext);
-        extension2.beforeAll(mockContext);
-
-        verify(mockLogger, times(1)).addHandler(any(ConsoleHandler.class));
-        verify(mockLogger, times(1)).setLevel(Level.INFO); // First level set
-        verify(mockLogger, times(1)).setUseParentHandlers(false);
-        verify(mockLogger, never()).setLevel(Level.FINE); // Second level ignored
-    }
-
-    @ParameterizedTest
-    @ValueSource(ints = {2, 3, 5, 10})
-    void shouldConfigureLoggerOnlyOnceWithMultipleCalls(int numberOfCalls) {
-        // mockLogger already has name set in setUp()
-        extension = new LoggingExtension(mockLogger);
-
-        for (int i = 0; i < numberOfCalls; i++) {
-            extension.beforeAll(mockContext);
+            var map = getTestConfigsForTestClass(this.getClass());
+            assertTrue(map.isEmpty(), "Configurations should be cleared after afterEach");
         }
 
-        verify(mockLogger, times(1)).addHandler(any(ConsoleHandler.class));
-        verify(mockLogger, times(1)).setLevel(any(Level.class));
-        verify(mockLogger, times(1)).setUseParentHandlers(false);
+        @Test
+        void afterEachWhenNoConfigsDoesNothing() {
+            var logger = getRandomLogger();
+            var extension = new LoggingExtension(logger);
+            var context = mockExtensionContext(this.getClass());
+            // Not calling beforeEach(), so config map is empty
+            assertDoesNotThrow(() -> extension.afterEach(context));
+        }
+
+        @Test
+        void afterEachWithNonNullHandlerDoesNotCloseConsoleHandler() {
+            var logger = getRandomLogger();
+            var handler = new ConsoleHandler();
+            var extension = new LoggingExtension(logger, handler); // handler != null
+            var context = mockExtensionContext(this.getClass());
+
+            extension.beforeEach(context);
+
+            // Should skip close() on handler; branch handler != null
+            assertDoesNotThrow(() -> extension.afterEach(context));
+        }
+
+        @Test
+        void afterEachWithNullLoggerNameRestoresThisLogger() {
+            // Custom Logger with null name
+            var nullNameLogger = new Logger(null, null) {
+            };
+            var extension = new LoggingExtension(nullNameLogger);
+            var context = mockExtensionContext(this.getClass());
+
+            extension.beforeEach(context); // This creates a configKey starting with null-logger-
+            // Should take the 'true' branch: use this.logger in afterEach
+            assertDoesNotThrow(() -> extension.afterEach(context));
+        }
+
+        @Test
+        void afterEachWithNullOriginalHandlerLevelDoesNotSetLevel() throws ReflectiveOperationException {
+            var logger = getRandomLogger();
+            var extension = new LoggingExtension(logger);
+            var context = mockExtensionContext(this.getClass());
+
+            extension.beforeEach(context);
+
+            // Simulate state with null originalHandlerLevel
+            var configs = getTestConfigsForTestClass(this.getClass());
+            for (Object stateObj : configs.values()) {
+                Field stateField = stateObj.getClass().getDeclaredField("originalHandlerLevel");
+                stateField.setAccessible(true);
+                stateField.set(stateObj, null);
+            }
+
+            // Should take the else branch (do nothing)
+            assertDoesNotThrow(() -> extension.afterEach(context));
+        }
+
+        @Test
+        void afterEachWithTestLogHandlerClearsRecords() {
+            var logger = getRandomLogger();
+            var testHandler = new TestLogHandler();
+            var extension = new LoggingExtension(logger, testHandler, Level.FINE);
+
+            var context = mockExtensionContext(this.getClass());
+
+            extension.beforeEach(context);
+
+            var record = new LogRecord(Level.FINE, "test message");
+            testHandler.publish(record);
+            assertFalse(testHandler.isEmpty());
+
+            extension.afterEach(context);
+
+            assertTrue(testHandler.isEmpty(), "TestLogHandler records should be cleared");
+        }
     }
 
-    @Test
-    void shouldDisableParentHandlers() {
-        extension = new LoggingExtension(mockLogger);
+    @Nested
+    @DisplayName("Before Each Tests")
+    class beforeEachTests {
+        @Test
+        void beforeEachAddsHandlerAndConfiguresLogger() throws ReflectiveOperationException {
+            var logger = getRandomLogger();
+            var extension = new LoggingExtension(logger, Level.FINE);
 
-        extension.beforeAll(mockContext);
+            var context = mockExtensionContext(this.getClass());
 
-        verify(mockLogger).setUseParentHandlers(false);
-    }
+            assertEquals(0, logger.getHandlers().length);
 
-    @Test
-    void shouldHandleNullLoggerName() {
-        // Create a separate mock for this test to avoid affecting others
-        var nullNameLogger = mock(Logger.class);
-        when(nullNameLogger.getName()).thenReturn(null);
-        extension = new LoggingExtension(nullNameLogger, Level.INFO);
+            extension.beforeEach(context);
 
-        // Should handle null logger name gracefully and still configure the logger
-        assertDoesNotThrow(() -> extension.beforeAll(mockContext));
+            assertEquals(1, logger.getHandlers().length);
+            assertEquals(Level.FINE, logger.getHandlers()[0].getLevel());
+            assertEquals(Level.FINE, logger.getLevel());
+            assertFalse(logger.getUseParentHandlers());
 
-        // Verify the logger was still configured despite the null name
-        verify(nullNameLogger).addHandler(any(ConsoleHandler.class));
-        verify(nullNameLogger).setLevel(Level.INFO);
-        verify(nullNameLogger).setUseParentHandlers(false);
-    }
+            var map = getTestConfigsForTestClass(this.getClass());
+            assertFalse(map.isEmpty());
+        }
 
-    @Test
-    void shouldSetLoggerLevel() {
-        var testLevel = Level.WARNING;
-        extension = new LoggingExtension(mockLogger, testLevel);
+        @Test
+        void beforeEachWithCustomHandlerPreservesOriginalHandlerLevel() {
+            var logger = getRandomLogger();
+            var handler = new ConsoleHandler();
+            handler.setLevel(Level.WARNING);
+            var extension = new LoggingExtension(logger, handler);
 
-        extension.beforeAll(mockContext);
+            var context = mockExtensionContext(this.getClass());
 
-        verify(mockLogger).setLevel(testLevel);
-    }
-
-    @Test
-    void shouldTrackConfiguredLoggersCorrectly() {
-        var logger1 = mock(Logger.class);
-        var logger2 = mock(Logger.class);
-        var logger3 = mock(Logger.class);
-        when(logger1.getName()).thenReturn("TrackingTest1");
-        when(logger2.getName()).thenReturn("TrackingTest2");
-        when(logger3.getName()).thenReturn("TrackingTest1"); // Same name as logger1
-
-        var extension1 = new LoggingExtension(logger1, Level.INFO);
-        var extension2 = new LoggingExtension(logger2, Level.FINE);
-        var extension3 = new LoggingExtension(logger3, Level.WARNING);
-
-        extension1.beforeAll(mockContext);
-        extension2.beforeAll(mockContext);
-        extension3.beforeAll(mockContext);
-
-        verify(logger1, times(1)).addHandler(any(ConsoleHandler.class));
-        verify(logger2, times(1)).addHandler(any(ConsoleHandler.class));
-        verify(logger3, never()).addHandler(any(ConsoleHandler.class)); // Skipped due to the same name
-    }
-
-    @Test
-    void staticInitialization() {
-        extension = new LoggingExtension();
-
-        assertDoesNotThrow(() -> extension.beforeAll(mockContext));
-    }
-
-    @Test
-    void stringConstructorWithLoggerNameAndLevel() {
-        var loggerName = "TestLogger-" + System.currentTimeMillis();
-        var testLevel = Level.WARNING;
-        extension = new LoggingExtension(loggerName, testLevel);
-
-        assertNotNull(extension);
-        extension.beforeAll(mockContext);
-
-        // Verify the logger was created and configured with a specified level
-        var createdLogger = Logger.getLogger(loggerName);
-        assertEquals(testLevel, createdLogger.getLevel());
-        assertFalse(createdLogger.getUseParentHandlers());
-        assertTrue(createdLogger.getHandlers().length > 0);
-
-        var consoleHandler = findConsoleHandler(createdLogger.getHandlers());
-        assertNotNull(consoleHandler, "ConsoleHandler should be added");
-        assertEquals(testLevel, consoleHandler.getLevel());
-    }
-
-    @Test
-    void stringConstructorWithLoggerNameOnly() {
-        var loggerName = "TestLogger-" + System.currentTimeMillis();
-        extension = new LoggingExtension(loggerName);
-
-        assertNotNull(extension);
-        extension.beforeAll(mockContext);
-
-        // Verify the logger was created and configured with default Level.ALL
-        var createdLogger = Logger.getLogger(loggerName);
-        assertEquals(Level.ALL, createdLogger.getLevel());
-        assertFalse(createdLogger.getUseParentHandlers());
-        assertTrue(createdLogger.getHandlers().length > 0);
-
-        var consoleHandler = findConsoleHandler(createdLogger.getHandlers());
-        assertNotNull(consoleHandler, "ConsoleHandler should be added");
-        assertEquals(Level.ALL, consoleHandler.getLevel());
-    }
-
-    @Test
-    void withRealLoggerShouldNotThrow() {
-        var realLogger = Logger.getLogger("TestLogger-" + System.currentTimeMillis());
-        extension = new LoggingExtension(realLogger, Level.FINE);
-
-        assertDoesNotThrow(() -> extension.beforeAll(mockContext));
-
-        // Verify logger was configured
-        assertTrue(realLogger.getHandlers().length > 0);
-        assertEquals(Level.FINE, realLogger.getLevel());
-        assertFalse(realLogger.getUseParentHandlers());
+            extension.beforeEach(context);
+            assertEquals(Level.WARNING, handler.getLevel());
+        }
     }
 }

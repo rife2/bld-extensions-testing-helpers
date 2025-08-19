@@ -29,9 +29,11 @@ class DisabledOnCiConditionTests {
     }
 
     @Test
-    void shouldBeEnabledOnNonCi() {
+    void shouldBeEnabledOrDisabled() {
         if (System.getenv("CI") != null) {
             assertTrue(DisabledOnCiCondition.isCi());
+        } else {
+            assertFalse(DisabledOnCiCondition.isCi());
         }
     }
 }

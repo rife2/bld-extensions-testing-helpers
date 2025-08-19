@@ -947,7 +947,7 @@ class TestLogHandlerTests {
 
     @Nested
     @DisplayName("Performance and Stress Tests")
-    @ExtendWith(RandomRangeParameterResolver.class)
+    @ExtendWith(RandomRangeResolver.class)
     class PerformanceAndStressTests {
         // Helper method to populate handler without creating objects in loop
         private void populateHandlerWithTestData(int count) {
@@ -1143,7 +1143,7 @@ class TestLogHandlerTests {
 
     @Nested
     @DisplayName("Thread Safety Tests")
-    @ExtendWith(RandomRangeParameterResolver.class)
+    @ExtendWith(RandomRangeResolver.class)
     class ThreadSafetyTests {
         // Helper methods to create reusable record pools
         private LogRecord[] createTestRecordPool() {
