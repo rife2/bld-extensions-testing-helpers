@@ -26,6 +26,11 @@ class RandomRangeResolverTests {
     }
 
     @SuppressWarnings({"EmptyMethod", "unused"})
+    static void integerParamMethod(Integer param) {
+        // no-op
+    }
+
+    @SuppressWarnings({"EmptyMethod", "unused"})
     @RandomRange(min = 1, max = 2)
     static void sampleMethod(int v) {
         // no-op
@@ -156,7 +161,6 @@ class RandomRangeResolverTests {
     @Nested
     @DisplayName("postProcessTestInstance Coverage")
     class PostProcessTestInstanceCoverage {
-
         @Test
         @DisplayName("injects using default min/max if not specified")
         void injectsDefaultRangeWhenNotSpecified() throws Exception {
@@ -180,33 +184,49 @@ class RandomRangeResolverTests {
         @Test
         @DisplayName("injects random int into multiple and inherited fields")
         void injectsMultipleAndInheritedFields() throws Exception {
-            class SuperClass {
+            class BaseClass {
                 @RandomRange(min = 20, max = 30)
-                private int superField;
+                private int baseField;
 
-                int getSuperField() {
-                    return superField;
+                int getBaseField() {
+                    return baseField;
                 }
             }
 
-            class SubClass extends SuperClass {
+            class ChildClass extends BaseClass {
                 @RandomRange(min = 1, max = 2)
-                private int subField;
+                private int childField;
 
-                int getSubField() {
-                    return subField;
+                int getChildField() {
+                    return childField;
                 }
             }
 
-            var testInstance = new SubClass();
+            var testInstance = new ChildClass();
             var resolver = new RandomRangeResolver();
 
             resolver.postProcessTestInstance(testInstance, null);
 
-            var subVal = testInstance.getSubField();
-            var superVal = testInstance.getSuperField();
-            assertTrue(subVal >= 1 && subVal <= 2, "subField: " + subVal);
-            assertTrue(superVal >= 20 && superVal <= 30, "superField: " + superVal);
+            var childVal = testInstance.getChildField();
+            var baseVal = testInstance.getBaseField();
+            assertTrue(childVal >= 1 && childVal <= 2, "childField: " + childVal);
+            assertTrue(baseVal >= 20 && baseVal <= 30, "baseField: " + baseVal);
+        }
+
+        @Test
+        @DisplayName("inject random int into Integer field")
+        void injectsRandomIntIntoIntegerField() throws Exception {
+            class TestClass {
+                @RandomRange(min = 10, max = 15)
+                private Integer field;
+            }
+            var testInstance = new TestClass();
+            var resolver = new RandomRangeResolver();
+
+            resolver.postProcessTestInstance(testInstance, null);
+
+            var value = testInstance.field;
+            assertTrue(value >= 10 && value <= 15, "Injected value: " + value);
         }
 
         @Test
@@ -510,6 +530,19 @@ class RandomRangeResolverTests {
         void returnsTrueForParameterLevelAnnotation() throws Exception {
             var intParam = RandomRangeResolverTests.class
                     .getDeclaredMethod("intPrimitiveParamMethod", int.class)
+                    .getParameters()[0];
+
+            when(parameterContext.getParameter()).thenReturn(intParam);
+            when(parameterContext.isAnnotated(RandomRange.class)).thenReturn(true);
+
+            var resolver = new RandomRangeResolver();
+            assertTrue(resolver.supportsParameter(parameterContext, extensionContext));
+        }
+
+        @Test
+        void returnsTrueForParameterLevelAnnotationWithInteger() throws Exception {
+            var intParam = RandomRangeResolverTests.class
+                    .getDeclaredMethod("integerParamMethod", Integer.class)
                     .getParameters()[0];
 
             when(parameterContext.getParameter()).thenReturn(intParam);

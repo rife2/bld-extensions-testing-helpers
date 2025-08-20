@@ -80,7 +80,8 @@ public class RandomRangeResolver implements ParameterResolver, TestInstancePostP
                 if (Modifier.isStatic(field.getModifiers())) {
                     continue;
                 }
-                if (field.getType() == int.class && field.isAnnotationPresent(RandomRange.class)) {
+                if ((field.getType() == int.class || field.getType() == Integer.class) &&
+                        field.isAnnotationPresent(RandomRange.class)) {
                     var annotation = field.getAnnotation(RandomRange.class);
                     var randomValue = TestingUtils.generateRandomInt(annotation.min(), annotation.max());
                     boolean wasAccessible = field.canAccess(testInstance);
@@ -104,7 +105,8 @@ public class RandomRangeResolver implements ParameterResolver, TestInstancePostP
      */
     @Override
     public boolean supportsParameter(ParameterContext parameterContext, ExtensionContext extensionContext) {
-        if (parameterContext.getParameter().getType() != int.class) {
+        if (parameterContext.getParameter().getType() != int.class &&
+                parameterContext.getParameter().getType() != Integer.class) {
             return false;
         }
         return parameterContext.isAnnotated(RandomRange.class) ||
