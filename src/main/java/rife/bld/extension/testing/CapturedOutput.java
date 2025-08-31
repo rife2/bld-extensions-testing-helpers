@@ -1,6 +1,7 @@
 package rife.bld.extension.testing;
 
 import java.io.ByteArrayOutputStream;
+import java.util.List;
 
 /**
  * Container for captured stdout and stderr output during test execution.
@@ -15,6 +16,7 @@ import java.io.ByteArrayOutputStream;
  *
  * <ul>
  *     <li>String access methods: {@link #getOut()}, {@link #getErr()}, {@link #getAll()}</li>
+ *     <li>Line access methods: {@link #getOutLines()}, {@link #getErrLines()}, {@link #getAllLines()}</li>
  *     <li>Byte array access methods: {@link #getOutAsBytes()}, {@link #getErrAsBytes()}</li>
  *     <li>Utility methods: {@link #isEmpty()}, {@link #contains(String)}, {@link #outContains(String)},
  *     {@link #errContains(String)}</li>
@@ -32,6 +34,10 @@ import java.io.ByteArrayOutputStream;
  *     // Access individual streams
  *     assertEquals("Hello World\n", output.getOut());
  *     assertEquals("Error\n", output.getErr());
+ *
+ *     // Access lines from streams
+ *     assertEquals(List.of("Hello World"), output.getOutLines());
+ *     assertEquals(List.of("Error"), output.getErrLines());
  *
  *     // Search within streams
  *     assertTrue(output.outContains("Hello"));
@@ -131,6 +137,27 @@ public class CapturedOutput {
     }
 
     /**
+     * Retrieves the combined stdout and stderr content as a list of lines.
+     * <p>
+     * This method splits the combined output (stdout followed by stderr) into
+     * individual lines using Java's built-in line processing. Empty lines
+     * are preserved in the result. The line splitting handles various line
+     * separator formats (\n, \r\n, \r) correctly across different platforms.
+     *
+     * @return a list of lines from the combined output, or empty list if no output was captured
+     * @see #getAll()
+     * @see #getOutLines()
+     * @see #getErrLines()
+     */
+    public List<String> getAllLines() {
+        var content = getAll();
+        if (content.isEmpty()) {
+            return List.of();
+        }
+        return content.lines().toList();
+    }
+
+    /**
      * Retrieves the captured stderr content as a string.
      * <p>
      * This method converts all data written to {@code System.err} during the test
@@ -161,6 +188,27 @@ public class CapturedOutput {
     }
 
     /**
+     * Retrieves the captured stderr content as a list of lines.
+     * <p>
+     * This method splits the stderr output into individual lines using
+     * Java's built-in line processing. Empty lines are preserved in the result.
+     * The line splitting handles various line separator formats (\n, \r\n, \r)
+     * correctly across different platforms.
+     *
+     * @return a list of lines from stderr, or empty list if no stderr was captured
+     * @see #getErr()
+     * @see #getOutLines()
+     * @see #getAllLines()
+     */
+    public List<String> getErrLines() {
+        var content = getErr();
+        if (content.isEmpty()) {
+            return List.of();
+        }
+        return content.lines().toList();
+    }
+
+    /**
      * Retrieves the captured stdout content as a string.
      * <p>
      * This method converts all data written to {@code System.out} during the test
@@ -188,6 +236,27 @@ public class CapturedOutput {
      */
     public byte[] getOutAsBytes() {
         return stdout.toByteArray();
+    }
+
+    /**
+     * Retrieves the captured stdout content as a list of lines.
+     * <p>
+     * This method splits the stdout output into individual lines using
+     * Java's built-in line processing. Empty lines are preserved in the result.
+     * The line splitting handles various line separator formats (\n, \r\n, \r)
+     * correctly across different platforms.
+     *
+     * @return a list of lines from stdout, or empty list if no stdout was captured
+     * @see #getOut()
+     * @see #getErrLines()
+     * @see #getAllLines()
+     */
+    public List<String> getOutLines() {
+        var content = getOut();
+        if (content.isEmpty()) {
+            return List.of();
+        }
+        return content.lines().toList();
     }
 
     /**
