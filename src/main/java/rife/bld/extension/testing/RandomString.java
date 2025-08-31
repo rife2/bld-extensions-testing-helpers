@@ -32,7 +32,7 @@ import java.lang.annotation.Target;
  * for all String parameters in that method.
  *
  * <h4>Usage examples:</h4>
- * 
+ *
  * <blockquote><pre>
  * &#64;ExtendWith(RandomStringResolver.class)
  * public class MyTest {

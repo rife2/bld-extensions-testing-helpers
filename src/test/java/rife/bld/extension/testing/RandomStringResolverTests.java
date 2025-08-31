@@ -120,12 +120,10 @@ class RandomStringResolverTests {
                 @RandomString
                 @SuppressWarnings({"PMD.MutableStaticState"})
                 public static String staticField;
-
-                @SuppressWarnings({"unused"})
-                private String fieldNotAnnotated;
-
                 @RandomString
                 private String fieldAnnotated;
+                @SuppressWarnings({"unused"})
+                private String fieldNotAnnotated;
             }
             var testInstance = new TestClass();
             var resolver = new RandomStringResolver();
