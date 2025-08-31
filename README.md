@@ -27,19 +27,20 @@ for more information.
 
 The following annotations are provided:
 
-| Annotation                                                                                                            | Description                                          |
-|:----------------------------------------------------------------------------------------------------------------------|:-----------------------------------------------------|
-| [`DisabledOnCi`](https://rife2.github.io/bld-extensions-testing-helpers/rife/bld/extension/testing/DisabledOnCi.html) | Disables a test when running on a CI/CD environment  |
-| [`RandomRange`](https://rife2.github.io/bld-extensions-testing-helpers/rife/bld/extension/testing/RandomRange.html)   | Generates a random integer within a specified range. |
-| [`RandomString`](https://rife2.github.io/bld-extensions-testing-helpers/rife/bld/extension/testing/RandomString.html) | Generates a random string.                           |
+| Annotation                                                                                                              | Description                                         |
+|:------------------------------------------------------------------------------------------------------------------------|:----------------------------------------------------|
+| [`CaptureOutput`](https://rife2.github.io/bld-extensions-testing-helpers/rife/bld/extension/testing/CaptureOutput.html) | Capture stdout and stderr output                    |
+| [`DisabledOnCi`](https://rife2.github.io/bld-extensions-testing-helpers/rife/bld/extension/testing/DisabledOnCi.html)   | Disables a test when running on a CI/CD environment |
+| [`RandomRange`](https://rife2.github.io/bld-extensions-testing-helpers/rife/bld/extension/testing/RandomRange.html)     | Generates a random integer within a specified range |
+| [`RandomString`](https://rife2.github.io/bld-extensions-testing-helpers/rife/bld/extension/testing/RandomString.html)   | Generates a random string                           |
 
 ## JUnit Extensions
 
 The following extensions are provided:
 
-| Extension                                                                                                                     | Description                                 |
-|:------------------------------------------------------------------------------------------------------------------------------|:--------------------------------------------|
-| [`LoggingExtension`](https://rife2.github.io/bld-extensions-testing-helpers/rife/bld/extension/testing/LoggingExtension.html) | Configures console logging for test suites. |
+| Extension                                                                                                                     | Description                                |
+|:------------------------------------------------------------------------------------------------------------------------------|:-------------------------------------------|
+| [`LoggingExtension`](https://rife2.github.io/bld-extensions-testing-helpers/rife/bld/extension/testing/LoggingExtension.html) | Configures console logging for test suites |
 
 ## Helpers
 
@@ -53,7 +54,7 @@ The following helper classes are provided:
 
 The following static methods are provided:
 
-| Utility                                                                                                                                                         | Description                 |
-|:----------------------------------------------------------------------------------------------------------------------------------------------------------------|:----------------------------|
-| [`generateRandomInt(int, int)`](https://rife2.github.io/bld-extensions-testing-helpers/rife/bld/extension/testing/TestingUtils.html#generateRandomInt(int,int)) | Generates a random integer. |
-| [`generateRandomString()`](https://rife2.github.io/bld-extensions-testing-helpers/rife/bld/extension/testing/TestingUtils.html#generateRandomString())          | Generates a random string.  |
+| Utility                                                                                                                                                         | Description                |
+|:----------------------------------------------------------------------------------------------------------------------------------------------------------------|:---------------------------|
+| [`generateRandomInt(int, int)`](https://rife2.github.io/bld-extensions-testing-helpers/rife/bld/extension/testing/TestingUtils.html#generateRandomInt(int,int)) | Generates a random integer |
+| [`generateRandomString()`](https://rife2.github.io/bld-extensions-testing-helpers/rife/bld/extension/testing/TestingUtils.html#generateRandomString())          | Generates a random string  |

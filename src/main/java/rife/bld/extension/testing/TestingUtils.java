@@ -19,7 +19,7 @@ package rife.bld.extension.testing;
 import java.security.SecureRandom;
 
 /**
- * Utility class that provides methods for generating random values and predefined character sets.
+ * Provides static methods for generating random values and predefined character sets.
  *
  * @author <a href="https://erik.thauvin.net/">Erik C. Thauvin</a>
  * @since 1.0

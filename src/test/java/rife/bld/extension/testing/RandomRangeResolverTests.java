@@ -216,6 +216,7 @@ class RandomRangeResolverTests {
         @Test
         @DisplayName("inject random int into Integer field")
         void injectsRandomIntIntoIntegerField() throws Exception {
+            @SuppressWarnings("unused")
             class TestClass {
                 @RandomRange(min = 10, max = 15)
                 private Integer field;
