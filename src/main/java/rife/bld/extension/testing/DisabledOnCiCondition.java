@@ -31,6 +31,9 @@ import org.junit.jupiter.api.extension.ExtensionContext;
  * The presence of the {@code CI} environment variable is typically an indicator that the code is running in a CI/CD
  * pipeline, as this variable is automatically defined in most CI environments such as GitHub Actions, GitLab CI, and
  * others.
+ *
+ * @author <a href="https://erik.thauvin.net/">Erik C. Thauvin</a>
+ * @since 1.0
  */
 public class DisabledOnCiCondition implements ExecutionCondition {
     /**

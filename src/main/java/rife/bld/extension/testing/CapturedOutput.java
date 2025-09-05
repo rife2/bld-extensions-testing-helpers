@@ -60,6 +60,7 @@ import java.util.List;
  * <strong>Thread Safety:</strong> This class is not thread-safe. Each instance
  * should only be used within the context of a single test method execution.
  *
+ * @author <a href="https://erik.thauvin.net/">Erik C. Thauvin</a>
  * @see CaptureOutput
  * @see CaptureOutputExtension
  * @see OutputEntry
@@ -411,8 +412,10 @@ public class CapturedOutput {
      * written to stdout or stderr. It's used in conjunction with {@link OutputEntry}
      * to provide chronological output tracking.
      *
+     * @author <a href="https://erik.thauvin.net/">Erik C. Thauvin</a>
      * @see OutputEntry
      * @see CapturedOutput#getChronologicalEntries()
+     * @since 1.0
      */
     public enum OutputType {
         /**
@@ -436,8 +439,10 @@ public class CapturedOutput {
      * Instances of this class are immutable and are created automatically by the
      * capture mechanism when output occurs.
      *
+     * @author <a href="https://erik.thauvin.net/">Erik C. Thauvin</a>
      * @see OutputType
      * @see CapturedOutput#getChronologicalEntries()
+     * @since 1.0
      */
     public static class OutputEntry {
         /**

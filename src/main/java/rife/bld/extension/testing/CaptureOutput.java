@@ -135,20 +135,20 @@ import java.lang.annotation.Target;
  *
  * <h3>Chronological vs. Stream-Grouped Output:</h3>
  * <p>
- * The annotation now provides two different ways to access captured output:
+ * The annotation provides two different ways to access captured output:
  * </p>
  * <ul>
- *     <li><strong>Stream-grouped:</strong> Traditional approach where all stdout content is grouped together,
- *         followed by all stderr content. This maintains backward compatibility with existing tests.</li>
- *     <li><strong>Chronological:</strong> New approach that preserves the exact order in which output
- *         occurred, interleaving stdout and stderr as it would appear in a real console. Each output
- *         event includes timestamp and stream type information.</li>
+ *     <li><strong>Stream-grouped:</strong> where all stdout content is grouped together,
+ *         followed by all stderr content.</li>
+ *     <li><strong>Chronological:</strong> where the exact order in which output
+ *         occurred is preserved, interleaving stdout and stderr as it would appear in a real console.
+ *         Each output event includes timestamp and stream type information.</li>
  * </ul>
  *
  * <h3>Performance Considerations:</h3>
  * <ul>
  *     <li>Chronological tracking adds minimal overhead per output operation</li>
- *     <li>Each output operation (print, println, write) creates one chronological entry</li>
+ *     <li>Each output operation (print, println, printf) creates one chronological entry</li>
  *     <li>Timestamps are captured using {@link java.time.Instant#now()}</li>
  *     <li>Memory usage scales linearly with the number of output operations</li>
  * </ul>
@@ -161,6 +161,7 @@ import java.lang.annotation.Target;
  *     <li>Chronological tracking granularity is per print/write operation, not per character</li>
  * </ul>
  *
+ * @author <a href="https://erik.thauvin.net/">Erik C. Thauvin</a>
  * @see CapturedOutput
  * @see CaptureOutputExtension
  * @see CapturedOutput.OutputEntry

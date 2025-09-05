@@ -23,14 +23,16 @@ import java.util.Locale;
  *     <li>{@link ParameterResolver} - Injects {@link CapturedOutput} parameters</li>
  * </ul>
  * <p>
- * The extension now supports chronological tracking of output, recording both
+ * The extension supports chronological tracking of output, recording both
  * the type (stdout/stderr) and timestamp of each output operation.
  * <p>
  * <strong>Note:</strong> This class is not intended to be used directly.
  * Use the {@link CaptureOutput} annotation instead.
  *
+ * @author <a href="https://erik.thauvin.net/">Erik C. Thauvin</a>
  * @see CaptureOutput
  * @see CapturedOutput
+ * @since 1.0
  */
 public class CaptureOutputExtension implements BeforeEachCallback, AfterEachCallback, ParameterResolver {
     /**
