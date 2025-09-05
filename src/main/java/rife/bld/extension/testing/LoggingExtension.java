@@ -83,7 +83,7 @@ import java.util.logging.Logger;
  * @see TestLogHandler
  * @since 1.0
  */
-@SuppressWarnings("PMD.MoreThanOneLogger")
+@SuppressWarnings({"PMD.MoreThanOneLogger"})
 public class LoggingExtension implements BeforeEachCallback, AfterEachCallback {
     /**
      * Default logger instance used when no custom logger is specified.
@@ -120,7 +120,7 @@ public class LoggingExtension implements BeforeEachCallback, AfterEachCallback {
      * Creates a LoggingExtension with a custom logger and {@link Level#ALL}.
      *
      * @param logger the logger to configure for console output
-     * @throws NullPointerException if logger is null
+     * @throws NullPointerException if logger is {@code null}
      */
     public LoggingExtension(Logger logger) {
         this(logger, null, Level.ALL);
@@ -131,7 +131,7 @@ public class LoggingExtension implements BeforeEachCallback, AfterEachCallback {
      *
      * @param logger the logger to configure for console output
      * @param level  the logging level to set for both logger and console handler
-     * @throws NullPointerException if logger or level is null
+     * @throws NullPointerException if logger or level is {@code null}
      */
     public LoggingExtension(Logger logger, Level level) {
         this(logger, null, level);
@@ -144,7 +144,7 @@ public class LoggingExtension implements BeforeEachCallback, AfterEachCallback {
      *
      * @param logger  the logger to configure for output
      * @param handler the existing handler to use for logging output
-     * @throws NullPointerException if logger or handler is null
+     * @throws NullPointerException if logger or handler is {@code null}
      */
     public LoggingExtension(Logger logger, Handler handler) {
         this(logger, handler, handler != null ? handler.getLevel() : Level.ALL);
@@ -159,7 +159,7 @@ public class LoggingExtension implements BeforeEachCallback, AfterEachCallback {
      * @param logger  the logger to configure for output
      * @param handler the existing handler to use for logging output
      * @param level   the logging level to set for both logger and handler
-     * @throws NullPointerException if logger or level is null
+     * @throws NullPointerException if logger or level is {@code null}
      */
     public LoggingExtension(Logger logger, Handler handler, Level level) {
         this.logger = logger;
@@ -193,7 +193,7 @@ public class LoggingExtension implements BeforeEachCallback, AfterEachCallback {
      *
      * @param loggerName the fully qualified logger name to configure for output
      * @param handler    the existing handler to use for logging output
-     * @throws NullPointerException if handler is null
+     * @throws NullPointerException if handler is {@code null}
      */
     public LoggingExtension(String loggerName, Handler handler) {
         this(Logger.getLogger(loggerName), handler);
@@ -205,7 +205,7 @@ public class LoggingExtension implements BeforeEachCallback, AfterEachCallback {
      * @param loggerName the fully qualified logger name to configure for output
      * @param handler    the existing handler to use for logging output
      * @param level      the logging level to set for both logger and handler
-     * @throws NullPointerException if handler or level is null
+     * @throws NullPointerException if handler or level is {@code null}
      */
     public LoggingExtension(String loggerName, Handler handler, Level level) {
         this(Logger.getLogger(loggerName), handler, level);

@@ -97,7 +97,7 @@ public @interface RandomString {
      * The alphanumeric character set to use for random string generation.
      *
      * @return the character set string
-     * @throws IllegalArgumentException if the character set is null or empty during resolution
+     * @throws IllegalArgumentException if the character set is {@code null} or empty during resolution
      */
     String characters() default TestingUtils.ALPHANUMERIC_CHARACTERS;
 

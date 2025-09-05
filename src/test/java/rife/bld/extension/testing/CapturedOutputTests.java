@@ -7,7 +7,7 @@ import java.util.Locale;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-@SuppressWarnings({"PMD.AvoidDuplicateLiterals", "PMD.SystemPrintln"})
+@SuppressWarnings({"PMD.AvoidDuplicateLiterals", "PMD.SystemPrintln", "PMD.TestClassWithoutTestCases"})
 class CapturedOutputTests {
     @Test
     void bothStreams() {

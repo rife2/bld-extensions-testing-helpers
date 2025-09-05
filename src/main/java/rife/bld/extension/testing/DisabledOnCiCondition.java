@@ -21,10 +21,16 @@ import org.junit.jupiter.api.extension.ExecutionCondition;
 import org.junit.jupiter.api.extension.ExtensionContext;
 
 /**
- * Disables tests on CI condition.
- *
- * @author <a href="https://erik.thauvin.net/">Erik C. Thauvin</a>
- * @since 1.0
+ * Implementation of JUnit's {@link ExecutionCondition} to conditionally disable tests when running in a CI/CD
+ * environment.
+ * <p>
+ * This condition determines whether a test or test container should be enabled or disabled based on the presence of
+ * the {@code CI} environment variable. If the variable is set, the condition disables the test; otherwise, it enables
+ * the test.
+ * <p>
+ * The presence of the {@code CI} environment variable is typically an indicator that the code is running in a CI/CD
+ * pipeline, as this variable is automatically defined in most CI environments such as GitHub Actions, GitLab CI, and
+ * others.
  */
 public class DisabledOnCiCondition implements ExecutionCondition {
     /**
@@ -37,10 +43,12 @@ public class DisabledOnCiCondition implements ExecutionCondition {
     }
 
     /**
-     * Evaluates the execution condition.
+     * Evaluates whether the execution of a test should be enabled or disabled based on the CI environment.
+     * <p>
+     * Returns a disabled state if the test is running in a CI/CD environment, otherwise returns an enabled state.
      *
-     * @param context the current extension context; never {@code null}
-     * @return the condition evaluation result
+     * @param context the {@link ExtensionContext} for the current test or container
+     * @return a {@link ConditionEvaluationResult} indicating whether the test is enabled or disabled
      */
     @Override
     public ConditionEvaluationResult evaluateExecutionCondition(ExtensionContext context) {

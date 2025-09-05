@@ -50,7 +50,7 @@ public final class TestingUtils {
     /**
      * A string constant representing a set of characters that are safe for use in URLs.
      * <p>
-     * It includes uppercase and lowercase letters, digits, and the symbols {@code -} and {@code _}.
+     * It includes uppercase and lowercase letters, digits, the symbols {@code -} and  {@code _}
      */
     public static final String URL_SAFE_CHARACTERS =
             "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_";
@@ -81,7 +81,7 @@ public final class TestingUtils {
      * @param length     the desired length of the generated string
      * @param characters the character set to use
      * @return a randomly generated string of the specified length
-     * @throws IllegalArgumentException if the length is non-positive or the character set is null/empty
+     * @throws IllegalArgumentException if the length is non-positive or the character set is {@code null} or empty
      */
     public static String generateRandomString(int length, String characters) {
         if (length <= 0) {
