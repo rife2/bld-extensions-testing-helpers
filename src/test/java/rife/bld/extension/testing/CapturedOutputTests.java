@@ -9,6 +9,8 @@ import static org.junit.jupiter.api.Assertions.*;
 
 @SuppressWarnings({"PMD.AvoidDuplicateLiterals", "PMD.SystemPrintln", "PMD.TestClassWithoutTestCases"})
 class CapturedOutputTests {
+    private static final String EOL = System.lineSeparator();
+
     @Test
     void bothStreams() {
         var out = new java.io.ByteArrayOutputStream();
@@ -52,11 +54,11 @@ class CapturedOutputTests {
 
         var entries = output.getChronologicalEntries();
 
-        var expected = "OutputEntry{type=STDOUT, content='Stdout line 1\n" +
+        var expected = "OutputEntry{type=STDOUT, content='Stdout line 1" + EOL +
                 "', timestamp=" + entries.get(0).getTimestamp() + "}";
         assertEquals(expected, entries.get(0).toString());
 
-        expected = "OutputEntry{type=STDERR, content='Stderr line 1\n" +
+        expected = "OutputEntry{type=STDERR, content='Stderr line 1" + EOL +
                 "', timestamp=" + entries.get(1).getTimestamp() + "}";
         assertEquals(expected, entries.get(1).toString());
     }
@@ -156,10 +158,10 @@ class CapturedOutputTests {
             assertFalse(entries.get(1).isStdout());
 
             assertEquals(CapturedOutput.OutputType.STDOUT, entries.get(2).getType());
-            assertEquals(" - Second stdout\n", entries.get(2).getContent());
+            assertEquals(" - Second stdout" + EOL, entries.get(2).getContent());
 
             assertEquals(CapturedOutput.OutputType.STDERR, entries.get(3).getType());
-            assertEquals(" - Second stderr\n", entries.get(3).getContent());
+            assertEquals(" - Second stderr" + EOL, entries.get(3).getContent());
 
             // Verify timestamps are in order
             for (int i = 1; i < entries.size(); i++) {
@@ -312,24 +314,24 @@ class CapturedOutputTests {
 
             // Verify content types are captured as strings
             assertEquals("String: ", entries.get(0).getContent());
-            assertEquals("text\n", entries.get(1).getContent());
+            assertEquals("text" + EOL, entries.get(1).getContent());
             assertEquals("Integer: ", entries.get(2).getContent());
-            assertEquals("42\n", entries.get(3).getContent());
+            assertEquals("42" + EOL, entries.get(3).getContent());
             assertEquals("Boolean: ", entries.get(4).getContent());
-            assertEquals("true\n", entries.get(5).getContent());
+            assertEquals("true" + EOL, entries.get(5).getContent());
             assertEquals("Double: ", entries.get(6).getContent());
-            assertEquals("3.14\n", entries.get(7).getContent());
+            assertEquals("3.14" + EOL, entries.get(7).getContent());
             assertEquals("Char: ", entries.get(8).getContent());
-            assertEquals("c\n", entries.get(9).getContent());
+            assertEquals("c" + EOL, entries.get(9).getContent());
             assertEquals("Long: ", entries.get(10).getContent());
-            assertEquals("10\n", entries.get(11).getContent());
+            assertEquals("10" + EOL, entries.get(11).getContent());
             assertEquals("Float: ", entries.get(12).getContent());
-            assertEquals("1.1\n", entries.get(13).getContent());
+            assertEquals("1.1" + EOL, entries.get(13).getContent());
             assertEquals("Char[]: ", entries.get(14).getContent());
-            assertEquals("abc\n", entries.get(15).getContent());
+            assertEquals("abc" + EOL, entries.get(15).getContent());
             assertEquals("Object: ", entries.get(16).getContent());
-            assertEquals("5\n", entries.get(17).getContent());
-            assertEquals("\n", entries.get(18).getContent());
+            assertEquals("5" + EOL, entries.get(17).getContent());
+            assertEquals(EOL, entries.get(18).getContent());
         }
 
         @Test
@@ -423,19 +425,19 @@ class CapturedOutputTests {
             assertEquals("String: ", dataEntries.get(0).getContent());
             assertEquals(CapturedOutput.OutputType.STDOUT, dataEntries.get(0).getType());
 
-            assertEquals("text\n", dataEntries.get(1).getContent());
+            assertEquals("text" + EOL, dataEntries.get(1).getContent());
             assertEquals(CapturedOutput.OutputType.STDOUT, dataEntries.get(1).getType());
 
             assertEquals("Integer: ", dataEntries.get(2).getContent());
             assertEquals(CapturedOutput.OutputType.STDOUT, dataEntries.get(2).getType());
 
-            assertEquals("42\n", dataEntries.get(3).getContent());
+            assertEquals("42" + EOL, dataEntries.get(3).getContent());
             assertEquals(CapturedOutput.OutputType.STDOUT, dataEntries.get(3).getType());
 
             assertEquals("Boolean: ", dataEntries.get(4).getContent());
             assertEquals(CapturedOutput.OutputType.STDERR, dataEntries.get(4).getType());
 
-            assertEquals("true\n", dataEntries.get(5).getContent());
+            assertEquals("true" + EOL, dataEntries.get(5).getContent());
             assertEquals(CapturedOutput.OutputType.STDERR, dataEntries.get(5).getType());
 
             // Verify timestamps are in chronological order
@@ -527,7 +529,10 @@ class CapturedOutputTests {
 
             // Verify chronological content
             var chronological = output.getChronologicalContent();
-            var expectedOrder = "First stdout message\nFirst stderr message\nSecond stdout message\nSecond stderr message\n";
+            var expectedOrder = "First stdout message" + EOL
+                    + "First stderr message" + EOL
+                    + "Second stdout message" + EOL
+                    + "Second stderr message" + EOL;
             assertTrue(chronological.contains(expectedOrder));
         }
 
