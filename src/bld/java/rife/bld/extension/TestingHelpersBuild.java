@@ -27,8 +27,7 @@ import java.util.List;
 
 import static rife.bld.dependencies.Repository.MAVEN_CENTRAL;
 import static rife.bld.dependencies.Repository.RIFE2_RELEASES;
-import static rife.bld.dependencies.Scope.provided;
-import static rife.bld.dependencies.Scope.test;
+import static rife.bld.dependencies.Scope.*;
 import static rife.bld.operations.JavadocOptions.DocLinkOption.NO_MISSING;
 
 public class TestingHelpersBuild extends Project {
@@ -48,6 +47,8 @@ public class TestingHelpersBuild extends Project {
                 version(5, 13, 4));
         var junitPlatform = dependency("org.junit.platform", "junit-platform-console-standalone",
                 version(1, 13, 4));
+        scope(compile)
+                .include(dependency("org.jetbrains:annotations:26.0.2"));
         scope(provided)
                 .include(junit)
                 .include(junitPlatform);

@@ -1,6 +1,9 @@
 package rife.bld.extension.testing;
 
 import java.io.ByteArrayOutputStream;
+import java.time.Instant;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -18,6 +21,7 @@ import java.util.List;
  *     <li>String access methods: {@link #getOut()}, {@link #getErr()}, {@link #getAll()}</li>
  *     <li>Line access methods: {@link #getOutLines()}, {@link #getErrLines()}, {@link #getAllLines()}</li>
  *     <li>Byte array access methods: {@link #getOutAsBytes()}, {@link #getErrAsBytes()}</li>
+ *     <li>Chronological access methods: {@link #getChronologicalEntries()}, {@link #getChronologicalContent()}</li>
  *     <li>Utility methods: {@link #isEmpty()}, {@link #contains(String)}, {@link #outContains(String)},
  *     {@link #errContains(String)}</li>
  * </ul>
@@ -35,9 +39,13 @@ import java.util.List;
  *     assertEquals("Hello World\n", output.getOut());
  *     assertEquals("Error\n", output.getErr());
  *
- *     // Access lines from streams
- *     assertEquals(List.of("Hello World"), output.getOutLines());
- *     assertEquals(List.of("Error"), output.getErrLines());
+ *     // Access chronological output
+ *     List&lt;OutputEntry&gt; entries = output.getChronologicalEntries();
+ *     assertEquals(OutputType.STDOUT, entries.get(0).getType());
+ *     assertEquals("Hello World\n", entries.get(0).getContent());
+ *
+ *     // Get chronological content as single string
+ *     String chronological = output.getChronologicalContent();
  *
  *     // Search within streams
  *     assertTrue(output.outContains("Hello"));
@@ -46,9 +54,6 @@ import java.util.List;
  *
  *     // Check if output is empty
  *     assertFalse(output.isEmpty());
- *
- *     // Get raw bytes if needed
- *     byte[] stdoutBytes = output.getOutAsBytes();
  * }</pre></blockquote>
  *
  * <p>
@@ -57,10 +62,23 @@ import java.util.List;
  *
  * @see CaptureOutput
  * @see CaptureOutputExtension
+ * @see OutputEntry
+ * @see OutputType
+ * @since 1.0
  */
 @SuppressWarnings("ClassCanBeRecord")
 public class CapturedOutput {
+    /**
+     * The chronologically ordered list of output entries with timestamps and types.
+     */
+    private final List<OutputEntry> chronologicalEntries;
+    /**
+     * The ByteArrayOutputStream containing captured stderr data.
+     */
     private final ByteArrayOutputStream stderr;
+    /**
+     * The ByteArrayOutputStream containing captured stdout data.
+     */
     private final ByteArrayOutputStream stdout;
 
     /**
@@ -76,6 +94,21 @@ public class CapturedOutput {
     CapturedOutput(ByteArrayOutputStream stdout, ByteArrayOutputStream stderr) {
         this.stdout = stdout;
         this.stderr = stderr;
+        this.chronologicalEntries = new ArrayList<>();
+    }
+
+    /**
+     * Adds an output entry to the chronological list.
+     * <p>
+     * This method is used internally by the capture mechanism to record output
+     * events with their timestamps and types in chronological order.
+     *
+     * @param type      the type of output (STDOUT or STDERR)
+     * @param content   the content that was written
+     * @param timestamp the instant when the output occurred
+     */
+    void addEntry(OutputType type, String content, Instant timestamp) {
+        chronologicalEntries.add(new OutputEntry(type, content, timestamp));
     }
 
     /**
@@ -126,11 +159,12 @@ public class CapturedOutput {
      * <p>
      * <strong>Note:</strong> This does not preserve the exact interleaving of stdout and stderr
      * as it would appear in a real console, but rather groups all stdout first,
-     * then all stderr.
+     * then all stderr. For chronological ordering, use {@link #getChronologicalContent()}.
      *
      * @return the combined stdout and stderr content, or empty string if no output was captured
      * @see #getOut()
      * @see #getErr()
+     * @see #getChronologicalContent()
      */
     public String getAll() {
         return getOut() + getErr();
@@ -143,14 +177,71 @@ public class CapturedOutput {
      * individual lines using Java's built-in line processing. Empty lines
      * are preserved in the result. The line splitting handles various line
      * separator formats (\n, \r\n, \r) correctly across different platforms.
+     * <p>
+     * <strong>Note:</strong> For chronological line ordering, use {@link #getChronologicalLines()}.
      *
      * @return a list of lines from the combined output, or empty list if no output was captured
      * @see #getAll()
      * @see #getOutLines()
      * @see #getErrLines()
+     * @see #getChronologicalLines()
      */
     public List<String> getAllLines() {
         var content = getAll();
+        if (content.isEmpty()) {
+            return List.of();
+        }
+        return content.lines().toList();
+    }
+
+    /**
+     * Retrieves all output content in chronological order as a single string.
+     * <p>
+     * This method combines all captured output (both stdout and stderr) in the
+     * exact order it was written during test execution. This preserves the
+     * interleaving of stdout and stderr as it would appear in a real console.
+     *
+     * @return the chronologically ordered output content, or empty string if no output was captured
+     * @see #getChronologicalEntries()
+     * @see #getAll()
+     */
+    public String getChronologicalContent() {
+        var builder = new StringBuilder();
+        for (var entry : chronologicalEntries) {
+            builder.append(entry.getContent());
+        }
+        return builder.toString();
+    }
+
+    /**
+     * Retrieves all output entries in chronological order.
+     * <p>
+     * This method returns an immutable list of all output entries, preserving
+     * the exact order in which stdout and stderr output occurred during test
+     * execution. Each entry includes the output type, content, and timestamp.
+     *
+     * @return an immutable list of output entries in chronological order
+     * @see OutputEntry
+     * @see #getChronologicalContent()
+     */
+    public List<OutputEntry> getChronologicalEntries() {
+        return Collections.unmodifiableList(chronologicalEntries);
+    }
+
+    /**
+     * Retrieves all output content in chronological order as a list of lines.
+     * <p>
+     * This method splits the chronologically ordered output into individual
+     * lines using Java's built-in line processing. Empty lines are preserved
+     * in the result. The line splitting handles various line separator formats
+     * (\n, \r\n, \r) correctly across different platforms.
+     *
+     * @return a list of lines from the chronologically ordered output, or an empty list if no output was captured
+     * @see #getChronologicalContent()
+     * @see #getAllLines()
+     */
+    public List<String> getChronologicalLines() {
+        var content = getChronologicalContent();
         if (content.isEmpty()) {
             return List.of();
         }
@@ -309,6 +400,129 @@ public class CapturedOutput {
         return "CapturedOutput{" +
                 "stdout='" + getOut() + '\'' +
                 ", stderr='" + getErr() + '\'' +
+                ", chronologicalEntries=" + chronologicalEntries.size() + " entries" +
                 '}';
+    }
+
+    /**
+     * Enumeration of output types for distinguishing between stdout and stderr.
+     * <p>
+     * This enum is used to identify whether a particular piece of output was
+     * written to stdout or stderr. It's used in conjunction with {@link OutputEntry}
+     * to provide chronological output tracking.
+     *
+     * @see OutputEntry
+     * @see CapturedOutput#getChronologicalEntries()
+     */
+    public enum OutputType {
+        /**
+         * Represents output written to stdout (System.out).
+         */
+        STDOUT,
+
+        /**
+         * Represents output written to stderr (System.err).
+         */
+        STDERR
+    }
+
+    /**
+     * Represents a single output entry with type, content, and timestamp.
+     * <p>
+     * This class encapsulates a single piece of output that was written to either
+     * stdout or stderr during test execution. Each entry includes the output type
+     * (STDOUT or STDERR), the actual content, and the timestamp when it occurred.
+     * <p>
+     * Instances of this class are immutable and are created automatically by the
+     * capture mechanism when output occurs.
+     *
+     * @see OutputType
+     * @see CapturedOutput#getChronologicalEntries()
+     */
+    public static class OutputEntry {
+        /**
+         * The content that was written.
+         */
+        private final String content;
+        /**
+         * The timestamp when the output occurred.
+         */
+        private final Instant timestamp;
+        /**
+         * The type of output (STDOUT or STDERR).
+         */
+        private final OutputType type;
+
+        /**
+         * Creates a new OutputEntry with the specified type, content, and timestamp.
+         *
+         * @param type      the output type (STDOUT or STDERR)
+         * @param content   the content that was written
+         * @param timestamp the timestamp when the output occurred
+         */
+        OutputEntry(OutputType type, String content, Instant timestamp) {
+            this.type = type;
+            this.content = content;
+            this.timestamp = timestamp;
+        }
+
+        /**
+         * Returns the content of this output entry.
+         *
+         * @return the content that was written
+         */
+        public String getContent() {
+            return content;
+        }
+
+        /**
+         * Returns the timestamp of this output entry.
+         *
+         * @return the instant when the output occurred
+         */
+        public Instant getTimestamp() {
+            return timestamp;
+        }
+
+        /**
+         * Returns the type of this output entry.
+         *
+         * @return the output type (STDOUT or STDERR)
+         */
+        public OutputType getType() {
+            return type;
+        }
+
+        /**
+         * Determines if this output entry is from stderr.
+         *
+         * @return {@code true} if this entry is from stderr, {@code false} otherwise
+         */
+        public boolean isStderr() {
+            return type == OutputType.STDERR;
+        }
+
+        /**
+         * Determines if this output entry is from stdout.
+         *
+         * @return {@code true} if this entry is from stdout, {@code false} otherwise
+         */
+        public boolean isStdout() {
+            return type == OutputType.STDOUT;
+        }
+
+        /**
+         * Provides a string representation of this output entry for debugging purposes.
+         *
+         * @return a string representation of the output entry
+         */
+        @Override
+        public String toString() {
+            return "OutputEntry{" +
+                    "type=" + type +
+                    ", content='" + content + '\'' +
+                    ", timestamp=" + timestamp +
+                    '}';
+        }
     }
 }
