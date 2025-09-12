@@ -47,11 +47,11 @@ import java.util.logging.Logger;
  *
  *     // Custom logger with default level
  *     &#64;RegisterExtension
- *     private static final LOGGING_EXTENSION extension = new LoggingExtension("MyCustomLogger"));
+ *     private static final LoggingExtension LOGGING_EXTENSION = new LoggingExtension("MyCustomLogger"));
  *
  *     // Custom logger and level
  *     &#64;RegisterExtension
- *     private static final LOGGING_EXTENSION extension = new LoggingExtension(
+ *     private static final LoggingExtension LOGGING_EXTENSION = new LoggingExtension(
  *         MyClass.getLogger(),
  *         Level.INFO
  *     );
@@ -61,14 +61,14 @@ import java.util.logging.Logger;
  *     private static final TestLogHandler TEST_LOG_HANDLER = new TestLogHandler();
  *
  *     &#64;RegisterExtension
- *     private static final LOGGING_EXTENSION extension = new LoggingExtension(
+ *     private static final LoggingExtension LOGGING_EXTENSION = new LoggingExtension(
  *         LOGGER,
  *         TEST_LOG_HANDLER,
  *     );
  *
  *     // Custom logger with existing handler and level override
  *     &#64;RegisterExtension
- *     private static final LOGGING_EXTENSION extension = new LoggingExtension(
+ *     private static final LoggingExtension LOGGING_EXTENSION = new LoggingExtension(
  *         MyClass.getLogger(),
  *         myExistingHandler,
  *         Level.WARNING
