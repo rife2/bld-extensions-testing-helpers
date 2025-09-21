@@ -47,7 +47,7 @@ import java.util.logging.Logger;
  *
  *     // Custom logger with default level
  *     &#64;RegisterExtension
- *     private static final LoggingExtension LOGGING_EXTENSION = new LoggingExtension("MyCustomLogger"));
+ *     private static final LoggingExtension LOGGING_EXTENSION = new LoggingExtension("MyCustomLogger");
  *
  *     // Custom logger and level
  *     &#64;RegisterExtension
