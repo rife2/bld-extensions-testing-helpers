@@ -48,7 +48,8 @@ public class TestingHelpersBuild extends Project {
         var junitPlatform = dependency("org.junit.platform", "junit-platform-console-standalone",
                 version(1, 13, 4));
         scope(compile)
-                .include(dependency("org.jetbrains:annotations:26.0.2"));
+                .include(dependency("org.jetbrains", "annotations",
+                        version(26, 0, 2)));
         scope(provided)
                 .include(junit)
                 .include(junitPlatform);
@@ -56,7 +57,7 @@ public class TestingHelpersBuild extends Project {
                 .include(junit)
                 .include(junitPlatform)
                 .include(dependency("org.mockito", "mockito-junit-jupiter",
-                        version(5, 19, 0)));
+                        version(5, 20, 0)));
 
         javadocOperation()
                 .javadocOptions()
