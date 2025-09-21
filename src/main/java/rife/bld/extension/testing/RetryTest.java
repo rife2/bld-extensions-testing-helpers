@@ -24,21 +24,24 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Annotation to mark a test method for retry on failure.
+ * JUnit annotation to mark a test method for retry on failure.
  * <p>
  * When a test fails, it will be retried up to the specified number of times.
- * This annotation automatically includes the RetryExtension, so no additional
+ * <p>
+ * This annotation automatically includes the {@link RetryExtension}, so no additional
  * {@code @ExtendWith} annotation is required.
  *
- * <p>Usage example:
- * <pre>
- * {@code
- * @RetryTest(3)
+ * <h4>Usage example:</h4>
+ *
+ * <blockquote><pre>
+ * &#64;RetryTest(3)
  * void unstableTest() {
  *     // Test code that might fail intermittently
- * }
- * }
- * </pre>
+ * }</pre></blockquote>
+ *
+ * @author <a href="https://erik.thauvin.net/">Erik C. Thauvin</a>
+ * @see RetryExtension
+ * @since 1.0
  */
 @Target(ElementType.METHOD)
 @Retention(RetentionPolicy.RUNTIME)

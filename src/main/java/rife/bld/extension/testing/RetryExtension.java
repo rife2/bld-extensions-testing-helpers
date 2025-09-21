@@ -27,12 +27,12 @@ import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 /**
- * JUnit 5 extension that provides retry functionality for failing tests.
+ * JUnit extension that provides retry functionality for failing tests.
  * <p>
  * This extension implements {@link TestTemplateInvocationContextProvider} to create
  * multiple invocations of a test method when failures occur.
- *
- * <p>The extension works by:
+ * <p>
+ * The extension works by:
  * <ol>
  *   <li>Detecting methods annotated with {@link RetryTest @RetryTest}</li>
  *   <li>Creating multiple test invocation contexts</li>
@@ -40,7 +40,12 @@ import java.util.stream.Stream;
  *   <li>Stopping retries when a test passes or max retries are reached</li>
  * </ol>
  *
- * <p>Usage: Apply the @RetryTest annotation to test methods that should be retried on failure.
+ * <p>
+ * Usage: Apply the {@link RetryTest @RetryTest} annotation to test methods that should be retried on failure.
+ *
+ * @author <a href="https://erik.thauvin.net/">Erik C. Thauvin</a>
+ * @see RetryTest
+ * @since 1.0
  */
 public class RetryExtension implements TestTemplateInvocationContextProvider {
     /**
@@ -56,10 +61,10 @@ public class RetryExtension implements TestTemplateInvocationContextProvider {
     /**
      * Determines if this extension supports the given test context.
      * <p>
-     * Returns true if the test method is annotated with {@link RetryTest @RetryTest}.
+     * Returns {@code true} if the test method is annotated with {@link RetryTest @RetryTest}.
      *
      * @param context the extension context for the test
-     * @return true if the test method has {@link RetryTest @RetryTest} annotation, false otherwise
+     * @return {@code true} if the test method is annotated with {@link RetryTest @RetryTest}, {@code false} otherwise
      */
     @Override
     public boolean supportsTestTemplate(ExtensionContext context) {
