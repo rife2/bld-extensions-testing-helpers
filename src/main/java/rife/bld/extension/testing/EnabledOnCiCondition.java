@@ -21,11 +21,11 @@ import org.junit.jupiter.api.extension.ExecutionCondition;
 import org.junit.jupiter.api.extension.ExtensionContext;
 
 /**
- * Implementation of JUnit's {@link ExecutionCondition} to conditionally disable tests when running in a CI/CD
+ * Implementation of JUnit's {@link ExecutionCondition} to conditionally enable tests when running in a CI/CD
  * environment.
  * <p>
  * This condition determines whether a test or test container should be enabled or disabled based on the presence of
- * the {@code CI} environment variable. If the variable is set, the condition disables the test; otherwise, it enables
+ * the {@code CI} environment variable. If the variable is set, the condition enables the test; otherwise, it disables
  * the test.
  * <p>
  * The presence of the {@code CI} environment variable is typically an indicator that the code is running in a CI/CD
@@ -35,30 +35,21 @@ import org.junit.jupiter.api.extension.ExtensionContext;
  * @author <a href="https://erik.thauvin.net/">Erik C. Thauvin</a>
  * @since 1.0
  */
-public class DisabledOnCiCondition implements ExecutionCondition {
-    /**
-     * Returns {@code true} if the environment variable {@code CI} is set.
-     *
-     * @return {@code true} if the environment variable {@code CI} is set, {@code false} otherwise
-     */
-    public static boolean isCi() {
-        return System.getenv("CI") != null;
-    }
-
+public class EnabledOnCiCondition implements ExecutionCondition {
     /**
      * Evaluates whether the execution of a test should be enabled or disabled based on the CI environment.
      * <p>
-     * Returns a disabled state if the test is running in a CI/CD environment, otherwise returns an enabled state.
+     * Returns an enabled state if the test is running in a CI/CD environment, otherwise returns a disabled state.
      *
      * @param context the {@link ExtensionContext} for the current test or container
      * @return a {@link ConditionEvaluationResult} indicating whether the test is enabled or disabled
      */
     @Override
     public ConditionEvaluationResult evaluateExecutionCondition(ExtensionContext context) {
-        if (isCi()) {
-            return ConditionEvaluationResult.disabled("Test disabled in CI/CD environment.");
+        if (DisabledOnCiCondition.isCi()) {
+            return ConditionEvaluationResult.enabled("Test enabled in CI/CD environment.");
         } else {
-            return ConditionEvaluationResult.enabled("Test enabled in non CI/CD environment.");
+            return ConditionEvaluationResult.disabled("Test disabled in non CI/CD environment.");
         }
     }
 }
