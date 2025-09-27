@@ -33,7 +33,8 @@ import static rife.bld.operations.JavadocOptions.DocLinkOption.NO_MISSING;
 public class TestingHelpersBuild extends Project {
     public TestingHelpersBuild() {
         pkg = "rife.bld.extension";
-        name = "bld-extensions-testing-helpers";
+        name = "Extensions Testing Helpers";
+        archiveBaseName = "bld-extensions-testing-helpers";
         version = version(0, 9, 3, "SNAPSHOT");
 
         javaRelease = 17;
@@ -71,9 +72,9 @@ public class TestingHelpersBuild extends Project {
                 .repository(repository("github"))
                 .info()
                 .groupId("com.uwyn.rife2")
-                .artifactId("bld-extensions-testing-helpers")
+                .artifactId(archiveBaseName)
                 .description("Testing Helpers for bld Extensions")
-                .url("https://github.com/rife2/bld-extensions-testing-helpers")
+                .url("https://github.com/rife2/" + archiveBaseName)
                 .developer(new PublishDeveloper()
                         .id("ethauvin")
                         .name("Erik C. Thauvin")
@@ -85,9 +86,9 @@ public class TestingHelpersBuild extends Project {
                         .url("https://www.apache.org/licenses/LICENSE-2.0.txt")
                 )
                 .scm(new PublishScm()
-                        .connection("scm:git:https://github.com/rife2/bld-extensions-testing-helpers.git")
-                        .developerConnection("scm:git:git@github.com:rife2/bld-extensions-testing-helpers.git")
-                        .url("https://github.com/rife2/bld-extensions-testing-helpers")
+                        .connection("scm:git:https://github.com/rife2/" + archiveBaseName + ".git")
+                        .developerConnection("scm:git:git@github.com:rife2/" + archiveBaseName + ".git")
+                        .url("https://github.com/rife2/" + archiveBaseName)
                 )
                 .signKey(property("sign.key"))
                 .signPassphrase(property("sign.passphrase"));
