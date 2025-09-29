@@ -35,7 +35,7 @@ public class TestingHelpersBuild extends Project {
         pkg = "rife.bld.extension";
         name = "Extensions Testing Helpers";
         archiveBaseName = "bld-extensions-testing-helpers";
-        version = version(0, 9, 3);
+        version = version(0, 9, 4, "SNAPSHOT");
 
         javaRelease = 17;
 
