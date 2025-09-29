@@ -27,16 +27,22 @@ import java.lang.annotation.Target;
  * JUnit annotation to mark a test method for retry on failure.
  * <p>
  * When a test fails, it will be retried up to the specified number of times.
+ * Optionally, a wait period can be specified between retry attempts.
  * <p>
  * This annotation automatically includes the {@link RetryExtension}, so no additional
  * {@code @ExtendWith} annotation is required.
  *
- * <h4>Usage example:</h4>
+ * <h4>Usage examples:</h4>
  *
  * <blockquote><pre>
  * &#64;RetryTest(3)
  * void unstableTest() {
  *     // Test code that might fail intermittently
+ * }
+ *
+ * &#64;RetryTest(value = 5, delay = 2)
+ * void testWithDelay() {
+ *     // Test that waits 2 seconds between retry attempts
  * }</pre></blockquote>
  *
  * @author <a href="https://erik.thauvin.net/">Erik C. Thauvin</a>
@@ -63,5 +69,15 @@ public @interface RetryTest {
      * @return the number of retry attempts. Must be greater than 0
      */
     int value() default 3;
-}
 
+    /**
+     * The number of seconds to wait between retry attempts.
+     * <p>
+     * If set to 0 (default), no wait occurs between retries.
+     * This can be useful for tests that interact with external systems
+     * that may need time to recover or stabilize.
+     *
+     * @return the wait time in seconds between retry attempts
+     */
+    int delay() default 0;
+}

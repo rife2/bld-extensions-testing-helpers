@@ -37,6 +37,7 @@ import java.util.stream.Stream;
  *   <li>Detecting methods annotated with {@link RetryTest @RetryTest}</li>
  *   <li>Creating multiple test invocation contexts</li>
  *   <li>Tracking failures and successes across invocations</li>
+ *   <li>Optionally waiting between retry attempts</li>
  *   <li>Stopping retries when a test passes or max retries are reached</li>
  * </ol>
  *
@@ -57,6 +58,11 @@ public class RetryExtension implements TestTemplateInvocationContextProvider {
      * Store key for tracking whether the test has passed in any previous attempt.
      */
     private static final String TEST_PASSED_KEY = "testPassed";
+
+    /**
+     * Store key for tracking the delay time in seconds between retry attempts.
+     */
+    private static final String DELAY_SECONDS_KEY = "delaySeconds";
 
     /**
      * Determines if this extension supports the given test context.
@@ -87,14 +93,16 @@ public class RetryExtension implements TestTemplateInvocationContextProvider {
 
         var maxAttempts = retryTest.value() + 1; // +1 for the initial attempt
         var testName = retryTest.name().isEmpty() ? context.getDisplayName() : retryTest.name();
+        var delaySeconds = retryTest.delay();
 
         // Initialize context store values
         var store = context.getStore(ExtensionContext.Namespace.create(getClass(), context.getRequiredTestMethod()));
         store.put(MAX_ATTEMPTS_KEY, maxAttempts);
         store.put(TEST_PASSED_KEY, false);
+        store.put(DELAY_SECONDS_KEY, delaySeconds);
 
         return IntStream.rangeClosed(1, maxAttempts)
-                .mapToObj(attempt -> new RetryInvocationContext(testName, attempt, maxAttempts));
+                .mapToObj(attempt -> new RetryInvocationContext(testName, attempt, maxAttempts, delaySeconds));
     }
 
     /**
@@ -115,6 +123,10 @@ public class RetryExtension implements TestTemplateInvocationContextProvider {
          * The maximum number of attempts allowed.
          */
         private final int maxAttempts;
+        /**
+         * The number of seconds to wait before retry attempts.
+         */
+        private final int delaySeconds;
 
         /**
          * Creates a new retry invocation context.
@@ -122,11 +134,13 @@ public class RetryExtension implements TestTemplateInvocationContextProvider {
          * @param testName       the base name of the test
          * @param currentAttempt the current attempt number (1-based)
          * @param maxAttempts    the maximum number of attempts
+         * @param delaySeconds   the number of seconds to wait before retry attempts
          */
-        public RetryInvocationContext(String testName, int currentAttempt, int maxAttempts) {
+        public RetryInvocationContext(String testName, int currentAttempt, int maxAttempts, int delaySeconds) {
             this.displayName = String.format("%s (attempt %d/%d)", testName, currentAttempt, maxAttempts);
             this.currentAttempt = currentAttempt;
             this.maxAttempts = maxAttempts;
+            this.delaySeconds = delaySeconds;
         }
 
         /**
@@ -148,7 +162,7 @@ public class RetryExtension implements TestTemplateInvocationContextProvider {
          */
         @Override
         public List<org.junit.jupiter.api.extension.Extension> getAdditionalExtensions() {
-            return List.of(new RetryExceptionHandler(currentAttempt, maxAttempts));
+            return List.of(new RetryExceptionHandler(currentAttempt, maxAttempts, delaySeconds));
         }
     }
 
@@ -157,23 +171,26 @@ public class RetryExtension implements TestTemplateInvocationContextProvider {
      * <p>
      * This handler decides whether to retry a test or let the failure propagate
      * based on the current attempt number and whether previous attempts succeeded.
+     * If configured, it will wait for a specified duration before allowing a retry.
      *
      * @param currentAttempt The current attempt number for this invocation.
      * @param maxAttempts    The maximum number of attempts allowed.
+     * @param delaySeconds   The number of seconds to wait before retry attempts.
      */
-    private record RetryExceptionHandler(int currentAttempt, int maxAttempts)
+    private record RetryExceptionHandler(int currentAttempt, int maxAttempts, int delaySeconds)
             implements TestExecutionExceptionHandler {
         /**
          * Handles exceptions thrown during test execution.
          * <p>
          * Decides whether to suppress the exception (for retry) or let it propagate.
+         * If suppressing for retry and a delay time is configured, waits before returning.
          *
          * @param context   the extension context
          * @param throwable the exception that was thrown
          * @throws Throwable the original exception if no more retries are available
          */
         @Override
-        @SuppressWarnings("PMD.SystemPrintln")
+        @SuppressWarnings({"PMD.SystemPrintln", "PMD.DoNotUseThreads", "PMD.AvoidThrowingRawExceptionTypes"})
         public void handleTestExecutionException(ExtensionContext context, Throwable throwable) throws Throwable {
             var store = context.getStore(
                     ExtensionContext.Namespace.create(
@@ -196,6 +213,17 @@ public class RetryExtension implements TestTemplateInvocationContextProvider {
             // Log the failure for debugging purposes
             System.err.printf("Test failed on attempt %d/%d: %s%n",
                     currentAttempt, maxAttempts, throwable.getMessage());
+
+            // Wait before the next retry if configured
+            if (delaySeconds > 0) {
+                try {
+                    System.err.printf("Waiting %d second(s) before retry...%n", delaySeconds);
+                    Thread.sleep(delaySeconds * 1000L);
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                    throw new RuntimeException("Retry delay was interrupted", e);
+                }
+            }
         }
     }
 }
