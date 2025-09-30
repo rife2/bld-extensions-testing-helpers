@@ -61,27 +61,17 @@ import java.lang.reflect.InvocationTargetException;
  */
 public class RetryExtension implements TestExecutionExceptionHandler {
     /**
-     * Handle the supplied {@link Throwable throwable}.
+     * Handles test execution exceptions, allowing retry mechanisms for a test method
+     * annotated with {@code @RetryTest}. This method retries the test execution up to
+     * a specified number of attempts and introduces optional delays between retries.
+     * <p>
+     * If the test is not annotated with {@code @RetryTest}, the exception is rethrown
+     * immediately. If all retry attempts fail, the last exception is thrown.
      *
-     * <p>Implementors must perform one of the following.
-     * <ol>
-     * <li>Swallow the supplied {@code throwable}, thereby preventing propagation.</li>
-     * <li>Rethrow the supplied {@code throwable} <em>as is</em>.</li>
-     * <li>Throw a new exception, potentially wrapping the supplied {@code throwable}.</li>
-     * </ol>
-     *
-     * <p>If the supplied {@code throwable} is swallowed, subsequent
-     * {@code TestExecutionExceptionHandlers} will not be invoked; otherwise,
-     * the next registered {@code TestExecutionExceptionHandler} (if there is
-     * one) will be invoked with any {@link Throwable} thrown by this handler.
-     *
-     * <p>Note that the {@link ExtensionContext#getExecutionException() execution
-     * exception} in the supplied {@code ExtensionContext} will <em>not</em>
-     * contain the {@code Throwable} thrown during invocation of the corresponding
-     * {@code @Test} method.
-     *
-     * @param extensionContext the current extension context; never {@code null}
-     * @param throwable the {@code Throwable} to handle; never {@code null}
+     * @param extensionContext the context in which the current test is executed,
+     *                         providing information about the test method and instance
+     * @param throwable        the exception thrown during the initial execution of the test
+     * @throws Throwable if the test exhausts all retry attempts or is not eligible for retry
      */
     @Override
     @SuppressWarnings({"PMD.AvoidInstanceofChecksInCatchClause", "PMD.AvoidCatchingThrowable", "PMD.DoNotUseThreads"})
