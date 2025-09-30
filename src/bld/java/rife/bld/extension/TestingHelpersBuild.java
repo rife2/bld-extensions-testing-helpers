@@ -44,18 +44,17 @@ public class TestingHelpersBuild extends Project {
 
         repositories = List.of(MAVEN_CENTRAL, RIFE2_RELEASES);
 
-        var junit = dependency("org.junit.jupiter", "junit-jupiter",
-                version(5, 13, 4));
-        var junitPlatform = dependency("org.junit.platform", "junit-platform-console-standalone",
-                version(1, 13, 4));
+        var junit = version(6, 0, 0);
+        var junitJupiter = dependency("org.junit.jupiter", "junit-jupiter", junit);
+        var junitPlatform = dependency("org.junit.platform", "junit-platform-console-standalone", junit);
         scope(compile)
                 .include(dependency("org.jetbrains", "annotations",
                         version(26, 0, 2)));
         scope(provided)
-                .include(junit)
+                .include(junitJupiter)
                 .include(junitPlatform);
         scope(test)
-                .include(junit)
+                .include(junitJupiter)
                 .include(junitPlatform)
                 .include(dependency("org.mockito", "mockito-junit-jupiter",
                         version(5, 20, 0)));
