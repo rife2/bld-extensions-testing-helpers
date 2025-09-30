@@ -62,8 +62,8 @@ import java.lang.reflect.InvocationTargetException;
 public class RetryExtension implements TestExecutionExceptionHandler {
     /**
      * Handles test execution exceptions, allowing retry mechanisms for a test method
-     * annotated with {@code @RetryTest}. This method retries the test execution up to
-     * a specified number of attempts and introduces optional delays between retries.
+     * annotated with {@link RetryTest @RetryTest}. This method retries the test execution
+     * up to a specified number of attempts and introduces optional delays between retries.
      * <p>
      * If the test is not annotated with {@code @RetryTest}, the exception is rethrown
      * immediately. If all retry attempts fail, the last exception is thrown.

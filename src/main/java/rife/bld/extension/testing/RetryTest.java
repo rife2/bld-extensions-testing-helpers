@@ -56,7 +56,7 @@ public @interface RetryTest {
     /**
      * The number of seconds to wait between retry attempts.
      * <p>
-     * If set to 0 (default), no wait occurs between retries.
+     * If set to {@code 0} (default), no wait occurs between retries.
      * This can be useful for tests that interact with external systems
      * that may need time to recover or stabilize.
      *
