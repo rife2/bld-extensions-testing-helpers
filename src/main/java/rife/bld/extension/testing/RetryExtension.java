@@ -18,212 +18,118 @@ package rife.bld.extension.testing;
 
 import org.junit.jupiter.api.extension.ExtensionContext;
 import org.junit.jupiter.api.extension.TestExecutionExceptionHandler;
-import org.junit.jupiter.api.extension.TestTemplateInvocationContext;
-import org.junit.jupiter.api.extension.TestTemplateInvocationContextProvider;
-import org.junit.platform.commons.support.AnnotationSupport;
 
-import java.util.List;
-import java.util.stream.IntStream;
-import java.util.stream.Stream;
+import java.lang.reflect.InvocationTargetException;
 
 /**
- * JUnit extension that provides retry functionality for failing tests.
+ * JUnit extension that handles retry logic for test methods annotated
+ * with the {@link RetryTest} annotation.
  * <p>
- * This extension implements {@link TestTemplateInvocationContextProvider} to create
- * multiple invocations of a test method when failures occur.
+ * This extension will execute a test method multiple times on failure
+ * based on the parameters specified in the {@link RetryTest} annotation.
+ * It also supports adding a delay between retries to allow external
+ * systems or resources to stabilize.
  * <p>
- * The extension works by:
- * <ol>
- *   <li>Detecting methods annotated with {@link RetryTest @RetryTest}</li>
- *   <li>Creating multiple test invocation contexts</li>
- *   <li>Tracking failures and successes across invocations</li>
- *   <li>Optionally waiting between retry attempts</li>
- *   <li>Stopping retries when a test passes or max retries are reached</li>
- * </ol>
- *
+ * The extension uses {@link TestExecutionExceptionHandler} to intercept
+ * and handle exceptions thrown during test execution. If the test succeeds
+ * in any of the retry attempts, it is marked as passed. Otherwise, the
+ * last exception thrown is re-thrown to indicate failure.
  * <p>
- * Usage: Apply the {@link RetryTest @RetryTest} annotation to test methods that should be retried on failure.
+ * Features:
+ * <ul>
+ * <li>Retries a test upon failure, up to the specified maximum attempts.</li>
+ * <li>Optionally introduces a delay between retry attempts.</li>
+ * <li>Reports the failure count and exception details for each retry on the console.</li>
+ * </ul>
+ * <p>
+ * Exceptions encountered during the retry process are carefully handled:
+ * <ul>
+ * <li>If a retry is interrupted during the delay, the thread is re-interrupted,
+ * and the {@link InterruptedException} is added as a suppressed exception.</li>
+ * <li>The original or last exception encountered is re-thrown when retries are exhausted.</li>
+ * </ul>
+ * <p>
+ * This extension operates on individual test methods and requires them
+ * to be annotated with {@link RetryTest} to activate the retry logic.
+ * <p>
+ * <strong>Note:</strong> Runtime exceptions during retries, such as {@link InvocationTargetException},
+ * are unwrapped to reveal the underlying cause.
  *
  * @author <a href="https://erik.thauvin.net/">Erik C. Thauvin</a>
- * @see RetryTest
+ * @author <a href="https://glaforge.dev/posts/2024/09/01/a-retryable-junit-5-extension/">Guillaume Laforge</a>
  * @since 1.0
  */
-public class RetryExtension implements TestTemplateInvocationContextProvider {
+public class RetryExtension implements TestExecutionExceptionHandler {
     /**
-     * Store key for tracking the maximum number of attempts in the extension context.
-     */
-    private static final String MAX_ATTEMPTS_KEY = "maxAttempts";
-
-    /**
-     * Store key for tracking whether the test has passed in any previous attempt.
-     */
-    private static final String TEST_PASSED_KEY = "testPassed";
-
-    /**
-     * Store key for tracking the delay time in seconds between retry attempts.
-     */
-    private static final String DELAY_SECONDS_KEY = "delaySeconds";
-
-    /**
-     * Determines if this extension supports the given test context.
-     * <p>
-     * Returns {@code true} if the test method is annotated with {@link RetryTest @RetryTest}.
+     * Handle the supplied {@link Throwable throwable}.
      *
-     * @param context the extension context for the test
-     * @return {@code true} if the test method is annotated with {@link RetryTest @RetryTest}, {@code false} otherwise
+     * <p>Implementors must perform one of the following.
+     * <ol>
+     * <li>Swallow the supplied {@code throwable}, thereby preventing propagation.</li>
+     * <li>Rethrow the supplied {@code throwable} <em>as is</em>.</li>
+     * <li>Throw a new exception, potentially wrapping the supplied {@code throwable}.</li>
+     * </ol>
+     *
+     * <p>If the supplied {@code throwable} is swallowed, subsequent
+     * {@code TestExecutionExceptionHandlers} will not be invoked; otherwise,
+     * the next registered {@code TestExecutionExceptionHandler} (if there is
+     * one) will be invoked with any {@link Throwable} thrown by this handler.
+     *
+     * <p>Note that the {@link ExtensionContext#getExecutionException() execution
+     * exception} in the supplied {@code ExtensionContext} will <em>not</em>
+     * contain the {@code Throwable} thrown during invocation of the corresponding
+     * {@code @Test} method.
+     *
+     * @param extensionContext the current extension context; never {@code null}
+     * @param throwable the {@code Throwable} to handle; never {@code null}
      */
     @Override
-    public boolean supportsTestTemplate(ExtensionContext context) {
-        return AnnotationSupport.isAnnotated(context.getTestMethod(), RetryTest.class);
-    }
+    @SuppressWarnings({"PMD.AvoidInstanceofChecksInCatchClause", "PMD.AvoidCatchingThrowable", "PMD.DoNotUseThreads"})
+    public void handleTestExecutionException(ExtensionContext extensionContext, Throwable throwable) throws Throwable {
+        var testMethodOpt = extensionContext.getTestMethod();
+        if (testMethodOpt.isEmpty()) {
+            throw throwable;
+        }
+        var method = testMethodOpt.get();
+        var retryTest = method.getAnnotation(RetryTest.class);
 
-    /**
-     * Provides invocation contexts for retry attempts.
-     * <p>
-     * Creates a stream of invocation contexts based on the retry count specified
-     * in the {@link RetryTest @RetryTest} annotation.
-     *
-     * @param context the extension context for the test
-     * @return a stream of {@link TestTemplateInvocationContext} for each retry attempt
-     */
-    @Override
-    public Stream<TestTemplateInvocationContext> provideTestTemplateInvocationContexts(ExtensionContext context) {
-        var retryTest = AnnotationSupport.findAnnotation(context.getTestMethod(), RetryTest.class)
-                .orElseThrow(() -> new IllegalStateException("@RetryTest annotation not found"));
-
-        var maxAttempts = retryTest.value() + 1; // +1 for the initial attempt
-        var testName = retryTest.name().isEmpty() ? context.getDisplayName() : retryTest.name();
-        var delaySeconds = retryTest.delay();
-
-        // Initialize context store values
-        var store = context.getStore(ExtensionContext.Namespace.create(getClass(), context.getRequiredTestMethod()));
-        store.put(MAX_ATTEMPTS_KEY, maxAttempts);
-        store.put(TEST_PASSED_KEY, false);
-        store.put(DELAY_SECONDS_KEY, delaySeconds);
-
-        return IntStream.rangeClosed(1, maxAttempts)
-                .mapToObj(attempt -> new RetryInvocationContext(testName, attempt, maxAttempts, delaySeconds));
-    }
-
-    /**
-     * Internal class representing a single invocation context for a retry attempt.
-     * <p>
-     * Each instance represents one execution attempt of the test method.
-     */
-    private static class RetryInvocationContext implements TestTemplateInvocationContext {
-        /**
-         * The current attempt number (1-based).
-         */
-        private final int currentAttempt;
-        /**
-         * The display name for this invocation.
-         */
-        private final String displayName;
-        /**
-         * The maximum number of attempts allowed.
-         */
-        private final int maxAttempts;
-        /**
-         * The number of seconds to wait before retry attempts.
-         */
-        private final int delaySeconds;
-
-        /**
-         * Creates a new retry invocation context.
-         *
-         * @param testName       the base name of the test
-         * @param currentAttempt the current attempt number (1-based)
-         * @param maxAttempts    the maximum number of attempts
-         * @param delaySeconds   the number of seconds to wait before retry attempts
-         */
-        public RetryInvocationContext(String testName, int currentAttempt, int maxAttempts, int delaySeconds) {
-            this.displayName = String.format("%s (attempt %d/%d)", testName, currentAttempt, maxAttempts);
-            this.currentAttempt = currentAttempt;
-            this.maxAttempts = maxAttempts;
-            this.delaySeconds = delaySeconds;
+        if (retryTest == null) {
+            throw throwable;
         }
 
-        /**
-         * Returns the display name for this invocation attempt.
-         *
-         * @return formatted string showing the attempt number
-         */
-        @Override
-        public String getDisplayName(int invocationIndex) {
-            return displayName;
-        }
+        int maxExecutions = retryTest.value();
+        int delaySeconds = retryTest.delay();
+        var lastThrown = throwable;
 
-        /**
-         * Provides additional extensions for this invocation.
-         * <p>
-         * Returns the retry exception handler that manages failure logic.
-         *
-         * @return list containing the retry exception handler
-         */
-        @Override
-        public List<org.junit.jupiter.api.extension.Extension> getAdditionalExtensions() {
-            return List.of(new RetryExceptionHandler(currentAttempt, maxAttempts, delaySeconds));
-        }
-    }
+        for (var i = 1; i < maxExecutions; i++) {
+            printError(lastThrown, i);
 
-    /**
-     * Exception handler that manages retry logic for failed test attempts
-     * <p>
-     * This handler decides whether to retry a test or let the failure propagate
-     * based on the current attempt number and whether previous attempts succeeded.
-     * If configured, it will wait for a specified duration before allowing a retry.
-     *
-     * @param currentAttempt The current attempt number for this invocation.
-     * @param maxAttempts    The maximum number of attempts allowed.
-     * @param delaySeconds   The number of seconds to wait before retry attempts.
-     */
-    private record RetryExceptionHandler(int currentAttempt, int maxAttempts, int delaySeconds)
-            implements TestExecutionExceptionHandler {
-        /**
-         * Handles exceptions thrown during test execution.
-         * <p>
-         * Decides whether to suppress the exception (for retry) or let it propagate.
-         * If suppressing for retry and a delay time is configured, waits before returning.
-         *
-         * @param context   the extension context
-         * @param throwable the exception that was thrown
-         * @throws Throwable the original exception if no more retries are available
-         */
-        @Override
-        @SuppressWarnings({"PMD.SystemPrintln", "PMD.DoNotUseThreads", "PMD.AvoidThrowingRawExceptionTypes"})
-        public void handleTestExecutionException(ExtensionContext context, Throwable throwable) throws Throwable {
-            var store = context.getStore(
-                    ExtensionContext.Namespace.create(
-                            RetryExtension.class,
-                            context.getRequiredTestMethod()
-                    ));
-            var testPassed = (Boolean) store.get(TEST_PASSED_KEY);
-
-            // If the test passed in a previous attempt, don't execute remaining attempts
-            if (Boolean.TRUE.equals(testPassed)) {
-                return;
-            }
-
-            // If this is the last attempt, let the exception propagate
-            if (currentAttempt >= maxAttempts) {
-                throw throwable;
-            }
-
-            // Otherwise, suppress the exception to allow retrying
-            // Log the failure for debugging purposes
-            System.err.printf("Test failed on attempt %d/%d: %s%n",
-                    currentAttempt, maxAttempts, throwable.getMessage());
-
-            // Wait before the next retry if configured
             if (delaySeconds > 0) {
                 try {
-                    System.err.printf("Waiting %d second(s) before retry...%n", delaySeconds);
                     Thread.sleep(delaySeconds * 1000L);
                 } catch (InterruptedException e) {
                     Thread.currentThread().interrupt();
-                    throw new RuntimeException("Retry delay was interrupted", e);
+                    lastThrown.addSuppressed(e);
+                    throw lastThrown;
                 }
             }
+
+            try {
+                method.invoke(extensionContext.getRequiredTestInstance());
+                // Succeeded, so return and mark the test as passed.
+                return;
+            } catch (Throwable t) {
+                lastThrown = t instanceof InvocationTargetException ? t.getCause() : t;
+            }
         }
+
+        printError(lastThrown, maxExecutions);
+        throw lastThrown;
+    }
+
+    @SuppressWarnings("PMD.SystemPrintln")
+    private void printError(Throwable e, int count) {
+        System.err.printf(
+                "Retry #%d failed (%s thrown): %s%n", count, e.getClass().getName(), e.getMessage());
     }
 }

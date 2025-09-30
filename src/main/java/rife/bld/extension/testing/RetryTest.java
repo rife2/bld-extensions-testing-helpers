@@ -54,6 +54,17 @@ import java.lang.annotation.Target;
 @ExtendWith(RetryExtension.class)
 public @interface RetryTest {
     /**
+     * The number of seconds to wait between retry attempts.
+     * <p>
+     * If set to 0 (default), no wait occurs between retries.
+     * This can be useful for tests that interact with external systems
+     * that may need time to recover or stabilize.
+     *
+     * @return the wait time in seconds between retry attempts
+     */
+    int delay() default 0;
+
+    /**
      * Optional name for the test template. If not specified,
      * a default name will be generated.
      *
@@ -64,20 +75,9 @@ public @interface RetryTest {
     /**
      * The maximum number of retry attempts for a failing test.
      * <p>
-     * The test will be executed at most (value + 1) times in total.
+     * The test will be executed at most {@code value()} times after the initial failure.
      *
      * @return the number of retry attempts. Must be greater than 0
      */
     int value() default 3;
-
-    /**
-     * The number of seconds to wait between retry attempts.
-     * <p>
-     * If set to 0 (default), no wait occurs between retries.
-     * This can be useful for tests that interact with external systems
-     * that may need time to recover or stabilize.
-     *
-     * @return the wait time in seconds between retry attempts
-     */
-    int delay() default 0;
 }
