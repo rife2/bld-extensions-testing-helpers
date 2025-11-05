@@ -40,7 +40,7 @@ class LoggingExtensionTests {
             var f = LoggingExtension.class.getDeclaredField(field);
             f.setAccessible(true);
             return f.get(obj);
-        } catch (Exception e) {
+        } catch (NoSuchFieldException | IllegalAccessException e) {
             throw new RuntimeException("Failed to get field: " + field, e);
         }
     }

@@ -63,7 +63,7 @@ import java.util.logging.Logger;
  *     &#64;RegisterExtension
  *     private static final LoggingExtension LOGGING_EXTENSION = new LoggingExtension(
  *         LOGGER,
- *         TEST_LOG_HANDLER,
+ *         TEST_LOG_HANDLER
  *     );
  *
  *     // Custom logger with existing handler and level override

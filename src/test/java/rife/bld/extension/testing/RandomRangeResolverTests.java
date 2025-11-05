@@ -76,7 +76,7 @@ class RandomRangeResolverTests {
                 var m = RandomRangeResolver.class.getDeclaredMethod("generateRandomValue", RandomRange.class);
                 m.setAccessible(true);
                 return m.invoke(resolver, ann);
-            } catch (Exception e) {
+            } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
                 throw new RuntimeException(e);
             }
         }

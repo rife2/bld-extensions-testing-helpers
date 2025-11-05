@@ -23,12 +23,12 @@ import java.lang.reflect.InvocationTargetException;
 
 /**
  * JUnit extension that handles retry logic for test methods annotated
- * with the {@link RetryTest} annotation.
+ * with the {@link RetryTest @RetryTest} annotation.
  * <p>
  * This extension will execute a test method multiple times on failure
- * based on the parameters specified in the {@link RetryTest} annotation.
- * It also supports adding a delay between retries to allow external
- * systems or resources to stabilize.
+ * based on the parameters specified in the {@link RetryTest @RetryTest}
+ * annotation. It also supports adding a delay between retries to allow
+ * external systems or resources to stabilize.
  * <p>
  * The extension uses {@link TestExecutionExceptionHandler} to intercept
  * and handle exceptions thrown during test execution. If the test succeeds
@@ -50,7 +50,7 @@ import java.lang.reflect.InvocationTargetException;
  * </ul>
  * <p>
  * This extension operates on individual test methods and requires them
- * to be annotated with {@link RetryTest} to activate the retry logic.
+ * to be annotated with {@link RetryTest @RetryTest} to activate the retry logic.
  * <p>
  * <strong>Note:</strong> Runtime exceptions during retries, such as {@link InvocationTargetException},
  * are unwrapped to reveal the underlying cause.
@@ -65,8 +65,8 @@ public class RetryExtension implements TestExecutionExceptionHandler {
      * annotated with {@link RetryTest @RetryTest}. This method retries the test execution
      * up to a specified number of attempts and introduces optional delays between retries.
      * <p>
-     * If the test is not annotated with {@code @RetryTest}, the exception is rethrown
-     * immediately. If all retry attempts fail, the last exception is thrown.
+     * If the test is not annotated with {@link RetryTest @RetryTest}, the exception is
+     * rethrown immediately. If all retry attempts fail, the last exception is thrown.
      *
      * @param extensionContext the context in which the current test is executed,
      *                         providing information about the test method and instance
@@ -74,7 +74,8 @@ public class RetryExtension implements TestExecutionExceptionHandler {
      * @throws Throwable if the test exhausts all retry attempts or is not eligible for retry
      */
     @Override
-    @SuppressWarnings({"PMD.AvoidInstanceofChecksInCatchClause", "PMD.AvoidCatchingThrowable", "PMD.DoNotUseThreads"})
+    @SuppressWarnings({"PMD.AvoidInstanceofChecksInCatchClause", "PMD.DoNotUseThreads",
+            "PMD.AvoidCatchingGenericException"})
     public void handleTestExecutionException(ExtensionContext extensionContext, Throwable throwable) throws Throwable {
         var testMethodOpt = extensionContext.getTestMethod();
         if (testMethodOpt.isEmpty()) {
