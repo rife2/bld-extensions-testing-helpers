@@ -44,7 +44,7 @@ public class TestingHelpersBuild extends Project {
 
         repositories = List.of(MAVEN_CENTRAL, RIFE2_RELEASES);
 
-        var junit = version(6, 0, 0);
+        var junit = version(6, 0, 1);
         var junitJupiter = dependency("org.junit.jupiter", "junit-jupiter", junit);
         var junitPlatform = dependency("org.junit.platform", "junit-platform-console-standalone", junit);
         scope(compile)
