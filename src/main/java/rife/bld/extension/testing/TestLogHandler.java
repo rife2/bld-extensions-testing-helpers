@@ -255,6 +255,108 @@ public class TestLogHandler extends Handler {
     }
 
     /**
+     * Prints all captured log messages to standard output.
+     * <p>
+     * Each message is printed on a separate line in the order it was logged.
+     */
+    @SuppressWarnings("PMD.SystemPrintln")
+    public void printLogMessages() {
+        logRecords.forEach(record -> System.out.println(record.getMessage()));
+    }
+
+    /**
+     * Prints all captured log messages to the specified output stream.
+     * <p>
+     * Each message is printed on a separate line in the order it was logged.
+     *
+     * @param out the output stream to print to
+     */
+    public void printLogMessages(java.io.PrintStream out) {
+        if (out != null) {
+            logRecords.forEach(record -> out.println(record.getMessage()));
+        }
+    }
+
+    /**
+     * Prints all captured log messages with their log levels to standard output.
+     * <p>
+     * Each message is printed in the format: [LEVEL] message
+     */
+    @SuppressWarnings("PMD.SystemPrintln")
+    public void printLogMessagesWithLevel() {
+        logRecords.forEach(record ->
+                System.out.println("[" + record.getLevel() + "] " + record.getMessage()));
+    }
+
+    /**
+     * Prints all captured log messages with their log levels to the specified output stream.
+     * <p>
+     * Each message is printed in the format: [LEVEL] message
+     *
+     * @param out the output stream to print to
+     */
+    public void printLogMessagesWithLevel(java.io.PrintStream out) {
+        if (out != null) {
+            logRecords.forEach(record ->
+                    out.println("[" + record.getLevel() + "] " + record.getMessage()));
+        }
+    }
+
+    /**
+     * Prints all captured log messages with both level and timestamp to standard output.
+     * <p>
+     * Each message is printed in the format: [timestamp] [LEVEL] message
+     */
+    @SuppressWarnings("PMD.SystemPrintln")
+    public void printLogMessagesWithLevelAndTimestamp() {
+        logRecords.forEach(record ->
+                System.out.println("[" + java.time.Instant.ofEpochMilli(record.getMillis()) + "] [" +
+                        record.getLevel() + "] " + record.getMessage()));
+    }
+
+    /**
+     * Prints all captured log messages with both level and timestamp to the specified output stream.
+     * <p>
+     * Each message is printed in the format: [timestamp] [LEVEL] message
+     *
+     * @param out the output stream to print to
+     */
+    public void printLogMessagesWithLevelAndTimestamp(java.io.PrintStream out) {
+        if (out != null) {
+            logRecords.forEach(record ->
+                    out.println("[" + java.time.Instant.ofEpochMilli(record.getMillis()) + "] [" +
+                            record.getLevel() + "] " + record.getMessage()));
+        }
+    }
+
+    /**
+     * Prints all captured log messages with timestamps to standard output.
+     * <p>
+     * Each message is printed in the format: [timestamp] message
+     */
+    @SuppressWarnings("PMD.SystemPrintln")
+    public void printLogMessagesWithTimestamp() {
+        logRecords.forEach(record ->
+                System.out.println("[" + java.time.Instant.ofEpochMilli(record.getMillis()) + "] " +
+                        record.getMessage()));
+    }
+
+    /**
+     * Prints all captured log messages with timestamps to the specified output stream.
+     * <p>
+     * Each message is printed in the format: [timestamp] message
+     *
+     * @param out the output stream to print to
+     */
+    public void printLogMessagesWithTimestamp(java.io.PrintStream out) {
+        if (out != null) {
+            logRecords.forEach(record ->
+                    out.println("[" + java.time.Instant.ofEpochMilli(record.getMillis()) + "] " +
+                            record.getMessage()));
+        }
+    }
+
+    /**
      * Publishes a log record if the handler is not closed.
      *
      * @param record description of the log event. A null record is silently ignored and is not published

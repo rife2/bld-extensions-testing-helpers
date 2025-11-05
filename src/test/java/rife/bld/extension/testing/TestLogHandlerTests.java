@@ -16,14 +16,13 @@
 
 package rife.bld.extension.testing;
 
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Nested;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.*;
 
+import java.io.ByteArrayOutputStream;
+import java.io.PrintStream;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executors;
@@ -40,7 +39,7 @@ import static org.junit.jupiter.api.Assertions.*;
 /**
  * Complete unit tests for optimized {@link TestLogHandler}
  */
-@SuppressWarnings("PMD.AvoidDuplicateLiterals")
+@SuppressWarnings({"PMD.AvoidDuplicateLiterals", "PMD.TestClassWithoutTestCases"})
 class TestLogHandlerTests {
     // Reusable LogRecord instances to avoid object creation in loops
     private static final LogRecord INFO_RECORD_1 = new LogRecord(Level.INFO, "Message 1");
@@ -1045,6 +1044,256 @@ class TestLogHandlerTests {
 
             // Should complete in a reasonable time (less than 5 seconds)
             assertTrue(duration < 5000, "Adding " + recordCount + " records took " + duration + "ms");
+        }
+    }
+
+    @DisplayName("Print Methods Tests")
+    @Nested
+    class PrintMethodsTests {
+        private TestLogHandler handler;
+        private PrintStream originalOut;
+        private ByteArrayOutputStream outputStream;
+        private PrintStream printStream;
+
+        @BeforeEach
+        void setUp() {
+            handler = new TestLogHandler();
+            outputStream = new ByteArrayOutputStream();
+            printStream = new PrintStream(outputStream);
+            originalOut = System.out;
+        }
+
+        @AfterEach
+        void tearDown() {
+            handler.close();
+            printStream.close();
+            System.setOut(originalOut);
+        }
+
+        @Test
+        void testPrintEmptyLogMessages() {
+            System.setOut(printStream);
+
+            handler.printLogMessages();
+
+            assertEquals("", outputStream.toString());
+        }
+
+        @Test
+        void testPrintLogMessages() {
+            var record1 = new LogRecord(Level.INFO, "First message");
+            var record2 = new LogRecord(Level.WARNING, "Second message");
+            handler.publish(record1);
+            handler.publish(record2);
+
+            System.setOut(printStream);
+
+            handler.printLogMessages();
+
+            var output = outputStream.toString();
+            assertTrue(output.contains("First message"));
+            assertTrue(output.contains("Second message"));
+            assertFalse(output.contains("INFO"));
+            assertFalse(output.contains("WARNING"));
+        }
+
+        @Test
+        void testPrintLogMessagesWithCustomStream() {
+            var record1 = new LogRecord(Level.INFO, "Test message 1");
+            var record2 = new LogRecord(Level.SEVERE, "Test message 2");
+            handler.publish(record1);
+            handler.publish(record2);
+
+            handler.printLogMessages(printStream);
+
+            var output = outputStream.toString();
+            assertTrue(output.contains("Test message 1"));
+            assertTrue(output.contains("Test message 2"));
+        }
+
+        @Test
+        void testPrintLogMessagesWithLevel() {
+            var record1 = new LogRecord(Level.INFO, "Info message");
+            var record2 = new LogRecord(Level.WARNING, "Warning message");
+            handler.publish(record1);
+            handler.publish(record2);
+
+            System.setOut(printStream);
+
+            handler.printLogMessagesWithLevel();
+
+            var output = outputStream.toString();
+            assertTrue(output.contains("[INFO] Info message"));
+            assertTrue(output.contains("[WARNING] Warning message"));
+        }
+
+        @Test
+        void testPrintLogMessagesWithLevelAndTimestamp() {
+            var record = new LogRecord(Level.WARNING, "Full format message");
+            handler.publish(record);
+
+            System.setOut(printStream);
+
+            handler.printLogMessagesWithLevelAndTimestamp();
+
+            var output = outputStream.toString();
+            assertTrue(output.contains("Full format message"));
+            assertTrue(output.contains("[WARNING]"));
+            assertTrue(
+                    output.matches("(?s).*\\[\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}.*] \\[WARNING] Full format message.*")
+            );
+        }
+
+        @Test
+        void testPrintLogMessagesWithLevelAndTimestampCustomStream() {
+            var record = new LogRecord(Level.SEVERE, "Complete log entry");
+            handler.publish(record);
+
+            handler.printLogMessagesWithLevelAndTimestamp(printStream);
+
+            var output = outputStream.toString();
+            assertTrue(output.contains("Complete log entry"));
+            assertTrue(output.contains("[SEVERE]"));
+            assertTrue(
+                    output.matches("(?s).*\\[\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}.*] \\[SEVERE] Complete log entry.*")
+            );
+        }
+
+        @Test
+        void testPrintLogMessagesWithLevelAndTimestampNullStream() {
+            var record = new LogRecord(Level.INFO, "Test");
+            handler.publish(record);
+
+            assertDoesNotThrow(() -> handler.printLogMessagesWithLevelAndTimestamp(null));
+        }
+
+        @Test
+        void testPrintLogMessagesWithLevelCustomStream() {
+            var record = new LogRecord(Level.SEVERE, "Error occurred");
+            handler.publish(record);
+
+            handler.printLogMessagesWithLevel(printStream);
+
+            var output = outputStream.toString();
+            assertTrue(output.contains("[SEVERE] Error occurred"));
+        }
+
+        @Test
+        void testPrintLogMessagesWithLevelNullStream() {
+            var record = new LogRecord(Level.INFO, "Test");
+            handler.publish(record);
+
+            assertDoesNotThrow(() -> handler.printLogMessagesWithLevel(null));
+        }
+
+        @Test
+        void testPrintLogMessagesWithNullStream() {
+            var record = new LogRecord(Level.INFO, "Test message");
+            handler.publish(record);
+
+            assertDoesNotThrow(() -> handler.printLogMessages(null));
+        }
+
+        @Test
+        void testPrintLogMessagesWithTimestamp() {
+            var record = new LogRecord(Level.INFO, "Timestamped message");
+            handler.publish(record);
+
+            System.setOut(printStream);
+
+            handler.printLogMessagesWithTimestamp();
+
+            var output = outputStream.toString();
+            assertTrue(output.contains("Timestamped message"));
+            assertTrue(output.contains("["));
+            assertTrue(output.contains("]"));
+            assertTrue(
+                    output.matches("(?s).*\\[\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}.*].*Timestamped message.*")
+            );
+        }
+
+        @Test
+        void testPrintLogMessagesWithTimestampCustomStream() {
+            var record = new LogRecord(Level.INFO, "Time test");
+            handler.publish(record);
+
+            handler.printLogMessagesWithTimestamp(printStream);
+
+            var output = outputStream.toString();
+            assertTrue(output.contains("Time test"));
+            assertTrue(output.contains("["));
+            assertTrue(output.contains("]"));
+            assertTrue(output.matches("(?s).*\\[\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}.*].*Time test.*"));
+        }
+
+        @Test
+        void testPrintLogMessagesWithTimestampNullStream() {
+            var record = new LogRecord(Level.INFO, "Test");
+            handler.publish(record);
+
+            assertDoesNotThrow(() -> handler.printLogMessagesWithTimestamp(null));
+        }
+
+        @Test
+        void testPrintMessagesAfterClear() {
+            handler.publish(new LogRecord(Level.INFO, "Before clear"));
+            handler.clear();
+            handler.publish(new LogRecord(Level.INFO, "After clear"));
+
+            handler.printLogMessages(printStream);
+
+            var output = outputStream.toString();
+            assertFalse(output.contains("Before clear"));
+            assertTrue(output.contains("After clear"));
+        }
+
+        @Test
+        void testPrintMessagesPreservesOrder() {
+            handler.publish(new LogRecord(Level.INFO, "First"));
+            handler.publish(new LogRecord(Level.INFO, "Second"));
+            handler.publish(new LogRecord(Level.INFO, "Third"));
+
+            handler.printLogMessages(printStream);
+
+            var output = outputStream.toString();
+            int firstIndex = output.indexOf("First");
+            int secondIndex = output.indexOf("Second");
+            int thirdIndex = output.indexOf("Third");
+
+            assertTrue(firstIndex < secondIndex);
+            assertTrue(secondIndex < thirdIndex);
+        }
+
+        @Test
+        void testPrintMessagesWithDifferentLevels() {
+            handler.publish(new LogRecord(Level.FINEST, "Trace"));
+            handler.publish(new LogRecord(Level.INFO, "Info"));
+            handler.publish(new LogRecord(Level.SEVERE, "Error"));
+
+            handler.printLogMessagesWithLevel(printStream);
+
+            var output = outputStream.toString();
+            assertTrue(output.contains("[FINEST] Trace"));
+            assertTrue(output.contains("[INFO] Info"));
+            assertTrue(output.contains("[SEVERE] Error"));
+        }
+
+        @Test
+        @SuppressWarnings("PMD.AvoidInstantiatingObjectsInLoops")
+        void testPrintMultipleMessages() {
+            for (int i = 1; i <= 5; i++) {
+                var record = new LogRecord(Level.INFO, "Message " + i);
+                handler.publish(record);
+            }
+
+            System.setOut(printStream);
+
+            handler.printLogMessages();
+
+            var output = outputStream.toString();
+            for (int i = 1; i <= 5; i++) {
+                assertTrue(output.contains("Message " + i));
+            }
         }
     }
 
