@@ -16,6 +16,7 @@
 
 package rife.bld.extension.testing;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.junit.jupiter.api.extension.AfterEachCallback;
 import org.junit.jupiter.api.extension.BeforeEachCallback;
 import org.junit.jupiter.api.extension.ExtensionContext;
@@ -161,6 +162,7 @@ public class LoggingExtension implements BeforeEachCallback, AfterEachCallback {
      * @param level   the logging level to set for both logger and handler
      * @throws NullPointerException if logger or level is {@code null}
      */
+    @SuppressFBWarnings({"EI_EXPOSE_REP"})
     public LoggingExtension(Logger logger, Handler handler, Level level) {
         this.logger = logger;
         this.handler = handler;

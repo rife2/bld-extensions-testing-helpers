@@ -16,6 +16,7 @@
 
 package rife.bld.extension.testing;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.junit.jupiter.api.extension.*;
 
 import java.lang.reflect.Modifier;
@@ -47,24 +48,6 @@ import java.lang.reflect.Modifier;
  */
 public class RandomRangeResolver implements ParameterResolver, TestInstancePostProcessor {
     /**
-     * Generates a random integer value based on the annotation configuration.
-     *
-     * @param annotation the RandomRange annotation containing min and max values
-     * @return a random integer within the specified range
-     * @throws ParameterResolutionException if min > max
-     */
-    private static int generateRandomValue(RandomRange annotation) {
-        int min = annotation.min();
-        int max = annotation.max();
-        if (min > max) {
-            throw new ParameterResolutionException(
-                    String.format("The minimum value (%d) cannot be greater than maximum value (%d)", min, max)
-            );
-        }
-        return TestingUtils.generateRandomInt(min, max);
-    }
-
-    /**
      * Processes fields of the test instance annotated with {@link RandomRange}.
      * <p>
      * Enables field injection for random ints. The field must be of type {@code int}.
@@ -74,6 +57,7 @@ public class RandomRangeResolver implements ParameterResolver, TestInstancePostP
      */
     @Override
     @SuppressWarnings("PMD.AvoidAccessibilityAlteration")
+    @SuppressFBWarnings("RFI_SET_ACCESSIBLE")
     public void postProcessTestInstance(Object testInstance, ExtensionContext context) throws Exception {
         for (var clazz = testInstance.getClass(); clazz != Object.class; clazz = clazz.getSuperclass()) {
             for (var field : clazz.getDeclaredFields()) {
@@ -112,7 +96,7 @@ public class RandomRangeResolver implements ParameterResolver, TestInstancePostP
         return parameterContext.isAnnotated(RandomRange.class) ||
                 extensionContext.getTestMethod()
                         .map(m -> m.isAnnotationPresent(RandomRange.class))
-                        .orElse(false);
+                        .orElse(Boolean.FALSE);
     }
 
     /**
@@ -140,5 +124,23 @@ public class RandomRangeResolver implements ParameterResolver, TestInstancePostP
             }
         }
         return TestingUtils.generateRandomInt(0, 100);
+    }
+
+    /**
+     * Generates a random integer value based on the annotation configuration.
+     *
+     * @param annotation the RandomRange annotation containing min and max values
+     * @return a random integer within the specified range
+     * @throws ParameterResolutionException if min > max
+     */
+    private static int generateRandomValue(RandomRange annotation) {
+        int min = annotation.min();
+        int max = annotation.max();
+        if (min > max) {
+            throw new ParameterResolutionException(
+                    String.format("The minimum value (%d) cannot be greater than maximum value (%d)", min, max)
+            );
+        }
+        return TestingUtils.generateRandomInt(min, max);
     }
 }

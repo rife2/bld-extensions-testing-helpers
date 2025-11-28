@@ -16,6 +16,7 @@
 
 package rife.bld.extension.testing;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.junit.jupiter.api.extension.ExtensionContext;
 import org.junit.jupiter.api.extension.TestExecutionExceptionHandler;
 
@@ -76,6 +77,7 @@ public class RetryExtension implements TestExecutionExceptionHandler {
     @Override
     @SuppressWarnings({"PMD.AvoidInstanceofChecksInCatchClause", "PMD.DoNotUseThreads",
             "PMD.AvoidCatchingGenericException"})
+    @SuppressFBWarnings("LEST_LOST_EXCEPTION_STACK_TRACE")
     public void handleTestExecutionException(ExtensionContext extensionContext, Throwable throwable) throws Throwable {
         var testMethodOpt = extensionContext.getTestMethod();
         if (testMethodOpt.isEmpty()) {

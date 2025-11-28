@@ -125,6 +125,32 @@ class RetryAnnotationTests {
     }
 
     @Nested
+    @DisplayName("Annotation Presence Detection")
+    class AnnotationPresenceDetection {
+        @Test
+        void methodWithOtherAnnotationDoesNotHaveRetryTest() throws NoSuchMethodException {
+            var testMethod = TestMethodsWithAnnotations.class.getDeclaredMethod("methodWithOtherAnnotation");
+
+            assertFalse(testMethod.isAnnotationPresent(RetryTest.class));
+            assertTrue(testMethod.isAnnotationPresent(org.junit.jupiter.api.Test.class));
+        }
+
+        @Test
+        void methodWithRetryTestIsAnnotationPresent() throws NoSuchMethodException {
+            var testMethod = TestMethodsWithAnnotations.class.getDeclaredMethod("methodWithDefaultValues");
+
+            assertTrue(testMethod.isAnnotationPresent(RetryTest.class));
+        }
+
+        @Test
+        void methodWithoutRetryTestIsNotAnnotationPresent() throws NoSuchMethodException {
+            var testMethod = TestMethodsWithAnnotations.class.getDeclaredMethod("methodWithoutRetryTest");
+
+            assertFalse(testMethod.isAnnotationPresent(RetryTest.class));
+        }
+    }
+
+    @Nested
     @DisplayName("Annotation Values")
     class AnnotationValues {
         @Test
@@ -205,32 +231,6 @@ class RetryAnnotationTests {
             assertNotNull(annotation);
             assertEquals(0, annotation.value());
             assertEquals("", annotation.name()); // default value
-        }
-    }
-
-    @Nested
-    @DisplayName("Annotation Presence Detection")
-    class AnnotationPresenceDetection {
-        @Test
-        void methodWithOtherAnnotationDoesNotHaveRetryTest() throws NoSuchMethodException {
-            var testMethod = TestMethodsWithAnnotations.class.getDeclaredMethod("methodWithOtherAnnotation");
-
-            assertFalse(testMethod.isAnnotationPresent(RetryTest.class));
-            assertTrue(testMethod.isAnnotationPresent(org.junit.jupiter.api.Test.class));
-        }
-
-        @Test
-        void methodWithRetryTestIsAnnotationPresent() throws NoSuchMethodException {
-            var testMethod = TestMethodsWithAnnotations.class.getDeclaredMethod("methodWithDefaultValues");
-
-            assertTrue(testMethod.isAnnotationPresent(RetryTest.class));
-        }
-
-        @Test
-        void methodWithoutRetryTestIsNotAnnotationPresent() throws NoSuchMethodException {
-            var testMethod = TestMethodsWithAnnotations.class.getDeclaredMethod("methodWithoutRetryTest");
-
-            assertFalse(testMethod.isAnnotationPresent(RetryTest.class));
         }
     }
 

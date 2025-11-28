@@ -67,6 +67,40 @@ public class TestLogHandler extends Handler {
     private final List<LogRecord> logRecords = new CopyOnWriteArrayList<>();
 
     /**
+     * Publishes a log record if the handler is not closed.
+     *
+     * @param record description of the log event. A null record is silently ignored and is not published
+     */
+    @Override
+    public void publish(LogRecord record) {
+        if (record == null || closed.get() || !isLoggable(record)) {
+            return;
+        }
+        logRecords.add(record);
+    }
+
+    /**
+     * Flushes this log handler.
+     * <p>
+     * No-op implementation as records are immediately available.
+     */
+    @Override
+    public void flush() {
+        // no-op - records are immediately available
+    }
+
+    /**
+     * Closes this log handler and prevents further logging.
+     * <p>
+     * Thread-safe operation.
+     */
+    @Override
+    public void close() {
+        closed.set(true);
+        logRecords.clear();
+    }
+
+    /**
      * Clears all captured log records and messages.
      * <p>
      * Thread-safe operation.
@@ -354,39 +388,5 @@ public class TestLogHandler extends Handler {
                     out.println("[" + java.time.Instant.ofEpochMilli(record.getMillis()) + "] " +
                             record.getMessage()));
         }
-    }
-
-    /**
-     * Publishes a log record if the handler is not closed.
-     *
-     * @param record description of the log event. A null record is silently ignored and is not published
-     */
-    @Override
-    public void publish(LogRecord record) {
-        if (record == null || closed.get() || !isLoggable(record)) {
-            return;
-        }
-        logRecords.add(record);
-    }
-
-    /**
-     * Flushes this log handler.
-     * <p>
-     * No-op implementation as records are immediately available.
-     */
-    @Override
-    public void flush() {
-        // no-op - records are immediately available
-    }
-
-    /**
-     * Closes this log handler and prevents further logging.
-     * <p>
-     * Thread-safe operation.
-     */
-    @Override
-    public void close() {
-        closed.set(true);
-        logRecords.clear();
     }
 }

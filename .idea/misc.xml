@@ -1,3 +1,4 @@
+<?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="EntryPointsManager">
     <entry_points version="2.0">
@@ -92,6 +93,7 @@
     <pattern value="rife.bld.extension.testing.RandomStringResolverTests" />
     <pattern value="rife.bld.extension.testing.RandomStringResolverTests.FieldInjection.SuperClass" />
     <pattern value="rife.bld.extension.testing.CaptureOutput" />
+    <pattern value="rife.bld.extension.TestingHelpersBuild" method="spotbugs" />
     <writeAnnotations>
       <writeAnnotation name="rife.bld.extension.testing.RandomRange" />
       <writeAnnotation name="rife.bld.extension.testing.RandomString" />

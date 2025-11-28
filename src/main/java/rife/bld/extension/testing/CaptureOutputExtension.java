@@ -1,5 +1,6 @@
 package rife.bld.extension.testing;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.extension.*;
 
@@ -74,6 +75,7 @@ public class CaptureOutputExtension implements BeforeEachCallback, AfterEachCall
      * @throws Exception if an error occurs during cleanup
      */
     @Override
+    @SuppressFBWarnings("FCBL_FIELD_COULD_BE_LOCAL")
     public void afterEach(ExtensionContext context) throws Exception {
         // Restore original streams
         System.setOut(originalOut);
@@ -180,7 +182,9 @@ public class CaptureOutputExtension implements BeforeEachCallback, AfterEachCall
          * @param outputType     the type of output (STDOUT or STDERR)
          * @param capturedOutput the CapturedOutput instance to record entries
          */
-        ChronologicalPrintStream(ByteArrayOutputStream out, CapturedOutput.OutputType outputType, CapturedOutput capturedOutput) {
+        @SuppressFBWarnings("DM_DEFAULT_ENCODING")
+        ChronologicalPrintStream(ByteArrayOutputStream out, CapturedOutput.OutputType outputType,
+                                 CapturedOutput capturedOutput) {
             super(out);
             this.outputType = outputType;
             this.capturedOutput = capturedOutput;

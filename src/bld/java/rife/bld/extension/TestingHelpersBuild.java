@@ -52,7 +52,9 @@ public class TestingHelpersBuild extends Project {
                         version(26, 0, 2)));
         scope(provided)
                 .include(junitJupiter)
-                .include(junitPlatform);
+                .include(junitPlatform)
+                .include(dependency("com.github.spotbugs", "spotbugs-annotations",
+                        version(4, 9, 8)));
         scope(test)
                 .include(junitJupiter)
                 .include(junitPlatform)
@@ -93,6 +95,14 @@ public class TestingHelpersBuild extends Project {
                 .signPassphrase(property("sign.passphrase"));
     }
 
+    @Override
+    public void test() throws Exception {
+        var op = testOperation().fromProject(this);
+        // Set the reports directory
+        op.testToolOptions().reportsDir(new File("build/test-results/test/"));
+        op.execute();
+    }
+
     public static void main(String[] args) {
         new TestingHelpersBuild().start(args);
     }
@@ -114,11 +124,11 @@ public class TestingHelpersBuild extends Project {
                 .execute();
     }
 
-    @Override
-    public void test() throws Exception {
-        var op = testOperation().fromProject(this);
-        // Set the reports directory
-        op.testToolOptions().reportsDir(new File("build/test-results/test/"));
-        op.execute();
+    @BuildCommand(summary = "Runs SpotBugs on this project")
+    public void spotbugs() throws Exception {
+        new SpotBugsOperation()
+                .fromProject(this)
+                .home("/opt/spotbugs")
+                .execute();
     }
 }

@@ -1,5 +1,7 @@
 package rife.bld.extension.testing;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+
 import java.io.ByteArrayOutputStream;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -99,17 +101,24 @@ public class CapturedOutput {
     }
 
     /**
-     * Adds an output entry to the chronological list.
+     * Provides a string representation of this captured output for debugging purposes.
      * <p>
-     * This method is used internally by the capture mechanism to record output
-     * events with their timestamps and types in chronological order.
+     * The returned string includes both the stdout and stderr content in a
+     * structured format that's useful for debugging test failures. The format
+     * shows the class name and both captured streams.
+     * <p>
+     * Example output:<br>
+     * {@code CapturedOutput{stdout='Hello World\n', stderr='Error\n'}}
      *
-     * @param type      the type of output (STDOUT or STDERR)
-     * @param content   the content that was written
-     * @param timestamp the instant when the output occurred
+     * @return a string representation of the captured output
      */
-    void addEntry(OutputType type, String content, Instant timestamp) {
-        chronologicalEntries.add(new OutputEntry(type, content, timestamp));
+    @Override
+    public String toString() {
+        return "CapturedOutput{" +
+                "stdout='" + getOut() + '\'' +
+                ", stderr='" + getErr() + '\'' +
+                ", chronologicalEntries=" + chronologicalEntries.size() + " entries" +
+                '}';
     }
 
     /**
@@ -260,6 +269,7 @@ public class CapturedOutput {
      * @see #getOut()
      * @see #getAll()
      */
+    @SuppressFBWarnings("DM_DEFAULT_ENCODING")
     public String getErr() {
         return stderr.toString();
     }
@@ -311,6 +321,7 @@ public class CapturedOutput {
      * @see #getErr()
      * @see #getAll()
      */
+    @SuppressFBWarnings("DM_DEFAULT_ENCODING")
     public String getOut() {
         return stdout.toString();
     }
@@ -385,24 +396,17 @@ public class CapturedOutput {
     }
 
     /**
-     * Provides a string representation of this captured output for debugging purposes.
+     * Adds an output entry to the chronological list.
      * <p>
-     * The returned string includes both the stdout and stderr content in a
-     * structured format that's useful for debugging test failures. The format
-     * shows the class name and both captured streams.
-     * <p>
-     * Example output:<br>
-     * {@code CapturedOutput{stdout='Hello World\n', stderr='Error\n'}}
+     * This method is used internally by the capture mechanism to record output
+     * events with their timestamps and types in chronological order.
      *
-     * @return a string representation of the captured output
+     * @param type      the type of output (STDOUT or STDERR)
+     * @param content   the content that was written
+     * @param timestamp the instant when the output occurred
      */
-    @Override
-    public String toString() {
-        return "CapturedOutput{" +
-                "stdout='" + getOut() + '\'' +
-                ", stderr='" + getErr() + '\'' +
-                ", chronologicalEntries=" + chronologicalEntries.size() + " entries" +
-                '}';
+    void addEntry(OutputType type, String content, Instant timestamp) {
+        chronologicalEntries.add(new OutputEntry(type, content, timestamp));
     }
 
     /**
@@ -472,6 +476,20 @@ public class CapturedOutput {
         }
 
         /**
+         * Provides a string representation of this output entry for debugging purposes.
+         *
+         * @return a string representation of the output entry
+         */
+        @Override
+        public String toString() {
+            return "OutputEntry{" +
+                    "type=" + type +
+                    ", content='" + content + '\'' +
+                    ", timestamp=" + timestamp +
+                    '}';
+        }
+
+        /**
          * Returns the content of this output entry.
          *
          * @return the content that was written
@@ -514,20 +532,6 @@ public class CapturedOutput {
          */
         public boolean isStdout() {
             return type == OutputType.STDOUT;
-        }
-
-        /**
-         * Provides a string representation of this output entry for debugging purposes.
-         *
-         * @return a string representation of the output entry
-         */
-        @Override
-        public String toString() {
-            return "OutputEntry{" +
-                    "type=" + type +
-                    ", content='" + content + '\'' +
-                    ", timestamp=" + timestamp +
-                    '}';
         }
     }
 }

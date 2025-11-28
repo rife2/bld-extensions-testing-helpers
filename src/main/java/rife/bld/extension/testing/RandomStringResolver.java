@@ -16,6 +16,7 @@
 
 package rife.bld.extension.testing;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.junit.jupiter.api.extension.ExtensionContext;
 import org.junit.jupiter.api.extension.ParameterContext;
 import org.junit.jupiter.api.extension.ParameterResolver;
@@ -61,6 +62,7 @@ public class RandomStringResolver implements ParameterResolver, TestInstancePost
      */
     @Override
     @SuppressWarnings("PMD.AvoidAccessibilityAlteration")
+    @SuppressFBWarnings("RFI_SET_ACCESSIBLE")
     public void postProcessTestInstance(Object testInstance, ExtensionContext context) throws Exception {
         for (var clazz = testInstance.getClass(); clazz != Object.class; clazz = clazz.getSuperclass()) {
             for (var field : clazz.getDeclaredFields()) {
@@ -93,10 +95,11 @@ public class RandomStringResolver implements ParameterResolver, TestInstancePost
         if (parameterContext.getParameter().getType() != String.class) {
             return false;
         }
-        return parameterContext.isAnnotated(RandomString.class) ||
-                extensionContext.getTestMethod()
-                        .map(m -> m.isAnnotationPresent(RandomString.class))
-                        .orElse(false);
+        if (parameterContext.isAnnotated(RandomString.class)) {
+            return true;
+        }
+        var testMethod = extensionContext.getTestMethod();
+        return testMethod.isPresent() && testMethod.get().isAnnotationPresent(RandomString.class);
     }
 
     /**

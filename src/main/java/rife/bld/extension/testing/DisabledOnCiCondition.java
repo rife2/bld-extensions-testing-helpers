@@ -37,15 +37,6 @@ import org.junit.jupiter.api.extension.ExtensionContext;
  */
 public class DisabledOnCiCondition implements ExecutionCondition {
     /**
-     * Returns {@code true} if the environment variable {@code CI} is set.
-     *
-     * @return {@code true} if the environment variable {@code CI} is set, {@code false} otherwise
-     */
-    public static boolean isCi() {
-        return System.getenv("CI") != null;
-    }
-
-    /**
      * Evaluates whether the execution of a test should be enabled or disabled based on the CI environment.
      * <p>
      * Returns a disabled state if the test is running in a CI/CD environment, otherwise returns an enabled state.
@@ -60,5 +51,14 @@ public class DisabledOnCiCondition implements ExecutionCondition {
         } else {
             return ConditionEvaluationResult.enabled("Test enabled in non CI/CD environment.");
         }
+    }
+
+    /**
+     * Returns {@code true} if the environment variable {@code CI} is set.
+     *
+     * @return {@code true} if the environment variable {@code CI} is set, {@code false} otherwise
+     */
+    public static boolean isCi() {
+        return System.getenv("CI") != null;
     }
 }
