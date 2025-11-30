@@ -23,12 +23,26 @@ import org.junit.jupiter.api.extension.ParameterResolver;
 import org.junit.jupiter.api.extension.TestInstancePostProcessor;
 
 import java.lang.reflect.Modifier;
+import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.Type;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 /**
  * Parameter and field resolver for the {@link RandomString} annotation.
  * <p>
  * This resolver automatically injects random string values into test method parameters that are annotated with
  * {@code @RandomString} or are part of test methods annotated with {@code @RandomString} at the method level.
+ *
+ * <h3>Supported Types:</h3>
+ * <p>
+ * <ul>
+ *   <li>{@code String} - single random string (when size = 0)</li>
+ *   <li>{@code List<String>} - list of random strings (when size > 0)</li>
+ *   <li>{@code Set<String>} - set of unique random strings (when size > 0)</li>
+ * </ul>
  *
  * <h3>Resolution Priority:</h3>
  * <p>
@@ -43,6 +57,7 @@ import java.lang.reflect.Modifier;
  * <ul>
  *   <li><strong>Length:</strong> 10 characters</li>
  *   <li><strong>Character Set:</strong> Alphanumeric (A-Z, a-z, 0-9)</li>
+ *   <li><strong>Size:</strong> 0 (single string)</li>
  * </ul>
  *
  * @author <a href="https://erik.thauvin.net/">Erik C. Thauvin</a>
@@ -55,7 +70,8 @@ public class RandomStringResolver implements ParameterResolver, TestInstancePost
     /**
      * Processes fields of the test instance annotated with {@link RandomString}.
      * <p>
-     * Enables field injection for random strings. Field must be of type {@code String}.
+     * Enables field injection for random strings. Field must be of type {@code String}, {@code List<String>},
+     * or {@code Set<String>}.
      *
      * @param testInstance the test class instance
      * @param context      the current extension context
@@ -69,9 +85,22 @@ public class RandomStringResolver implements ParameterResolver, TestInstancePost
                 if (Modifier.isStatic(field.getModifiers())) {
                     continue;
                 }
-                if (field.getType() == String.class && field.isAnnotationPresent(RandomString.class)) {
+                if (field.isAnnotationPresent(RandomString.class)) {
                     var annotation = field.getAnnotation(RandomString.class);
-                    var randomValue = TestingUtils.generateRandomString(annotation.length(), annotation.characters());
+                    Object randomValue;
+
+                    if (field.getType() == String.class) {
+                        randomValue = TestingUtils.generateRandomString(annotation.length(), annotation.characters());
+                    } else if (field.getType() == List.class) {
+                        randomValue = generateRandomStringList(annotation.size(), annotation.length(),
+                                annotation.characters());
+                    } else if (field.getType() == Set.class) {
+                        randomValue = generateRandomStringSet(annotation.size(), annotation.length(),
+                                annotation.characters());
+                    } else {
+                        continue;
+                    }
+
                     boolean wasAccessible = field.canAccess(testInstance);
                     field.setAccessible(true);
                     field.set(testInstance, randomValue);
@@ -83,8 +112,6 @@ public class RandomStringResolver implements ParameterResolver, TestInstancePost
 
     /**
      * Determines if this resolver can resolve a parameter.
-     * <p>
-     * Supports String parameters annotated with {@link RandomString} at parameter or method level.
      *
      * @param parameterContext information about the parameter to be resolved
      * @param extensionContext the current extension context
@@ -92,9 +119,17 @@ public class RandomStringResolver implements ParameterResolver, TestInstancePost
      */
     @Override
     public boolean supportsParameter(ParameterContext parameterContext, ExtensionContext extensionContext) {
-        if (parameterContext.getParameter().getType() != String.class) {
+        var parameterType = parameterContext.getParameter().getType();
+
+        if (parameterType != String.class && parameterType != List.class && parameterType != Set.class) {
             return false;
         }
+
+        if ((parameterType == List.class || parameterType == Set.class) &&
+                !isStringCollection(parameterContext.getParameter().getParameterizedType())) {
+            return false;
+        }
+
         if (parameterContext.isAnnotated(RandomString.class)) {
             return true;
         }
@@ -103,29 +138,93 @@ public class RandomStringResolver implements ParameterResolver, TestInstancePost
     }
 
     /**
-     * Resolves the parameter by generating a random string based on annotation configuration.
+     * Resolves the parameter by generating a random string, list, or set based on annotation configuration.
      * <p>
-     * Priority: Parameter-level > Method-level > Default (10, alphanumeric).
+     * Priority: Parameter-level > Method-level > Default (10, alphanumeric, size 0).
      *
      * @param parameterContext information about the parameter to be resolved
      * @param extensionContext the current extension context
-     * @return a randomly generated string matching the annotation specifications
+     * @return a randomly generated string, list, or set matching the annotation specifications
      * @throws IllegalArgumentException if the annotation specifies invalid parameters
      */
     @Override
     public Object resolveParameter(ParameterContext parameterContext, ExtensionContext extensionContext) {
+        var parameterType = parameterContext.getParameter().getType();
         var parameterAnnotation = parameterContext.findAnnotation(RandomString.class);
+
         if (parameterAnnotation.isPresent()) {
             var annotation = parameterAnnotation.get();
-            return TestingUtils.generateRandomString(annotation.length(), annotation.characters());
+            return generateValue(parameterType, annotation.size(), annotation.length(), annotation.characters());
         }
+
         var testMethod = extensionContext.getTestMethod();
         if (testMethod.isPresent()) {
             var methodAnnotation = testMethod.get().getAnnotation(RandomString.class);
             if (methodAnnotation != null) {
-                return TestingUtils.generateRandomString(methodAnnotation.length(), methodAnnotation.characters());
+                return generateValue(parameterType, methodAnnotation.size(), methodAnnotation.length(),
+                        methodAnnotation.characters());
             }
         }
-        return TestingUtils.generateRandomString();
+
+        return generateValue(parameterType, 0, 10, TestingUtils.ALPHANUMERIC_CHARACTERS);
+    }
+
+    // Generates a list of random strings.
+    private List<String> generateRandomStringList(int size, int length, String characters) {
+        var list = new ArrayList<String>(size);
+        for (int i = 0; i < size; i++) {
+            list.add(TestingUtils.generateRandomString(length, characters));
+        }
+        return list;
+    }
+
+    // Generates a set of unique random strings.
+    private Set<String> generateRandomStringSet(int size, int length, String characters) {
+        // Calculate theoretical maximum unique strings possible
+        long maxPossibleStrings = (long) Math.pow(characters.length(), length);
+
+        if (size > maxPossibleStrings) {
+            throw new IllegalArgumentException(
+                    String.format("Cannot generate %d unique strings of length %d from %d characters. " +
+                                    "Maximum possible unique strings: %d",
+                            size, length, characters.length(), maxPossibleStrings));
+        }
+
+        var set = new HashSet<String>(size);
+        int maxAttempts = size * 100; // Reasonable limit
+        int attempts = 0;
+
+        while (set.size() < size) {
+            if (attempts++ > maxAttempts) {
+                throw new IllegalStateException(
+                        String.format("Failed to generate %d unique strings after %d attempts. " +
+                                        "Consider using longer strings or more characters.",
+                                size, maxAttempts));
+            }
+            set.add(TestingUtils.generateRandomString(length, characters));
+        }
+        return set;
+    }
+
+    // Generates the appropriate value based on the parameter type.
+    @SuppressFBWarnings("URV_UNRELATED_RETURN_VALUES")
+    private Object generateValue(Class<?> parameterType, int size, int length, String characters) {
+        if (parameterType == String.class) {
+            return TestingUtils.generateRandomString(length, characters);
+        } else if (parameterType == List.class) {
+            return generateRandomStringList(size, length, characters);
+        } else if (parameterType == Set.class) {
+            return generateRandomStringSet(size, length, characters);
+        }
+        throw new IllegalArgumentException("Unsupported parameter type: " + parameterType);
+    }
+
+    // Checks if a parameterized type is a collection of strings.
+    private boolean isStringCollection(Type type) {
+        if (type instanceof ParameterizedType parameterizedType) {
+            var typeArguments = parameterizedType.getActualTypeArguments();
+            return typeArguments.length == 1 && typeArguments[0] == String.class;
+        }
+        return false;
     }
 }

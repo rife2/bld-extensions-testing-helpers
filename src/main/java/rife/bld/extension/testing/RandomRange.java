@@ -59,6 +59,31 @@ import java.lang.annotation.Target;
  *     public void testMixed(int defaultRange, &#64;RandomRange(min = 50, max = 60) int customRange) {
  *         // defaultRange: 1-10, customRange: 50-60
  *     }
+ *
+ *     // Field injection
+ *     &#64;RandomRange(min = 1, max = 100)
+ *     private int myRandomInt;
+ *
+ *     &#64;Test
+ *     void test() {
+ *         // myRandomInt is initialized before test
+ *     }
+ *
+ *     // List of random integers
+ *     &#64;Test
+ *     void test(&#64;RandomRange(size = 5, min = 1, max = 10) List&lt;Integer&gt; randomList) { ... }
+ *
+ *     // Set of random integers
+ *     &#64;Test
+ *     void test(&#64;RandomRange(size = 10, min = 0, max = 100) Set&lt;Integer&gt; randomSet) { ... }
+ *
+ *     // Field injection for List
+ *     &#64;RandomRange(size = 5, min = 1, max = 50)
+ *     private List&lt;Integer&gt; randomInts;
+ *
+ *     // Field injection for Set
+ *     &#64;RandomRange(size = 10, min = 10, max = 20)
+ *     private Set&lt;Integer&gt; randomIntSet;
  * }</pre></blockquote>
  *
  * @author <a href="https://erik.thauvin.net/">Erik C. Thauvin</a>
@@ -81,4 +106,20 @@ public @interface RandomRange {
      * @return the minimum value, defaults to 0
      */
     int min() default 0;
+
+    /**
+     * The number of random integers to generate for List or Set parameters.
+     * <p>
+     * When {@code size} is greater than 0, this annotation can be applied to:
+     * <ul>
+     *   <li>{@code List<Integer>} parameters - generates a list of random integers</li>
+     *   <li>{@code Set<Integer>} parameters - generates a set of unique random integers</li>
+     * </ul>
+     * <p>
+     * When {@code size} is 0 (default), this annotation applies to single {@code int} parameters.
+     *
+     * @return the number of integers to generate, or 0 for single integer generation
+     * @throws IllegalArgumentException if size is negative during resolution
+     */
+    int size() default 0;
 }

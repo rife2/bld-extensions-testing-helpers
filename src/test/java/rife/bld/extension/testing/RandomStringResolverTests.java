@@ -28,7 +28,9 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;
+import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.doReturn;
@@ -84,6 +86,31 @@ class RandomStringResolverTests {
         }
 
         @Test
+        @DisplayName("should inject list of random strings into field")
+        void injectRandomStringListField() throws Exception {
+            class TestClass {
+                @RandomString(size = 5, length = 6, characters = TestingUtils.NUMERIC_CHARACTERS)
+                private List<String> stringList;
+
+                List<String> getStringList() {
+                    return stringList;
+                }
+            }
+            var testInstance = new TestClass();
+            var resolver = new RandomStringResolver();
+
+            resolver.postProcessTestInstance(testInstance, null);
+
+            assertNotNull(testInstance.getStringList());
+            assertEquals(5, testInstance.getStringList().size());
+            for (String str : testInstance.getStringList()) {
+                assertNotNull(str);
+                assertEquals(6, str.length());
+                assertTrue(str.matches("[0-9]+"), "List item: " + str);
+            }
+        }
+
+        @Test
         @DisplayName("should inject random string into multiple annotated fields including inherited ones")
         void injectRandomStringMultipleAndInheritedFields() throws Exception {
             class SubClass extends SuperClass {
@@ -108,6 +135,31 @@ class RandomStringResolverTests {
             assertEquals(5, testInstance.getSuperField().length());
             assertTrue(testInstance.getSuperField().matches("[0-9]+"),
                     "Super field: " + testInstance.getSuperField());
+        }
+
+        @Test
+        @DisplayName("should inject set of unique random strings into field")
+        void injectRandomStringSetField() throws Exception {
+            class TestClass {
+                @RandomString(size = 4, length = 8)
+                private Set<String> stringSet;
+
+                Set<String> getStringSet() {
+                    return stringSet;
+                }
+            }
+            var testInstance = new TestClass();
+            var resolver = new RandomStringResolver();
+
+            resolver.postProcessTestInstance(testInstance, null);
+
+            assertNotNull(testInstance.getStringSet());
+            assertEquals(4, testInstance.getStringSet().size());
+            for (String str : testInstance.getStringSet()) {
+                assertNotNull(str);
+                assertEquals(8, str.length());
+                assertTrue(str.matches("[A-Za-z0-9]+"), "Set item: " + str);
+            }
         }
 
         @Test
@@ -181,6 +233,32 @@ class RandomStringResolverTests {
             assertNotNull(randomStr);
             assertEquals(5, randomStr.length());
             assertTrue(randomStr.matches("[A-Za-z0-9]+"), "Result: " + randomStr);
+        }
+
+        @RepeatedTest(3)
+        @DisplayName("should inject list from method-level annotation")
+        @RandomString(size = 4, length = 7)
+        void injectListFromMethodLevelAnnotation(List<String> randomList) {
+            assertNotNull(randomList);
+            assertEquals(4, randomList.size());
+            for (String str : randomList) {
+                assertNotNull(str);
+                assertEquals(7, str.length());
+                assertTrue(str.matches("[A-Za-z0-9]+"), "Result: " + str);
+            }
+        }
+
+        @RepeatedTest(3)
+        @DisplayName("should inject set from method-level annotation")
+        @RandomString(size = 3, length = 9, characters = TestingUtils.UPPERCASE_CHARACTERS)
+        void injectSetFromMethodLevelAnnotation(Set<String> randomSet) {
+            assertNotNull(randomSet);
+            assertEquals(3, randomSet.size());
+            for (String str : randomSet) {
+                assertNotNull(str);
+                assertEquals(9, str.length());
+                assertTrue(str.matches("[A-Z]+"), "Result: " + str);
+            }
         }
 
         @RepeatedTest(3)
@@ -271,6 +349,18 @@ class RandomStringResolverTests {
         }
 
         @RepeatedTest(3)
+        @DisplayName("should inject list of random strings")
+        void injectListOfRandomStrings(@RandomString(size = 3) List<String> randomList) {
+            assertNotNull(randomList);
+            assertEquals(3, randomList.size());
+            for (String str : randomList) {
+                assertNotNull(str);
+                assertEquals(10, str.length());
+                assertTrue(str.matches("[A-Za-z0-9]+"), "Result: " + str);
+            }
+        }
+
+        @RepeatedTest(3)
         @DisplayName("should inject multiple different random strings")
         void injectMultipleDifferentRandomStrings(
                 @RandomString(
@@ -288,6 +378,23 @@ class RandomStringResolverTests {
             assertTrue(defaultStr.matches("[A-Za-z0-9]+"), "Result: " + defaultStr);
 
             assertNotEquals(numbersOnly, defaultStr);
+        }
+
+        @RepeatedTest(3)
+        @DisplayName("should inject set of unique random strings")
+        void injectSetOfRandomStrings(
+                @RandomString(
+                        size = 5,
+                        length = 12,
+                        characters = TestingUtils.HEXADECIMAL_CHARACTERS
+                ) Set<String> randomSet) {
+            assertNotNull(randomSet);
+            assertEquals(5, randomSet.size());
+            for (String str : randomSet) {
+                assertNotNull(str);
+                assertEquals(12, str.length());
+                assertTrue(str.matches("[0-9A-F]+"), "Result: " + str);
+            }
         }
 
         @RepeatedTest(3)
@@ -315,7 +422,7 @@ class RandomStringResolverTests {
         @Mock
         private Method testMethod;
 
-        private RandomString createMockAnnotation(int length, String characters) {
+        private RandomString createMockAnnotation(int length, String characters, int size) {
             return new RandomString() {
                 @Override
                 public Class<? extends java.lang.annotation.Annotation> annotationType() {
@@ -330,6 +437,11 @@ class RandomStringResolverTests {
                 @Override
                 public int length() {
                     return length;
+                }
+
+                @Override
+                public int size() {
+                    return size;
                 }
             };
         }
@@ -348,12 +460,36 @@ class RandomStringResolverTests {
         }
 
         @Test
+        @DisplayName("should not support raw List parameters without type parameter")
+        void notSupportRawListParameters() throws Exception {
+            var extension = new RandomStringResolver();
+
+            class TestClass {
+                @SuppressWarnings({"unused", "rawtypes", "EmptyMethod"})
+                void testMethod(List param) {
+                    // no-op
+                }
+            }
+
+            //noinspection JavaReflectionMemberAccess
+            var method = TestClass.class.getDeclaredMethod("testMethod", List.class);
+            var realParameter = method.getParameters()[0];
+
+            when(parameterContext.getParameter()).thenReturn(realParameter);
+
+            var result = extension.supportsParameter(parameterContext, extensionContext);
+
+            assertFalse(result);
+        }
+
+        @Test
         @DisplayName("should not support String parameters without RandomString annotation")
         void notSupportStringParametersWithoutAnnotation() {
             var extension = new RandomStringResolver();
 
             when(parameterContext.getParameter()).thenReturn(parameter);
             doReturn(String.class).when(parameter).getType();
+
             when(parameterContext.isAnnotated(RandomString.class)).thenReturn(false);
             when(extensionContext.getTestMethod()).thenReturn(Optional.empty());
 
@@ -366,12 +502,12 @@ class RandomStringResolverTests {
         @DisplayName("should prioritize parameter annotation over method annotation")
         void prioritizeParameterAnnotationOverMethod() {
             var extension = new RandomStringResolver();
-            var parameterAnnotation = createMockAnnotation(3, "ABC");
+            var annotation = createMockAnnotation(3, "ABC", 0);
 
-            when(parameterContext.findAnnotation(RandomString.class)).thenReturn(Optional.of(parameterAnnotation));
+            when(parameterContext.getParameter()).thenReturn(parameter);
+            doReturn(String.class).when(parameter).getType();
 
-            // No need to mock method-level annotation since parameter annotation takes precedence
-            // and the resolver won't even check the method annotation
+            when(parameterContext.findAnnotation(RandomString.class)).thenReturn(Optional.of(annotation));
 
             var result = (String) extension.resolveParameter(parameterContext, extensionContext);
 
@@ -381,10 +517,36 @@ class RandomStringResolverTests {
         }
 
         @Test
+        @DisplayName("should resolve list parameter with size annotation")
+        void resolveListParameterWithSizeAnnotation() {
+            var extension = new RandomStringResolver();
+            var annotation = createMockAnnotation(8, TestingUtils.ALPHANUMERIC_CHARACTERS, 5);
+
+            when(parameterContext.getParameter()).thenReturn(parameter);
+            doReturn(List.class).when(parameter).getType();
+
+            when(parameterContext.findAnnotation(RandomString.class)).thenReturn(Optional.of(annotation));
+
+            @SuppressWarnings("unchecked")
+            var result = (List<String>) extension.resolveParameter(parameterContext, extensionContext);
+
+            assertNotNull(result);
+            assertEquals(5, result.size());
+            for (String str : result) {
+                assertNotNull(str);
+                assertEquals(8, str.length());
+                assertTrue(str.matches("[A-Za-z0-9]+"), "Result: " + str);
+            }
+        }
+
+        @Test
         @DisplayName("should resolve parameter with custom annotation values")
         void resolveParameterWithCustomAnnotation() {
             var extension = new RandomStringResolver();
-            var annotation = createMockAnnotation(5, "XYZ");
+            var annotation = createMockAnnotation(5, "XYZ", 0);
+
+            when(parameterContext.getParameter()).thenReturn(parameter);
+            doReturn(String.class).when(parameter).getType();
 
             when(parameterContext.findAnnotation(RandomString.class)).thenReturn(Optional.of(annotation));
 
@@ -399,10 +561,12 @@ class RandomStringResolverTests {
         @DisplayName("should resolve parameter with default annotation values")
         void resolveParameterWithDefaultAnnotation() {
             var extension = new RandomStringResolver();
-            var annotation = createMockAnnotation(10, TestingUtils.ALPHANUMERIC_CHARACTERS);
+            var annotation = createMockAnnotation(10, TestingUtils.ALPHANUMERIC_CHARACTERS, 0);
 
-            when(parameterContext.findAnnotation(RandomString.class))
-                    .thenReturn(Optional.of(annotation));
+            when(parameterContext.getParameter()).thenReturn(parameter);
+            doReturn(String.class).when(parameter).getType();
+
+            when(parameterContext.findAnnotation(RandomString.class)).thenReturn(Optional.of(annotation));
 
             var result = (String) extension.resolveParameter(parameterContext, extensionContext);
 
@@ -416,8 +580,9 @@ class RandomStringResolverTests {
         void resolveParameterWithFallback() {
             var extension = new RandomStringResolver();
 
-            when(parameterContext.findAnnotation(RandomString.class))
-                    .thenReturn(Optional.empty());
+            when(parameterContext.getParameter()).thenReturn(parameter);
+            doReturn(String.class).when(parameter).getType();
+
             when(extensionContext.getTestMethod()).thenReturn(Optional.of(testMethod));
             when(testMethod.getAnnotation(RandomString.class)).thenReturn(null);
 
@@ -432,6 +597,9 @@ class RandomStringResolverTests {
         @DisplayName("should resolve parameter with fallback when test method is not present")
         void resolveParameterWithFallbackWhenNoTestMethod() {
             var extension = new RandomStringResolver();
+
+            when(parameterContext.getParameter()).thenReturn(parameter);
+            doReturn(String.class).when(parameter).getType();
 
             when(parameterContext.findAnnotation(RandomString.class))
                     .thenReturn(Optional.empty());
@@ -448,7 +616,10 @@ class RandomStringResolverTests {
         @DisplayName("should resolve parameter with method-level annotation when no parameter annotation")
         void resolveParameterWithMethodLevelAnnotation() {
             var extension = new RandomStringResolver();
-            var methodAnnotation = createMockAnnotation(7, "123");
+            var methodAnnotation = createMockAnnotation(7, "123", 0);
+
+            when(parameterContext.getParameter()).thenReturn(parameter);
+            doReturn(String.class).when(parameter).getType();
 
             when(parameterContext.findAnnotation(RandomString.class))
                     .thenReturn(Optional.empty());
@@ -460,6 +631,29 @@ class RandomStringResolverTests {
             assertNotNull(result);
             assertEquals(7, result.length());
             assertTrue(result.matches("[123]+"), "Result: " + result);
+        }
+
+        @Test
+        @DisplayName("should resolve set parameter with size annotation")
+        void resolveSetParameterWithSizeAnnotation() {
+            var extension = new RandomStringResolver();
+            var annotation = createMockAnnotation(6, TestingUtils.NUMERIC_CHARACTERS, 4);
+
+            when(parameterContext.getParameter()).thenReturn(parameter);
+            doReturn(Set.class).when(parameter).getType();
+
+            when(parameterContext.findAnnotation(RandomString.class)).thenReturn(Optional.of(annotation));
+
+            @SuppressWarnings("unchecked")
+            var result = (Set<String>) extension.resolveParameter(parameterContext, extensionContext);
+
+            assertNotNull(result);
+            assertEquals(4, result.size());
+            for (String str : result) {
+                assertNotNull(str);
+                assertEquals(6, str.length());
+                assertTrue(str.matches("[0-9]+"), "Result: " + str);
+            }
         }
 
         @Test
