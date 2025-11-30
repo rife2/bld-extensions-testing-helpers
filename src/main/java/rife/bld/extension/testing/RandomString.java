@@ -78,6 +78,26 @@ import java.lang.annotation.Target;
  *     void test() {
  *         // myRandomString is initialized before test
  *     }
+ *
+ *     // List of random strings
+ *     &#64;Test
+ *     void test(&#64;RandomString(size = 5) List&lt;String&gt; randomList) { ... }
+ *
+ *     // Set of random strings with custom length
+ *     &#64;Test
+ *     void test(&#64;RandomString(size = 10, length = 8) Set&lt;String&gt; randomSet) { ... }
+ *
+ *     // List with custom character set
+ *     &#64;Test
+ *     void test(&#64;RandomString(size = 3, characters = TestingUtils.HEXADECIMAL_CHARACTERS) List&lt;String&gt; hexList) { ... }
+ *
+ *     // Field injection for List
+ *     &#64;RandomString(size = 5)
+ *     private List&lt;String&gt; randomStrings;
+ *
+ *     // Field injection for Set
+ *     &#64;RandomString(size = 10, length = 15)
+ *     private Set&lt;String&gt; randomStringSet;
  * }</pre></blockquote>
  *
  * @author <a href="https://erik.thauvin.net/">Erik C. Thauvin</a>
@@ -108,4 +128,20 @@ public @interface RandomString {
      * @throws IllegalArgumentException if length is 0 or negative during resolution
      */
     int length() default 10;
+
+    /**
+     * The number of random strings to generate for List or Set parameters.
+     * <p>
+     * When {@code size} is greater than 0, this annotation can be applied to:
+     * <ul>
+     *   <li>{@code List<String>} parameters - generates a list of random strings</li>
+     *   <li>{@code Set<String>} parameters - generates a set of unique random strings</li>
+     * </ul>
+     * <p>
+     * When {@code size} is 0 (default), this annotation applies to single {@code String} parameters.
+     *
+     * @return the number of strings to generate, or 0 for single string generation
+     * @throws IllegalArgumentException if size is negative during resolution
+     */
+    int size() default 0;
 }
