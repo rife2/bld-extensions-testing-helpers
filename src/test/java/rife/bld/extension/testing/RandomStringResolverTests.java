@@ -465,12 +465,13 @@ class RandomStringResolverTests {
             var extension = new RandomStringResolver();
 
             class TestClass {
-                @SuppressWarnings({"unused", "rawtypes"})
+                @SuppressWarnings({"unused", "rawtypes", "EmptyMethod"})
                 void testMethod(List param) {
                     // no-op
                 }
             }
 
+            //noinspection JavaReflectionMemberAccess
             var method = TestClass.class.getDeclaredMethod("testMethod", List.class);
             var realParameter = method.getParameters()[0];
 

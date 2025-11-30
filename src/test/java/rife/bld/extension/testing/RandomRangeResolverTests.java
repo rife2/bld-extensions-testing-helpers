@@ -12,7 +12,9 @@ import org.mockito.MockitoAnnotations;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.when;
@@ -61,6 +63,11 @@ class RandomRangeResolverTests {
                 @Override
                 public int min() {
                     return 7;
+                }
+
+                @Override
+                public int size() {
+                    return 0;  // Add this method
                 }
             };
             // Should not throw, 7 is a valid value
@@ -154,6 +161,400 @@ class RandomRangeResolverTests {
 
                 var resolver = new RandomRangeResolver();
                 assertFalse(resolver.supportsParameter(parameterContext, extensionContext));
+            }
+        }
+    }
+
+    @Nested
+    @DisplayName("Range Size Tests")
+    class RandomRangeSizeTests {
+        // Fake methods for extracting real Parameter objects
+        @SuppressWarnings({"EmptyMethod", "unused"})
+        static void listIntegerParamMethod(List<Integer> param) {
+            // no-op
+        }
+
+        @SuppressWarnings({"EmptyMethod", "unused"})
+        static void listStringParamMethod(List<String> param) {
+            // no-op
+        }
+
+        @SuppressWarnings({"EmptyMethod", "unused"})
+        static void setIntegerParamMethod(Set<Integer> param) {
+            // no-op
+        }
+
+        @Nested
+        @DisplayName("Edge Cases for Collections")
+        class CollectionEdgeCases {
+            @Test
+            @DisplayName("generates empty List when size is 0")
+            void generatesEmptyListWhenSizeIsZero() throws Exception {
+                class TestClass {
+                    @RandomRange(min = 1, max = 10)
+                    private List<Integer> listField;
+
+                    List<Integer> getListField() {
+                        return listField;
+                    }
+                }
+
+                var testInstance = new TestClass();
+                var resolver = new RandomRangeResolver();
+
+                resolver.postProcessTestInstance(testInstance, null);
+
+                var list = testInstance.getListField();
+                assertNotNull(list);
+                assertEquals(0, list.size());
+            }
+
+            @Test
+            @DisplayName("generates List with duplicate values allowed")
+            void generatesListWithDuplicates() throws Exception {
+                class TestClass {
+                    @RandomRange(size = 10, min = 1, max = 3)  // only 3 possible values
+                    private List<Integer> listField;
+
+                    List<Integer> getListField() {
+                        return listField;
+                    }
+                }
+
+                var testInstance = new TestClass();
+                var resolver = new RandomRangeResolver();
+
+                resolver.postProcessTestInstance(testInstance, null);
+
+                var list = testInstance.getListField();
+                assertEquals(10, list.size());
+                for (Integer value : list) {
+                    assertTrue(value >= 1 && value <= 3);
+                }
+            }
+
+            @Test
+            @DisplayName("generates Set with maximum possible unique values")
+            void generatesSetWithMaxUniqueValues() throws Exception {
+                class TestClass {
+                    @RandomRange(size = 5, min = 1, max = 5)  // exactly 5 possible values
+                    private Set<Integer> setField;
+
+                    Set<Integer> getSetField() {
+                        return setField;
+                    }
+                }
+
+                var testInstance = new TestClass();
+                var resolver = new RandomRangeResolver();
+
+                resolver.postProcessTestInstance(testInstance, null);
+
+                var set = testInstance.getSetField();
+                assertEquals(5, set.size());
+                // Should contain all values from 1 to 5
+                assertTrue(set.contains(1));
+                assertTrue(set.contains(2));
+                assertTrue(set.contains(3));
+                assertTrue(set.contains(4));
+                assertTrue(set.contains(5));
+            }
+
+            @Test
+            @DisplayName("generates Set with single element range")
+            void generatesSetWithSingleElementRange() throws Exception {
+                class TestClass {
+                    @RandomRange(size = 1, min = 7, max = 7)
+                    private Set<Integer> setField;
+
+                    Set<Integer> getSetField() {
+                        return setField;
+                    }
+                }
+
+                var testInstance = new TestClass();
+                var resolver = new RandomRangeResolver();
+
+                resolver.postProcessTestInstance(testInstance, null);
+
+                var set = testInstance.getSetField();
+                assertEquals(1, set.size());
+                assertTrue(set.contains(7));
+            }
+        }
+
+        @Nested
+        @DisplayName("Field Injection for Lists and Sets")
+        class FieldInjectionForCollections {
+            @Test
+            @DisplayName("injects List<Integer> into field")
+            void injectsListIntoField() throws Exception {
+                class TestClass {
+                    @RandomRange(size = 5, min = 10, max = 20)
+                    private List<Integer> listField;
+
+                    List<Integer> getListField() {
+                        return listField;
+                    }
+                }
+
+                var testInstance = new TestClass();
+                var resolver = new RandomRangeResolver();
+
+                resolver.postProcessTestInstance(testInstance, null);
+
+                var list = testInstance.getListField();
+                assertNotNull(list);
+                assertEquals(5, list.size());
+                for (Integer value : list) {
+                    assertTrue(value >= 10 && value <= 20);
+                }
+            }
+
+            @Test
+            @DisplayName("injects List<Integer> with default min/max")
+            void injectsListWithDefaults() throws Exception {
+                class TestClass {
+                    @RandomRange(size = 3)
+                    private List<Integer> listField;
+
+                    List<Integer> getListField() {
+                        return listField;
+                    }
+                }
+
+                var testInstance = new TestClass();
+                var resolver = new RandomRangeResolver();
+
+                resolver.postProcessTestInstance(testInstance, null);
+
+                var list = testInstance.getListField();
+                assertNotNull(list);
+                assertEquals(3, list.size());
+                for (Integer value : list) {
+                    assertTrue(value >= 0 && value <= 100);
+                }
+            }
+
+            @Test
+            @DisplayName("injects Set<Integer> into field")
+            void injectsSetIntoField() throws Exception {
+                class TestClass {
+                    @RandomRange(size = 8, min = 1, max = 50)
+                    private Set<Integer> setField;
+
+                    Set<Integer> getSetField() {
+                        return setField;
+                    }
+                }
+
+                var testInstance = new TestClass();
+                var resolver = new RandomRangeResolver();
+
+                resolver.postProcessTestInstance(testInstance, null);
+
+                var set = testInstance.getSetField();
+                assertNotNull(set);
+                assertEquals(8, set.size());
+                for (Integer value : set) {
+                    assertTrue(value >= 1 && value <= 50);
+                }
+            }
+
+            @Test
+            @DisplayName("skips non-List/Set fields even with size parameter")
+            void skipsNonCollectionFieldsWithSize() throws Exception {
+                class TestClass {
+                    @RandomRange(size = 5, min = 1, max = 10)
+                    private int intField;
+
+                    @RandomRange(size = 5, min = 1, max = 10)
+                    private List<Integer> listField;
+
+                    int getIntField() {
+                        return intField;
+                    }
+
+                    List<Integer> getListField() {
+                        return listField;
+                    }
+                }
+
+                var testInstance = new TestClass();
+                var resolver = new RandomRangeResolver();
+
+                resolver.postProcessTestInstance(testInstance, null);
+
+                // int field should be injected with a single value (size ignored for int)
+                var intValue = testInstance.getIntField();
+                assertTrue(intValue >= 1 && intValue <= 10);
+
+                // List field should be injected with 5 values
+                var list = testInstance.getListField();
+                assertNotNull(list);
+                assertEquals(5, list.size());
+            }
+
+            @Test
+            @DisplayName("throws when Set size exceeds possible range")
+            void throwsWhenSetSizeExceedsRange() {
+                class TestClass {
+                    @RandomRange(size = 10, min = 1, max = 5)  // range of 5, requesting 10
+                    private Set<Integer> setField;
+                }
+
+                var testInstance = new TestClass();
+                var resolver = new RandomRangeResolver();
+
+                assertThrows(IllegalArgumentException.class, () ->
+                        resolver.postProcessTestInstance(testInstance, null));
+            }
+        }
+
+        @Nested
+        @DisplayName("List and Set Parameter Resolution")
+        class ListAndSetResolution {
+            @Mock
+            ExtensionContext extensionContext;
+            @Mock
+            ParameterContext parameterContext;
+
+            public ListAndSetResolution() {
+                MockitoAnnotations.openMocks(this);
+            }
+
+            @Test
+            @DisplayName("does not support List<String> parameter type")
+            void doesNotSupportListStringParameter() throws Exception {
+                //noinspection JavaReflectionMemberAccess
+                var listParam = RandomRangeSizeTests.class
+                        .getDeclaredMethod("listStringParamMethod", List.class)
+                        .getParameters()[0];
+
+                when(parameterContext.getParameter()).thenReturn(listParam);
+                when(parameterContext.isAnnotated(RandomRange.class)).thenReturn(true);
+
+                var resolver = new RandomRangeResolver();
+                assertFalse(resolver.supportsParameter(parameterContext, extensionContext));
+            }
+
+            private RandomRange mockAnnotation(int min, int max, int size) {
+                return new RandomRange() {
+                    @Override
+                    public Class<? extends Annotation> annotationType() {
+                        return RandomRange.class;
+                    }
+
+                    @Override
+                    public int max() {
+                        return max;
+                    }
+
+                    @Override
+                    public int min() {
+                        return min;
+                    }
+
+                    @Override
+                    public int size() {
+                        return size;
+                    }
+                };
+            }
+
+            @Test
+            @DisplayName("resolves List<Integer> with size parameter")
+            void resolvesListWithSize() throws Exception {
+                //noinspection JavaReflectionMemberAccess
+                var listParam = RandomRangeSizeTests.class
+                        .getDeclaredMethod("listIntegerParamMethod", List.class)
+                        .getParameters()[0];
+
+                var annotation = mockAnnotation(1, 10, 5);
+                when(parameterContext.getParameter()).thenReturn(listParam);
+                when(parameterContext.findAnnotation(RandomRange.class)).thenReturn(Optional.of(annotation));
+
+                var resolver = new RandomRangeResolver();
+                var result = resolver.resolveParameter(parameterContext, extensionContext);
+
+                assertInstanceOf(List.class, result);
+                @SuppressWarnings("unchecked")
+                List<Integer> list = (List<Integer>) result;
+                assertEquals(5, list.size());
+                for (Integer value : list) {
+                    assertTrue(value >= 1 && value <= 10);
+                }
+            }
+
+            @Test
+            @DisplayName("resolves Set<Integer> with size parameter")
+            void resolvesSetWithSize() throws Exception {
+                //noinspection JavaReflectionMemberAccess
+                var setParam = RandomRangeSizeTests.class
+                        .getDeclaredMethod("setIntegerParamMethod", Set.class)
+                        .getParameters()[0];
+
+                var annotation = mockAnnotation(2, 100, 10);
+                when(parameterContext.getParameter()).thenReturn(setParam);
+                when(parameterContext.findAnnotation(RandomRange.class)).thenReturn(Optional.of(annotation));
+
+                var resolver = new RandomRangeResolver();
+                var result = resolver.resolveParameter(parameterContext, extensionContext);
+
+                assertInstanceOf(Set.class, result);
+                @SuppressWarnings("unchecked")
+                Set<Integer> set = (Set<Integer>) result;
+                assertEquals(10, set.size());
+                for (Integer value : set) {
+                    assertTrue(value >= 2 && value <= 100);
+                }
+            }
+
+            @Test
+            @DisplayName("supports List<Integer> parameter type")
+            void supportsListIntegerParameter() throws Exception {
+                //noinspection JavaReflectionMemberAccess
+                var listParam = RandomRangeSizeTests.class
+                        .getDeclaredMethod("listIntegerParamMethod", List.class)
+                        .getParameters()[0];
+
+                when(parameterContext.getParameter()).thenReturn(listParam);
+                when(parameterContext.isAnnotated(RandomRange.class)).thenReturn(true);
+
+                var resolver = new RandomRangeResolver();
+                assertTrue(resolver.supportsParameter(parameterContext, extensionContext));
+            }
+
+            @Test
+            @DisplayName("supports Set<Integer> parameter type")
+            void supportsSetIntegerParameter() throws Exception {
+                //noinspection JavaReflectionMemberAccess
+                var setParam = RandomRangeSizeTests.class
+                        .getDeclaredMethod("setIntegerParamMethod", Set.class)
+                        .getParameters()[0];
+
+                when(parameterContext.getParameter()).thenReturn(setParam);
+                when(parameterContext.isAnnotated(RandomRange.class)).thenReturn(true);
+
+                var resolver = new RandomRangeResolver();
+                assertTrue(resolver.supportsParameter(parameterContext, extensionContext));
+            }
+
+            @Test
+            @DisplayName("throws when requesting more unique values than possible range")
+            void throwsWhenSizeExceedsRange() throws Exception {
+                //noinspection JavaReflectionMemberAccess
+                var setParam = RandomRangeSizeTests.class
+                        .getDeclaredMethod("setIntegerParamMethod", Set.class)
+                        .getParameters()[0];
+
+                var annotation = mockAnnotation(1, 5, 10);  // range of 5, requesting 10 unique
+                when(parameterContext.getParameter()).thenReturn(setParam);
+                when(parameterContext.findAnnotation(RandomRange.class)).thenReturn(Optional.of(annotation));
+
+                var resolver = new RandomRangeResolver();
+                assertThrows(IllegalArgumentException.class, () ->
+                        resolver.resolveParameter(parameterContext, extensionContext));
             }
         }
     }
@@ -388,6 +789,11 @@ class RandomRangeResolverTests {
                 public int min() {
                     return min;
                 }
+
+                @Override
+                public int size() {
+                    return 0;
+                }
             };
         }
 
@@ -451,6 +857,31 @@ class RandomRangeResolverTests {
             int v = (Integer) value;
             assertTrue(v >= 5 && v <= 15);
         }
+
+        @Test
+        @DisplayName("should not support raw List parameters without type parameter")
+        void notSupportRawListParameters() throws Exception {
+            var extension = new RandomRangeResolver();
+
+            class TestClass {
+                @SuppressWarnings({"unused", "rawtypes", "EmptyMethod"})
+                void testMethod(List param) {
+                    // no-op
+                }
+            }
+
+            //noinspection JavaReflectionMemberAccess
+            var method = TestClass.class.getDeclaredMethod("testMethod", List.class);
+            var realParameter = method.getParameters()[0];
+
+            when(parameterContext.getParameter()).thenReturn(realParameter);
+
+            var result = extension.supportsParameter(parameterContext, extensionContext);
+
+            assertFalse(result);
+        }
+
+
     }
 
     @Nested
