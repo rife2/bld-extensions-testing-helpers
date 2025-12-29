@@ -13,9 +13,9 @@ This project provides a collection of testing helpers used by various
 To use, include the following in your `bld` build file:
 
 ```java
-repositories = List.of(RIFE2_RELEASES, RIFE2_SNAPSHOTS);
+repositories = List.of(RIFE2_SNAPSHOTS, RIFE2_RELEASES);
 
-scope(compile).include(
+scope(test).include(
     dependency("com.uwyn.rife2", "bld-extensions-testing-helpers", version(0, 9, 4))
 );
 ```
