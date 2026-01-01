@@ -69,7 +69,6 @@ import java.util.List;
  * @see OutputType
  * @since 1.0
  */
-@SuppressWarnings("ClassCanBeRecord")
 public class CapturedOutput {
     /**
      * The chronologically ordered list of output entries with timestamps and types.

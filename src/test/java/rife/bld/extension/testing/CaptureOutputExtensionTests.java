@@ -155,7 +155,6 @@ class CaptureOutputExtensionTests {
     }
 
     @Test
-    @SuppressWarnings("JavaReflectionMemberAccess")
     void supportsParameterOnlyForCapturedOutput() throws Exception {
         var extension = new CaptureOutputExtension();
 

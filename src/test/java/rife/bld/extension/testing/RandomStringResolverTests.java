@@ -471,7 +471,6 @@ class RandomStringResolverTests {
                 }
             }
 
-            //noinspection JavaReflectionMemberAccess
             var method = TestClass.class.getDeclaredMethod("testMethod", List.class);
             var realParameter = method.getParameters()[0];
 

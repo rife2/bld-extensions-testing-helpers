@@ -30,7 +30,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 class RetryAnnotationTests {
     // Helper class with various annotation configurations for testing
-    @SuppressWarnings({"JUnitMalformedDeclaration", "EmptyMethod", "PMD.DetachedTestCase"})
+    @SuppressWarnings({"EmptyMethod", "PMD.DetachedTestCase"})
     private static final class TestMethodsWithAnnotations {
         @RetryTest(value = 5, name = "Custom Name")
         void methodWithCustomValues() {

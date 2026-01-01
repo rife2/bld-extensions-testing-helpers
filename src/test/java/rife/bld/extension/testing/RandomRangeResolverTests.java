@@ -426,7 +426,6 @@ class RandomRangeResolverTests {
             @Test
             @DisplayName("does not support List<String> parameter type")
             void doesNotSupportListStringParameter() throws Exception {
-                //noinspection JavaReflectionMemberAccess
                 var listParam = RandomRangeSizeTests.class
                         .getDeclaredMethod("listStringParamMethod", List.class)
                         .getParameters()[0];
@@ -465,7 +464,6 @@ class RandomRangeResolverTests {
             @Test
             @DisplayName("resolves List<Integer> with size parameter")
             void resolvesListWithSize() throws Exception {
-                //noinspection JavaReflectionMemberAccess
                 var listParam = RandomRangeSizeTests.class
                         .getDeclaredMethod("listIntegerParamMethod", List.class)
                         .getParameters()[0];
@@ -489,7 +487,6 @@ class RandomRangeResolverTests {
             @Test
             @DisplayName("resolves Set<Integer> with size parameter")
             void resolvesSetWithSize() throws Exception {
-                //noinspection JavaReflectionMemberAccess
                 var setParam = RandomRangeSizeTests.class
                         .getDeclaredMethod("setIntegerParamMethod", Set.class)
                         .getParameters()[0];
@@ -513,7 +510,6 @@ class RandomRangeResolverTests {
             @Test
             @DisplayName("supports List<Integer> parameter type")
             void supportsListIntegerParameter() throws Exception {
-                //noinspection JavaReflectionMemberAccess
                 var listParam = RandomRangeSizeTests.class
                         .getDeclaredMethod("listIntegerParamMethod", List.class)
                         .getParameters()[0];
@@ -528,7 +524,6 @@ class RandomRangeResolverTests {
             @Test
             @DisplayName("supports Set<Integer> parameter type")
             void supportsSetIntegerParameter() throws Exception {
-                //noinspection JavaReflectionMemberAccess
                 var setParam = RandomRangeSizeTests.class
                         .getDeclaredMethod("setIntegerParamMethod", Set.class)
                         .getParameters()[0];
@@ -543,7 +538,6 @@ class RandomRangeResolverTests {
             @Test
             @DisplayName("throws when requesting more unique values than possible range")
             void throwsWhenSizeExceedsRange() throws Exception {
-                //noinspection JavaReflectionMemberAccess
                 var setParam = RandomRangeSizeTests.class
                         .getDeclaredMethod("setIntegerParamMethod", Set.class)
                         .getParameters()[0];
@@ -870,7 +864,6 @@ class RandomRangeResolverTests {
                 }
             }
 
-            //noinspection JavaReflectionMemberAccess
             var method = TestClass.class.getDeclaredMethod("testMethod", List.class);
             var realParameter = method.getParameters()[0];
 
