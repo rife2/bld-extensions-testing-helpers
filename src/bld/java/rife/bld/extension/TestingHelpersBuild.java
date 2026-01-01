@@ -1,5 +1,5 @@
 /*
- * Copyright 2025 the original author or authors.
+ * Copyright 2025-2026 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -95,16 +95,16 @@ public class TestingHelpersBuild extends Project {
                 .signPassphrase(property("sign.passphrase"));
     }
 
+    public static void main(String[] args) {
+        new TestingHelpersBuild().start(args);
+    }
+
     @Override
     public void test() throws Exception {
         var op = testOperation().fromProject(this);
         // Set the reports directory
         op.testToolOptions().reportsDir(new File("build/test-results/test/"));
         op.execute();
-    }
-
-    public static void main(String[] args) {
-        new TestingHelpersBuild().start(args);
     }
 
     @BuildCommand(summary = "Runs PMD analysis")
