@@ -16,6 +16,8 @@
 
 package rife.bld.extension.testing;
 
+import rife.bld.extension.tools.TextUtils;
+
 import java.security.SecureRandom;
 
 /**
@@ -87,7 +89,7 @@ public final class TestingUtils {
         if (length <= 0) {
             throw new IllegalArgumentException("Length must be greater than 0");
         }
-        if (characters == null || characters.isEmpty()) {
+        if (TextUtils.isEmpty(characters)) {
             throw new IllegalArgumentException("Characters cannot be null or empty");
         }
 

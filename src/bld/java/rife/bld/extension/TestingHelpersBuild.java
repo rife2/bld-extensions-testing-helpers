@@ -25,8 +25,7 @@ import rife.bld.publish.PublishScm;
 import java.io.File;
 import java.util.List;
 
-import static rife.bld.dependencies.Repository.MAVEN_CENTRAL;
-import static rife.bld.dependencies.Repository.RIFE2_RELEASES;
+import static rife.bld.dependencies.Repository.*;
 import static rife.bld.dependencies.Scope.*;
 import static rife.bld.operations.JavadocOptions.DocLinkOption.NO_MISSING;
 
@@ -42,12 +41,14 @@ public class TestingHelpersBuild extends Project {
         downloadSources = true;
         autoDownloadPurge = true;
 
-        repositories = List.of(MAVEN_CENTRAL, RIFE2_RELEASES);
+        repositories = List.of(MAVEN_CENTRAL, RIFE2_RELEASES, RIFE2_SNAPSHOTS);
 
         var junit = version(6, 0, 1);
         var junitJupiter = dependency("org.junit.jupiter", "junit-jupiter", junit);
         var junitPlatform = dependency("org.junit.platform", "junit-platform-console-standalone", junit);
         scope(compile)
+                .include(dependency("com.uwyn.rife2", "bld-extensions-tools",
+                        version(0, 9, 0, "SNAPSHOT")))
                 .include(dependency("org.jetbrains", "annotations",
                         version(26, 0, 2)));
         scope(provided)
