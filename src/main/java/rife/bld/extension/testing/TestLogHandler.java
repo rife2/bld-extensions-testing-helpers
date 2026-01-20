@@ -16,7 +16,7 @@
 
 package rife.bld.extension.testing;
 
-import rife.bld.extension.tools.TextUtils;
+import rife.bld.extension.tools.TextTools;
 
 import java.util.Collections;
 import java.util.List;
@@ -150,7 +150,7 @@ public class TestLogHandler extends Handler {
      * @return the number of messages containing the given text
      */
     public long countMessagesContaining(String message) {
-        return TextUtils.isEmpty(message) ? 0 :
+        return TextTools.isEmpty(message) ? 0 :
                 logRecords.stream().filter(record ->
                         record.getMessage() != null && record.getMessage().contains(message)).count();
     }
@@ -173,7 +173,7 @@ public class TestLogHandler extends Handler {
      * @return the first log record containing the given text, or {@code null} if not found
      */
     public LogRecord getFirstRecordContaining(String message) {
-        if (TextUtils.isNotEmpty(message)) {
+        if (TextTools.isNotEmpty(message)) {
             return logRecords.stream()
                     .filter(record -> record.getMessage() != null && record.getMessage().contains(message))
                     .findFirst()
@@ -200,7 +200,7 @@ public class TestLogHandler extends Handler {
      * @return the last log record containing the given text, or {@code null} if not found
      */
     public LogRecord getLastRecordContaining(String message) {
-        if (TextUtils.isEmpty(message)) {
+        if (TextTools.isEmpty(message)) {
             return null;
         }
         // Iterate backwards for efficiency

@@ -18,11 +18,11 @@ package rife.bld.extension;
 
 import rife.bld.BuildCommand;
 import rife.bld.Project;
+import rife.bld.extension.tools.IOTools;
 import rife.bld.publish.PublishDeveloper;
 import rife.bld.publish.PublishLicense;
 import rife.bld.publish.PublishScm;
 
-import java.io.File;
 import java.util.List;
 
 import static rife.bld.dependencies.Repository.*;
@@ -30,6 +30,7 @@ import static rife.bld.dependencies.Scope.*;
 import static rife.bld.operations.JavadocOptions.DocLinkOption.NO_MISSING;
 
 public class TestingHelpersBuild extends Project {
+
     public TestingHelpersBuild() {
         pkg = "rife.bld.extension";
         name = "Extensions Testing Helpers";
@@ -96,16 +97,16 @@ public class TestingHelpersBuild extends Project {
                 .signPassphrase(property("sign.passphrase"));
     }
 
-    public static void main(String[] args) {
-        new TestingHelpersBuild().start(args);
-    }
-
     @Override
     public void test() throws Exception {
         var op = testOperation().fromProject(this);
         // Set the reports directory
-        op.testToolOptions().reportsDir(new File("build/test-results/test/"));
+        op.testToolOptions().reportsDir(IOTools.resolveFile(buildDirectory(), "test-results", "test"));
         op.execute();
+    }
+
+    public static void main(String[] args) {
+        new TestingHelpersBuild().start(args);
     }
 
     @BuildCommand(summary = "Runs PMD analysis")
