@@ -20,7 +20,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-class EnabledOnCiTests {
+class EnabledOnCiTest {
     @Test
     @EnabledOnCi
     void shouldBeEnabledOnCi() {

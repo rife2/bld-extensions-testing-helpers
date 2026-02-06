@@ -24,7 +24,7 @@ import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
 
 @SuppressWarnings("PMD.AvoidDuplicateLiterals")
-class TestingUtilsTests {
+class TestingUtilsTest {
     @Nested
     @DisplayName("Character Set Constants")
     class CharacterSetConstants {

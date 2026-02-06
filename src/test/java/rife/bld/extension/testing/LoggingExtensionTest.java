@@ -33,7 +33,7 @@ import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 
 @SuppressWarnings({"PMD.AvoidAccessibilityAlteration", "PMD.AvoidDuplicateLiterals"})
-class LoggingExtensionTests {
+class LoggingExtensionTest {
     @SuppressWarnings("PMD.AvoidThrowingRawExceptionTypes")
     private static Object getPrivateField(Object obj, String field) {
         try {

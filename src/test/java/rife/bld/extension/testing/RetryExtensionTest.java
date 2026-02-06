@@ -30,7 +30,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 @SuppressWarnings({"PMD.AvoidDuplicateLiterals", "PMD.DoNotUseThreads"})
-class RetryExtensionTests {
+class RetryExtensionTest {
     private final ExtensionContext mockExtensionContext = mock(ExtensionContext.class);
     private final RetryTest mockRetryTest = mock(RetryTest.class);
     private final Object mockTestInstance = new Object();

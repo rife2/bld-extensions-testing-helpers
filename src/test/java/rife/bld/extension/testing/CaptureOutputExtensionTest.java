@@ -26,7 +26,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 @SuppressWarnings("PMD.SystemPrintln")
-class CaptureOutputExtensionTests {
+class CaptureOutputExtensionTest {
     // Utility method to set private fields via reflection
     @SuppressWarnings("PMD.AvoidAccessibilityAlteration")
     private static void setPrivateField(Object obj, String fieldName, Object value)

@@ -28,7 +28,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 @ExtendWith(CouldFailExtension.class)
 @DisplayName("CouldFail Annotation Tests")
-class CouldFailTests {
+class CouldFailTest {
     
     @Nested
     @DisplayName("Basic Usage")

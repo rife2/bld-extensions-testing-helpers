@@ -24,7 +24,7 @@ import java.util.Locale;
 import static org.junit.jupiter.api.Assertions.*;
 
 @SuppressWarnings({"PMD.AvoidDuplicateLiterals", "PMD.SystemPrintln", "PMD.TestClassWithoutTestCases"})
-class CapturedOutputTests {
+class CapturedOutputTest {
     private static final String EOL = System.lineSeparator();
 
     @Test

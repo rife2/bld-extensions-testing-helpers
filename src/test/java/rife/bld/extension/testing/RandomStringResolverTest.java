@@ -38,7 +38,7 @@ import static org.mockito.Mockito.when;
 
 @ExtendWith({RandomStringResolver.class, MockitoExtension.class})
 @SuppressWarnings({"PMD.AvoidDuplicateLiterals", "PMD.AvoidAccessibilityAlteration"})
-class RandomStringResolverTests {
+class RandomStringResolverTest {
     @Nested
     @DisplayName("Field Injection Integration")
     class FieldInjection {

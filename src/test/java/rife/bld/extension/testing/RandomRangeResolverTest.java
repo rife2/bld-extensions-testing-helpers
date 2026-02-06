@@ -36,7 +36,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.when;
 
 @SuppressWarnings({"PMD.AvoidDuplicateLiterals", "PMD.UseUtilityClass", "PMD.AvoidAccessibilityAlteration"})
-class RandomRangeResolverTests {
+class RandomRangeResolverTest {
     // Fake methods for extracting real Parameter objects
     @SuppressWarnings({"EmptyMethod", "unused"})
     static void intPrimitiveParamMethod(int param) {
@@ -167,7 +167,7 @@ class RandomRangeResolverTests {
                 MockitoAnnotations.openMocks(this);
                 // Field-level annotations are not supported for parameter resolution by the resolver.
                 // Only method and parameter-level annotations are considered.
-                var intParam = RandomRangeResolverTests.class
+                var intParam = RandomRangeResolverTest.class
                         .getDeclaredMethod("intPrimitiveParamMethod", int.class)
                         .getParameters()[0];
 
@@ -906,7 +906,7 @@ class RandomRangeResolverTests {
 
         @Test
         void returnsFalseForNonIntType() throws Exception {
-            var stringParam = RandomRangeResolverTests.class
+            var stringParam = RandomRangeResolverTest.class
                     .getDeclaredMethod("stringParamMethod", String.class)
                     .getParameters()[0];
 
@@ -918,7 +918,7 @@ class RandomRangeResolverTests {
 
         @Test
         void returnsFalseIfNoAnnotationsPresent() throws Exception {
-            var intParam = RandomRangeResolverTests.class
+            var intParam = RandomRangeResolverTest.class
                     .getDeclaredMethod("intPrimitiveParamMethod", int.class)
                     .getParameters()[0];
 
@@ -926,7 +926,7 @@ class RandomRangeResolverTests {
             when(parameterContext.isAnnotated(RandomRange.class)).thenReturn(false);
 
             // Use a real method without @RandomRange
-            var m = RandomRangeResolverTests.class
+            var m = RandomRangeResolverTest.class
                     .getDeclaredMethod("intPrimitiveParamMethod", int.class);
             when(extensionContext.getTestMethod()).thenReturn(Optional.of(m));
 
@@ -936,7 +936,7 @@ class RandomRangeResolverTests {
 
         @Test
         void returnsFalseIfNoTestMethodPresent() throws Exception {
-            var intParam = RandomRangeResolverTests.class
+            var intParam = RandomRangeResolverTest.class
                     .getDeclaredMethod("intPrimitiveParamMethod", int.class)
                     .getParameters()[0];
 
@@ -950,7 +950,7 @@ class RandomRangeResolverTests {
 
         @Test
         void returnsTrueForMethodLevelAnnotation() throws Exception {
-            var intParam = RandomRangeResolverTests.class
+            var intParam = RandomRangeResolverTest.class
                     .getDeclaredMethod("sampleMethod", int.class)
                     .getParameters()[0];
 
@@ -958,7 +958,7 @@ class RandomRangeResolverTests {
             when(parameterContext.isAnnotated(RandomRange.class)).thenReturn(false);
 
             // Use the real annotated method
-            var m = RandomRangeResolverTests.class
+            var m = RandomRangeResolverTest.class
                     .getDeclaredMethod("sampleMethod", int.class);
             when(extensionContext.getTestMethod()).thenReturn(Optional.of(m));
 
@@ -968,7 +968,7 @@ class RandomRangeResolverTests {
 
         @Test
         void returnsTrueForParameterLevelAnnotation() throws Exception {
-            var intParam = RandomRangeResolverTests.class
+            var intParam = RandomRangeResolverTest.class
                     .getDeclaredMethod("intPrimitiveParamMethod", int.class)
                     .getParameters()[0];
 
@@ -981,7 +981,7 @@ class RandomRangeResolverTests {
 
         @Test
         void returnsTrueForParameterLevelAnnotationWithInteger() throws Exception {
-            var intParam = RandomRangeResolverTests.class
+            var intParam = RandomRangeResolverTest.class
                     .getDeclaredMethod("integerParamMethod", Integer.class)
                     .getParameters()[0];
 

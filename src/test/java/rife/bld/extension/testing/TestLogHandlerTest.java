@@ -40,7 +40,7 @@ import static org.junit.jupiter.api.Assertions.*;
  * Complete unit tests for optimized {@link TestLogHandler}
  */
 @SuppressWarnings({"PMD.AvoidDuplicateLiterals", "PMD.TestClassWithoutTestCases"})
-class TestLogHandlerTests {
+class TestLogHandlerTest {
     // Reusable LogRecord instances to avoid object creation in loops
     private static final LogRecord INFO_RECORD_1 = new LogRecord(Level.INFO, "Message 1");
     private static final LogRecord INFO_RECORD_HELLO = new LogRecord(Level.INFO, "Hello world");

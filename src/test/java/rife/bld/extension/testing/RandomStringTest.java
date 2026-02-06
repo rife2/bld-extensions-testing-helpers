@@ -25,7 +25,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 @ExtendWith(RandomStringResolver.class)
 @SuppressWarnings("PMD.AvoidDuplicateLiterals")
-class RandomStringTests {
+class RandomStringTest {
     @Nested
     @DisplayName("Parameter Injection Integration")
     class ParameterInjectionIntegration {

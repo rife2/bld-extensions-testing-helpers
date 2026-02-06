@@ -28,7 +28,7 @@ import java.lang.annotation.Target;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-class RetryAnnotationTests {
+class RetryAnnotationTest {
     // Helper class with various annotation configurations for testing
     @SuppressWarnings({"EmptyMethod", "PMD.DetachedTestCase"})
     private static final class TestMethodsWithAnnotations {
