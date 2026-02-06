@@ -24,7 +24,7 @@ import java.util.Optional;
 import java.util.logging.Logger;
 
 /**
- * JUnit 6 extension that implements the @CouldFail annotation behavior.
+ * JUnit extension that implements the @CouldFail annotation behavior.
  *
  * <p>This extension intercepts test failures and checks if they match the
  * specified exception types. If so, the test is aborted (shown as skipped).
