@@ -170,8 +170,7 @@ class RandomStringResolverTests {
                 private static final int notAString = 123;
 
                 @RandomString
-                @SuppressWarnings({"PMD.MutableStaticState"})
-                public static String staticField;
+                private static String staticField;
                 @RandomString
                 private String fieldAnnotated;
                 @SuppressWarnings({"unused"})

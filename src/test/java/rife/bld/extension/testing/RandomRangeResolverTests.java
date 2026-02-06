@@ -123,7 +123,7 @@ class RandomRangeResolverTests {
             @Mock
             ParameterContext parameterContext;
 
-            public FieldAnnotationCoverage() {
+            FieldAnnotationCoverage() {
                 MockitoAnnotations.openMocks(this);
             }
 
@@ -165,7 +165,7 @@ class RandomRangeResolverTests {
             void supportsParameterReturnsFalseForFieldAnnotationOnly() throws NoSuchMethodException {
                 // Initialize mocks for this test
                 MockitoAnnotations.openMocks(this);
-                // Field-level annotations not supported for parameter resolution by the resolver.
+                // Field-level annotations are not supported for parameter resolution by the resolver.
                 // Only method and parameter-level annotations are considered.
                 var intParam = RandomRangeResolverTests.class
                         .getDeclaredMethod("intPrimitiveParamMethod", int.class)
@@ -435,7 +435,7 @@ class RandomRangeResolverTests {
             @Mock
             ParameterContext parameterContext;
 
-            public ListAndSetResolution() {
+            ListAndSetResolution() {
                 MockitoAnnotations.openMocks(this);
             }
 
@@ -726,8 +726,7 @@ class RandomRangeResolverTests {
         void skipsStaticAndNonIntFields() throws Exception {
             class TestClass {
                 @RandomRange
-                @SuppressWarnings({"PMD.MutableStaticState"})
-                public static int staticInt;
+                private static int staticInt;
 
                 @RandomRange
                 private int injected;
@@ -779,7 +778,7 @@ class RandomRangeResolverTests {
         @Mock
         ParameterContext parameterContext;
 
-        public ResolveParameterTests() {
+        ResolveParameterTests() {
             MockitoAnnotations.openMocks(this);
         }
 
@@ -901,7 +900,7 @@ class RandomRangeResolverTests {
         @Mock
         ParameterContext parameterContext;
 
-        public SupportsParameterTests() {
+        SupportsParameterTests() {
             MockitoAnnotations.openMocks(this);
         }
 

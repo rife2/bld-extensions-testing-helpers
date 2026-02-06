@@ -30,6 +30,7 @@ The following annotations are provided:
 | Annotation                                                                                                              | Description                                         |
 |:------------------------------------------------------------------------------------------------------------------------|:----------------------------------------------------|
 | [`CaptureOutput`](https://rife2.github.io/bld-extensions-testing-helpers/rife/bld/extension/testing/CaptureOutput.html) | Capture stdout and stderr output                    |
+| [`CouldFail`](https://rife2.github.io/bld-extensions-testing-helpers/rife/bld/extension/testing/CouldFail.html)         | Allow a test to fail                                |
 | [`DisabledOnCi`](https://rife2.github.io/bld-extensions-testing-helpers/rife/bld/extension/testing/DisabledOnCi.html)   | Disables a test when running in a CI/CD environment |
 | [`EnabledOnCi`](https://rife2.github.io/bld-extensions-testing-helpers/rife/bld/extension/testing/EnabledOnCi.html)     | Enables a test when running in a CI/CD environment  |
 | [`RandomRange`](https://rife2.github.io/bld-extensions-testing-helpers/rife/bld/extension/testing/RandomRange.html)     | Generates a random integer within a specified range |
