@@ -28,6 +28,7 @@ import java.security.SecureRandom;
  */
 @SuppressWarnings("PMD.TestClassWithoutTestCases")
 public final class TestingUtils {
+
     /**
      * A string constant containing all uppercase letters, lowercase letters, and numeric digits.
      */

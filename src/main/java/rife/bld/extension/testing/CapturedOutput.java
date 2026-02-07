@@ -86,6 +86,7 @@ import java.util.List;
  * @since 1.0
  */
 public class CapturedOutput {
+
     /**
      * The chronologically ordered list of output entries with timestamps and types.
      */
@@ -464,6 +465,7 @@ public class CapturedOutput {
      * @since 1.0
      */
     public static class OutputEntry {
+
         /**
          * The content that was written.
          */

@@ -37,6 +37,7 @@ import static org.mockito.Mockito.when;
 
 @SuppressWarnings({"PMD.AvoidDuplicateLiterals", "PMD.UseUtilityClass", "PMD.AvoidAccessibilityAlteration"})
 class RandomRangeResolverTest {
+
     // Fake methods for extracting real Parameter objects
     @SuppressWarnings({"EmptyMethod", "unused"})
     static void intPrimitiveParamMethod(int param) {
@@ -62,6 +63,7 @@ class RandomRangeResolverTest {
     @Nested
     @DisplayName("Edge Cases and Full Branches")
     class EdgeCases {
+
         @Test
         void generateRandomValueThrowsIfMinEqualsMaxIsValid() {
             var resolver = new RandomRangeResolver();
@@ -107,6 +109,7 @@ class RandomRangeResolverTest {
 
     @Nested
     class FieldAnnotationTests {
+
         @RandomRange(min = 100, max = 101)
         @SuppressWarnings("unused")
         private static int staticRandomField;
@@ -118,6 +121,7 @@ class RandomRangeResolverTest {
         @Nested
         @DisplayName("Field Annotation Coverage")
         class FieldAnnotationCoverage {
+
             @Mock
             ExtensionContext extensionContext;
             @Mock
@@ -182,8 +186,219 @@ class RandomRangeResolverTest {
     }
 
     @Nested
+    @DisplayName("postProcessTestInstance Coverage")
+    class PostProcessTestInstanceCoverage {
+
+        @Test
+        @DisplayName("injects using default min/max if not specified")
+        void injectsDefaultRangeWhenNotSpecified() throws Exception {
+            class TestClass {
+
+                @RandomRange
+                private int field;
+
+                int getField() {
+                    return field;
+                }
+            }
+            var testInstance = new TestClass();
+            var resolver = new RandomRangeResolver();
+
+            resolver.postProcessTestInstance(testInstance, null);
+
+            var value = testInstance.getField();
+            assertTrue(value >= 0 && value <= 100);
+        }
+
+        @Test
+        @DisplayName("injects random int into multiple and inherited fields")
+        void injectsMultipleAndInheritedFields() throws Exception {
+            class BaseClass {
+
+                @RandomRange(min = 20, max = 30)
+                private int baseField;
+
+                int getBaseField() {
+                    return baseField;
+                }
+            }
+
+            class ChildClass extends BaseClass {
+
+                @RandomRange(min = 1, max = 2)
+                private int childField;
+
+                int getChildField() {
+                    return childField;
+                }
+            }
+
+            var testInstance = new ChildClass();
+            var resolver = new RandomRangeResolver();
+
+            resolver.postProcessTestInstance(testInstance, null);
+
+            var childVal = testInstance.getChildField();
+            var baseVal = testInstance.getBaseField();
+            assertTrue(childVal >= 1 && childVal <= 2, "childField: " + childVal);
+            assertTrue(baseVal >= 20 && baseVal <= 30, "baseField: " + baseVal);
+        }
+
+        @Test
+        @DisplayName("inject random int into Integer field")
+        void injectsRandomIntIntoIntegerField() throws Exception {
+            @SuppressWarnings("unused")
+            class TestClass {
+
+                @RandomRange(min = 10, max = 15)
+                private Integer field;
+            }
+            var testInstance = new TestClass();
+            var resolver = new RandomRangeResolver();
+
+            resolver.postProcessTestInstance(testInstance, null);
+
+            var value = testInstance.field;
+            assertTrue(value >= 10 && value <= 15, "Injected value: " + value);
+        }
+
+        @Test
+        @DisplayName("injects random int into private field")
+        void injectsRandomIntPrivateField() throws Exception {
+            class TestClass {
+
+                @RandomRange(min = 10, max = 15)
+                private int field;
+
+                int getField() {
+                    return field;
+                }
+            }
+            var testInstance = new TestClass();
+            var resolver = new RandomRangeResolver();
+
+            resolver.postProcessTestInstance(testInstance, null);
+
+            var value = testInstance.getField();
+            assertTrue(value >= 10 && value <= 15, "Injected value: " + value);
+        }
+
+        @Test
+        @DisplayName("injects value into private field even if originally inaccessible")
+        void injectsValueIntoPrivateFieldRegardlessOfAccessibility() throws Exception {
+            class TestClass {
+
+                @RandomRange(min = 1, max = 2)
+                private int field;
+
+                int getField() {
+                    return field;
+                }
+            }
+            var testInstance = new TestClass();
+            var resolver = new RandomRangeResolver();
+
+            var field = TestClass.class.getDeclaredField("field");
+            field.setAccessible(false);
+
+            resolver.postProcessTestInstance(testInstance, null);
+
+            // The field should have a value in range, regardless of accessibility state
+            var value = testInstance.getField();
+            assertTrue(value == 1 || value == 2, "Injected value: " + value);
+        }
+
+        @Test
+        @DisplayName("injects when min equals max")
+        void injectsWhenMinEqualsMax() throws Exception {
+            class TestClass {
+
+                @RandomRange(min = 5, max = 5)
+                private int field;
+
+                int getField() {
+                    return field;
+                }
+            }
+            var testInstance = new TestClass();
+            var resolver = new RandomRangeResolver();
+
+            resolver.postProcessTestInstance(testInstance, null);
+
+            assertEquals(5, testInstance.getField());
+        }
+
+        @Test
+        @DisplayName("no-op for classes with no annotated fields")
+        void noAnnotatedFieldsNoOp() throws Exception {
+            @SuppressWarnings("unused")
+            class TestClass {
+
+                private int a;
+                private String b;
+            }
+            var testInstance = new TestClass();
+            var resolver = new RandomRangeResolver();
+
+            resolver.postProcessTestInstance(testInstance, null);
+
+            assertEquals(0, testInstance.a);
+            assertNull(testInstance.b);
+        }
+
+        @Test
+        @DisplayName("skips static fields and non-int fields")
+        void skipsStaticAndNonIntFields() throws Exception {
+            class TestClass {
+
+                @RandomRange
+                private static int staticInt;
+
+                @RandomRange
+                private int injected;
+
+                @SuppressWarnings("unused")
+                private String notAnInt;
+            }
+            var testInstance = new TestClass();
+            var resolver = new RandomRangeResolver();
+
+            resolver.postProcessTestInstance(testInstance, null);
+
+            var injectedField = TestClass.class.getDeclaredField("injected");
+            injectedField.setAccessible(true);
+            var injectedVal = injectedField.getInt(testInstance);
+            assertTrue(injectedVal >= 0 && injectedVal <= 100);
+
+            var staticField = TestClass.class.getDeclaredField("staticInt");
+            staticField.setAccessible(true);
+            assertEquals(0, staticField.getInt(null)); // Static field should not be injected
+
+            var notAnIntField = TestClass.class.getDeclaredField("notAnInt");
+            notAnIntField.setAccessible(true);
+            assertNull(notAnIntField.get(testInstance));
+        }
+
+        @Test
+        @DisplayName("throws if min > max")
+        void throwsIfMinGreaterThanMax() {
+            class TestClass {
+
+                @RandomRange(min = 10, max = 5)
+                private int failField;
+            }
+            var testInstance = new TestClass();
+            var resolver = new RandomRangeResolver();
+
+            var ex = assertThrows(Exception.class, () -> resolver.postProcessTestInstance(testInstance, null));
+            assertTrue(ex.getMessage().toLowerCase().contains("min") || ex.getMessage().toLowerCase().contains("greater"));
+        }
+    }
+
+    @Nested
     @DisplayName("Range Size Tests")
     class RandomRangeSizeTests {
+
         // Fake methods for extracting real Parameter objects
         @SuppressWarnings({"EmptyMethod", "unused"})
         static void listIntegerParamMethod(List<Integer> param) {
@@ -203,10 +418,12 @@ class RandomRangeResolverTest {
         @Nested
         @DisplayName("Edge Cases for Collections")
         class CollectionEdgeCases {
+
             @Test
             @DisplayName("generates empty List when size is 0")
             void generatesEmptyListWhenSizeIsZero() throws Exception {
                 class TestClass {
+
                     @RandomRange(min = 1, max = 10)
                     private List<Integer> listField;
 
@@ -229,6 +446,7 @@ class RandomRangeResolverTest {
             @DisplayName("generates List with duplicate values allowed")
             void generatesListWithDuplicates() throws Exception {
                 class TestClass {
+
                     @RandomRange(size = 10, min = 1, max = 3)  // only 3 possible values
                     private List<Integer> listField;
 
@@ -253,6 +471,7 @@ class RandomRangeResolverTest {
             @DisplayName("generates Set with maximum possible unique values")
             void generatesSetWithMaxUniqueValues() throws Exception {
                 class TestClass {
+
                     @RandomRange(size = 5, min = 1, max = 5)  // exactly 5 possible values
                     private Set<Integer> setField;
 
@@ -280,6 +499,7 @@ class RandomRangeResolverTest {
             @DisplayName("generates Set with single element range")
             void generatesSetWithSingleElementRange() throws Exception {
                 class TestClass {
+
                     @RandomRange(size = 1, min = 7, max = 7)
                     private Set<Integer> setField;
 
@@ -302,10 +522,12 @@ class RandomRangeResolverTest {
         @Nested
         @DisplayName("Field Injection for Lists and Sets")
         class FieldInjectionForCollections {
+
             @Test
             @DisplayName("injects List<Integer> into field")
             void injectsListIntoField() throws Exception {
                 class TestClass {
+
                     @RandomRange(size = 5, min = 10, max = 20)
                     private List<Integer> listField;
 
@@ -331,6 +553,7 @@ class RandomRangeResolverTest {
             @DisplayName("injects List<Integer> with default min/max")
             void injectsListWithDefaults() throws Exception {
                 class TestClass {
+
                     @RandomRange(size = 3)
                     private List<Integer> listField;
 
@@ -356,6 +579,7 @@ class RandomRangeResolverTest {
             @DisplayName("injects Set<Integer> into field")
             void injectsSetIntoField() throws Exception {
                 class TestClass {
+
                     @RandomRange(size = 8, min = 1, max = 50)
                     private Set<Integer> setField;
 
@@ -381,6 +605,7 @@ class RandomRangeResolverTest {
             @DisplayName("skips non-List/Set fields even with size parameter")
             void skipsNonCollectionFieldsWithSize() throws Exception {
                 class TestClass {
+
                     @RandomRange(size = 5, min = 1, max = 10)
                     private int intField;
 
@@ -415,6 +640,7 @@ class RandomRangeResolverTest {
             @DisplayName("throws when Set size exceeds possible range")
             void throwsWhenSetSizeExceedsRange() {
                 class TestClass {
+
                     @RandomRange(size = 10, min = 1, max = 5)  // range of 5, requesting 10
                     private Set<Integer> setField;
                 }
@@ -430,6 +656,7 @@ class RandomRangeResolverTest {
         @Nested
         @DisplayName("List and Set Parameter Resolution")
         class ListAndSetResolution {
+
             @Mock
             ExtensionContext extensionContext;
             @Mock
@@ -570,207 +797,9 @@ class RandomRangeResolverTest {
     }
 
     @Nested
-    @DisplayName("postProcessTestInstance Coverage")
-    class PostProcessTestInstanceCoverage {
-        @Test
-        @DisplayName("injects using default min/max if not specified")
-        void injectsDefaultRangeWhenNotSpecified() throws Exception {
-            class TestClass {
-                @RandomRange
-                private int field;
-
-                int getField() {
-                    return field;
-                }
-            }
-            var testInstance = new TestClass();
-            var resolver = new RandomRangeResolver();
-
-            resolver.postProcessTestInstance(testInstance, null);
-
-            var value = testInstance.getField();
-            assertTrue(value >= 0 && value <= 100);
-        }
-
-        @Test
-        @DisplayName("injects random int into multiple and inherited fields")
-        void injectsMultipleAndInheritedFields() throws Exception {
-            class BaseClass {
-                @RandomRange(min = 20, max = 30)
-                private int baseField;
-
-                int getBaseField() {
-                    return baseField;
-                }
-            }
-
-            class ChildClass extends BaseClass {
-                @RandomRange(min = 1, max = 2)
-                private int childField;
-
-                int getChildField() {
-                    return childField;
-                }
-            }
-
-            var testInstance = new ChildClass();
-            var resolver = new RandomRangeResolver();
-
-            resolver.postProcessTestInstance(testInstance, null);
-
-            var childVal = testInstance.getChildField();
-            var baseVal = testInstance.getBaseField();
-            assertTrue(childVal >= 1 && childVal <= 2, "childField: " + childVal);
-            assertTrue(baseVal >= 20 && baseVal <= 30, "baseField: " + baseVal);
-        }
-
-        @Test
-        @DisplayName("inject random int into Integer field")
-        void injectsRandomIntIntoIntegerField() throws Exception {
-            @SuppressWarnings("unused")
-            class TestClass {
-                @RandomRange(min = 10, max = 15)
-                private Integer field;
-            }
-            var testInstance = new TestClass();
-            var resolver = new RandomRangeResolver();
-
-            resolver.postProcessTestInstance(testInstance, null);
-
-            var value = testInstance.field;
-            assertTrue(value >= 10 && value <= 15, "Injected value: " + value);
-        }
-
-        @Test
-        @DisplayName("injects random int into private field")
-        void injectsRandomIntPrivateField() throws Exception {
-            class TestClass {
-                @RandomRange(min = 10, max = 15)
-                private int field;
-
-                int getField() {
-                    return field;
-                }
-            }
-            var testInstance = new TestClass();
-            var resolver = new RandomRangeResolver();
-
-            resolver.postProcessTestInstance(testInstance, null);
-
-            var value = testInstance.getField();
-            assertTrue(value >= 10 && value <= 15, "Injected value: " + value);
-        }
-
-        @Test
-        @DisplayName("injects value into private field even if originally inaccessible")
-        void injectsValueIntoPrivateFieldRegardlessOfAccessibility() throws Exception {
-            class TestClass {
-                @RandomRange(min = 1, max = 2)
-                private int field;
-
-                int getField() {
-                    return field;
-                }
-            }
-            var testInstance = new TestClass();
-            var resolver = new RandomRangeResolver();
-
-            var field = TestClass.class.getDeclaredField("field");
-            field.setAccessible(false);
-
-            resolver.postProcessTestInstance(testInstance, null);
-
-            // The field should have a value in range, regardless of accessibility state
-            var value = testInstance.getField();
-            assertTrue(value == 1 || value == 2, "Injected value: " + value);
-        }
-
-        @Test
-        @DisplayName("injects when min equals max")
-        void injectsWhenMinEqualsMax() throws Exception {
-            class TestClass {
-                @RandomRange(min = 5, max = 5)
-                private int field;
-
-                int getField() {
-                    return field;
-                }
-            }
-            var testInstance = new TestClass();
-            var resolver = new RandomRangeResolver();
-
-            resolver.postProcessTestInstance(testInstance, null);
-
-            assertEquals(5, testInstance.getField());
-        }
-
-        @Test
-        @DisplayName("no-op for classes with no annotated fields")
-        void noAnnotatedFieldsNoOp() throws Exception {
-            @SuppressWarnings("unused")
-            class TestClass {
-                private int a;
-                private String b;
-            }
-            var testInstance = new TestClass();
-            var resolver = new RandomRangeResolver();
-
-            resolver.postProcessTestInstance(testInstance, null);
-
-            assertEquals(0, testInstance.a);
-            assertNull(testInstance.b);
-        }
-
-        @Test
-        @DisplayName("skips static fields and non-int fields")
-        void skipsStaticAndNonIntFields() throws Exception {
-            class TestClass {
-                @RandomRange
-                private static int staticInt;
-
-                @RandomRange
-                private int injected;
-
-                @SuppressWarnings("unused")
-                private String notAnInt;
-            }
-            var testInstance = new TestClass();
-            var resolver = new RandomRangeResolver();
-
-            resolver.postProcessTestInstance(testInstance, null);
-
-            var injectedField = TestClass.class.getDeclaredField("injected");
-            injectedField.setAccessible(true);
-            var injectedVal = injectedField.getInt(testInstance);
-            assertTrue(injectedVal >= 0 && injectedVal <= 100);
-
-            var staticField = TestClass.class.getDeclaredField("staticInt");
-            staticField.setAccessible(true);
-            assertEquals(0, staticField.getInt(null)); // Static field should not be injected
-
-            var notAnIntField = TestClass.class.getDeclaredField("notAnInt");
-            notAnIntField.setAccessible(true);
-            assertNull(notAnIntField.get(testInstance));
-        }
-
-        @Test
-        @DisplayName("throws if min > max")
-        void throwsIfMinGreaterThanMax() {
-            class TestClass {
-                @RandomRange(min = 10, max = 5)
-                private int failField;
-            }
-            var testInstance = new TestClass();
-            var resolver = new RandomRangeResolver();
-
-            var ex = assertThrows(Exception.class, () -> resolver.postProcessTestInstance(testInstance, null));
-            assertTrue(ex.getMessage().toLowerCase().contains("min") || ex.getMessage().toLowerCase().contains("greater"));
-        }
-    }
-
-    @Nested
     @DisplayName("Resolve Parameter Tests")
     class ResolveParameterTests {
+
         @Mock
         ExtensionContext extensionContext;
         @Mock
@@ -804,6 +833,29 @@ class RandomRangeResolverTest {
                     return 0;
                 }
             };
+        }
+
+        @Test
+        @DisplayName("should not support raw List parameters without type parameter")
+        void notSupportRawListParameters() throws Exception {
+            var extension = new RandomRangeResolver();
+
+            class TestClass {
+
+                @SuppressWarnings({"unused", "rawtypes", "EmptyMethod"})
+                void testMethod(List param) {
+                    // no-op
+                }
+            }
+
+            var method = TestClass.class.getDeclaredMethod("testMethod", List.class);
+            var realParameter = method.getParameters()[0];
+
+            when(parameterContext.getParameter()).thenReturn(realParameter);
+
+            var result = extension.supportsParameter(parameterContext, extensionContext);
+
+            assertFalse(result);
         }
 
         @Test
@@ -867,34 +919,13 @@ class RandomRangeResolverTest {
             assertTrue(v >= 5 && v <= 15);
         }
 
-        @Test
-        @DisplayName("should not support raw List parameters without type parameter")
-        void notSupportRawListParameters() throws Exception {
-            var extension = new RandomRangeResolver();
-
-            class TestClass {
-                @SuppressWarnings({"unused", "rawtypes", "EmptyMethod"})
-                void testMethod(List param) {
-                    // no-op
-                }
-            }
-
-            var method = TestClass.class.getDeclaredMethod("testMethod", List.class);
-            var realParameter = method.getParameters()[0];
-
-            when(parameterContext.getParameter()).thenReturn(realParameter);
-
-            var result = extension.supportsParameter(parameterContext, extensionContext);
-
-            assertFalse(result);
-        }
-
 
     }
 
     @Nested
     @DisplayName("Supports Parameter Tests")
     class SupportsParameterTests {
+
         @Mock
         ExtensionContext extensionContext;
         @Mock

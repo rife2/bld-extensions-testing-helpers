@@ -50,4 +50,5 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 @ExtendWith(EnabledOnCiCondition.class)
 public @interface EnabledOnCi {
+
 }

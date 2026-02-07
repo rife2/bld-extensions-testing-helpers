@@ -29,9 +29,11 @@ import java.lang.annotation.Target;
 import static org.junit.jupiter.api.Assertions.*;
 
 class RetryAnnotationTest {
+
     // Helper class with various annotation configurations for testing
     @SuppressWarnings({"EmptyMethod", "PMD.DetachedTestCase"})
     private static final class TestMethodsWithAnnotations {
+
         @RetryTest(value = 5, name = "Custom Name")
         void methodWithCustomValues() {
             // Method with custom values
@@ -97,6 +99,7 @@ class RetryAnnotationTest {
     @Nested
     @DisplayName("Annotation Meta-Properties")
     class AnnotationMetaProperties {
+
         @Test
         void hasCorrectRetentionPolicy() {
             var annotation = RetryTest.class.getAnnotation(Retention.class);
@@ -127,6 +130,7 @@ class RetryAnnotationTest {
     @Nested
     @DisplayName("Annotation Presence Detection")
     class AnnotationPresenceDetection {
+
         @Test
         void methodWithOtherAnnotationDoesNotHaveRetryTest() throws NoSuchMethodException {
             var testMethod = TestMethodsWithAnnotations.class.getDeclaredMethod("methodWithOtherAnnotation");
@@ -153,6 +157,7 @@ class RetryAnnotationTest {
     @Nested
     @DisplayName("Annotation Values")
     class AnnotationValues {
+
         @Test
         void customValues() throws NoSuchMethodException {
             var testMethod = TestMethodsWithAnnotations.class.getDeclaredMethod("methodWithCustomValues");
@@ -237,6 +242,7 @@ class RetryAnnotationTest {
     @Nested
     @DisplayName("Edge Cases and Validation")
     class EdgeCasesAndValidation {
+
         @Test
         void canHaveMultipleOnSameClass() throws NoSuchMethodException {
             var method1 = TestMethodsWithAnnotations.class.getDeclaredMethod("methodWithDefaultValues");

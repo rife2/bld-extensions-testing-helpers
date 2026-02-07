@@ -29,11 +29,13 @@ import java.util.Locale;
  * JUnit extension that captures stdout and stderr during test execution.
  * <p>
  * This extension is automatically applied when using the {@link CaptureOutput}
- * annotation. It intercepts the standard output and error streams before test
+ * annotation.
+ * <p>
+ * It intercepts the standard output and error streams before test
  * execution and restores them afterward, making the captured content available
  * through parameter injection with chronological tracking support.
  * <p>
- * The extension implements the following JUnit 5 extension interfaces:
+ * The extension implements the following JUnit extension interfaces:
  * <ul>
  *     <li>{@link BeforeEachCallback} - Sets up output capture before each test</li>
  *     <li>{@link AfterEachCallback} - Restores original streams after each test</li>
@@ -52,6 +54,7 @@ import java.util.Locale;
  * @since 1.0
  */
 public class CaptureOutputExtension implements BeforeEachCallback, AfterEachCallback, ParameterResolver {
+
     /**
      * The key used to store captured output in the extension context.
      */
@@ -182,6 +185,7 @@ public class CaptureOutputExtension implements BeforeEachCallback, AfterEachCall
      * chronological tracking.
      */
     private static class ChronologicalPrintStream extends PrintStream {
+
         /**
          * The CapturedOutput instance to record chronological entries.
          */

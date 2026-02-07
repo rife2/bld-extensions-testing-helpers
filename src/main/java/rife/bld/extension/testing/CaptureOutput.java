@@ -188,4 +188,5 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 @ExtendWith(CaptureOutputExtension.class)
 public @interface CaptureOutput {
+
 }

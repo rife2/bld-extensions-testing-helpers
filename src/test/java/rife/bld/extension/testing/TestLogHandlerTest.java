@@ -41,6 +41,7 @@ import static org.junit.jupiter.api.Assertions.*;
  */
 @SuppressWarnings({"PMD.AvoidDuplicateLiterals", "PMD.TestClassWithoutTestCases"})
 class TestLogHandlerTest {
+
     // Reusable LogRecord instances to avoid object creation in loops
     private static final LogRecord INFO_RECORD_1 = new LogRecord(Level.INFO, "Message 1");
     private static final LogRecord INFO_RECORD_HELLO = new LogRecord(Level.INFO, "Hello world");
@@ -60,6 +61,7 @@ class TestLogHandlerTest {
     @Nested
     @DisplayName("Clear Functionality Tests")
     class ClearFunctionalityTests {
+
         @Test
         @DisplayName("Should clear all messages and records")
         void shouldClearAllMessagesAndRecords() {
@@ -94,6 +96,7 @@ class TestLogHandlerTest {
     @Nested
     @DisplayName("Edge Cases Tests")
     class EdgeCasesTests {
+
         @ParameterizedTest
         @ValueSource(strings = {"Case", "Sensitive"})
         @DisplayName("Should find case-sensitive messages")
@@ -139,6 +142,7 @@ class TestLogHandlerTest {
     @Nested
     @DisplayName("Enhanced Record Access Tests")
     class EnhancedRecordAccessTests {
+
         @Test
         @DisplayName("Should correctly identify empty state")
         void shouldCorrectlyIdentifyEmptyState() {
@@ -255,6 +259,7 @@ class TestLogHandlerTest {
     @Nested
     @DisplayName("Handler Interface Tests")
     class HandlerInterfaceTests {
+
         static Stream<Runnable> handlerMethods() {
             return Stream.of(() -> new TestLogHandler().close(), () -> new TestLogHandler().flush());
         }
@@ -283,6 +288,7 @@ class TestLogHandlerTest {
     @Nested
     @DisplayName("Handler State Management Tests")
     class HandlerStateManagementTests {
+
         @Test
         @DisplayName("Should handle closed state correctly")
         void shouldHandleClosedStateCorrectly() {
@@ -344,6 +350,7 @@ class TestLogHandlerTest {
     @Nested
     @DisplayName("Immutable Returns Tests")
     class ImmutableReturnsTests {
+
         @Test
         @DisplayName("Should provide snapshot of current state")
         void shouldProvideSnapshotOfCurrentState() {
@@ -398,6 +405,7 @@ class TestLogHandlerTest {
     @Nested
     @DisplayName("Integration Tests")
     class IntegrationTests {
+
         @Test
         @DisplayName("Should maintain consistency across all operations")
         void shouldMaintainConsistencyAcrossAllOperations() {
@@ -472,6 +480,7 @@ class TestLogHandlerTest {
     @Nested
     @DisplayName("Level-based Filtering Tests")
     class LevelBasedFilteringTests {
+
         private static final LogRecord CONFIG_RECORD = new LogRecord(Level.CONFIG, "Config message");
         private static final LogRecord FINER_RECORD = new LogRecord(Level.FINER, "Finer message");
         // Reusable records for level tests
@@ -560,6 +569,7 @@ class TestLogHandlerTest {
     @Nested
     @DisplayName("Log Level Tests")
     class LogLevelTests {
+
         // Reusable test records
         private static final LogRecord INFO_TEST_RECORD = new LogRecord(Level.INFO, "Info message");
         private static final LogRecord SEVERE_TEST_RECORD = new LogRecord(Level.SEVERE, "Error message");
@@ -618,6 +628,7 @@ class TestLogHandlerTest {
     @Nested
     @DisplayName("Message Publishing Tests")
     class MessagePublishingTests {
+
         @ParameterizedTest
         @ValueSource(strings = {"INFO", "WARNING", "SEVERE"})
         @DisplayName("Should publish log record and capture message")
@@ -666,6 +677,7 @@ class TestLogHandlerTest {
     @Nested
     @DisplayName("Message Searching Tests")
     class MessageSearchingTests {
+
         @BeforeEach
         void setUpMessages() {
             handler.publish(INFO_RECORD_HELLO);
@@ -717,6 +729,7 @@ class TestLogHandlerTest {
     @Nested
     @DisplayName("Null Value Handling Tests")
     class NullValueHandlingTests {
+
         // Reusable null records
         private static final LogRecord NULL_INFO_RECORD = new LogRecord(Level.INFO, null);
         private static final LogRecord NULL_SEVERE_RECORD = new LogRecord(Level.SEVERE, null);
@@ -881,6 +894,7 @@ class TestLogHandlerTest {
     @Nested
     @DisplayName("Pattern Matching Tests")
     class PatternMatchingTests {
+
         private static final LogRecord EMAIL_RECORD = new LogRecord(Level.WARNING, "Invalid email: user@domain.com");
         private static final LogRecord ERROR_RECORD = new LogRecord(Level.INFO, "Error: File not found");
         private static final LogRecord FATAL_RECORD = new LogRecord(Level.SEVERE, "Fatal: System crash");
@@ -948,6 +962,7 @@ class TestLogHandlerTest {
     @DisplayName("Performance and Stress Tests")
     @ExtendWith(RandomRangeResolver.class)
     class PerformanceAndStressTests {
+
         // Helper method to populate handler without creating objects in loop
         private void populateHandlerWithTestData(int count) {
             // Create a small pool of reusable records
@@ -1050,6 +1065,7 @@ class TestLogHandlerTest {
     @DisplayName("Print Methods Tests")
     @Nested
     class PrintMethodsTests {
+
         private TestLogHandler handler;
         private PrintStream originalOut;
         private ByteArrayOutputStream outputStream;
@@ -1300,6 +1316,7 @@ class TestLogHandlerTest {
     @Nested
     @DisplayName("Record Retrieval Tests")
     class RecordRetrievalTests {
+
         private static final LogRecord DIFFERENT_MESSAGE_RECORD = new LogRecord(Level.SEVERE, "Different message");
         // Reusable records for retrieval tests
         private static final LogRecord FIRST_HELLO_RECORD = new LogRecord(Level.INFO, "First hello message");
@@ -1409,6 +1426,7 @@ class TestLogHandlerTest {
     @DisplayName("Thread Safety Tests")
     @ExtendWith(RandomRangeResolver.class)
     class ThreadSafetyTests {
+
         // Helper methods to create reusable record pools
         private LogRecord[] createTestRecordPool() {
             return new LogRecord[]{

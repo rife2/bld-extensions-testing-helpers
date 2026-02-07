@@ -24,6 +24,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 @ExtendWith(RandomRangeResolver.class)
 @SuppressWarnings("PMD.SystemPrintln")
 class RandomRangeTest {
+
     @RepeatedTest(3)
     void defaultRange(@RandomRange int randomNum) {
         assertTrue(randomNum >= 0 && randomNum <= 100,

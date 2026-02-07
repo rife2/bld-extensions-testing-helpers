@@ -86,6 +86,7 @@ import java.util.logging.Logger;
  */
 @SuppressWarnings({"PMD.MoreThanOneLogger"})
 public class LoggingExtension implements BeforeEachCallback, AfterEachCallback {
+
     /**
      * Default logger instance used when no custom logger is specified.
      */
@@ -312,6 +313,7 @@ public class LoggingExtension implements BeforeEachCallback, AfterEachCallback {
      * after tests complete.
      */
     private static class LoggerState {
+
         final Handler addedHandler;
         final Level originalHandlerLevel; // Store original handler level if using existing handler
         final Handler[] originalHandlers;

@@ -25,6 +25,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 @SuppressWarnings({"PMD.AvoidDuplicateLiterals", "PMD.SystemPrintln", "PMD.TestClassWithoutTestCases"})
 class CapturedOutputTest {
+
     private static final String EOL = System.lineSeparator();
 
     @Test
@@ -150,6 +151,7 @@ class CapturedOutputTest {
     @Nested
     @DisplayName("Chronological Output Capture Tests")
     class CapturedOutputExampleTest {
+
         @Test
         @CaptureOutput
         void chronologicalCapture(CapturedOutput output) {
@@ -374,6 +376,7 @@ class CapturedOutputTest {
     @CaptureOutput
     @DisplayName("Class-Level Output Capture Tests")
     class ClassLevelCaptureOutputTests {
+
         /**
          * Counter to track test execution order for demonstration purposes.
          */
@@ -637,6 +640,7 @@ class CapturedOutputTest {
     @Nested
     @DisplayName("Get Lines Tests")
     class GetLinesTests {
+
         @Test
         void allLinesWithBothStreams() {
             var out = new java.io.ByteArrayOutputStream();

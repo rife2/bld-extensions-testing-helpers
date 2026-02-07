@@ -67,6 +67,7 @@ import java.util.Set;
  * @since 1.0
  */
 public class RandomStringResolver implements ParameterResolver, TestInstancePostProcessor {
+
     /**
      * Processes fields of the test instance annotated with {@link RandomString}.
      * <p>

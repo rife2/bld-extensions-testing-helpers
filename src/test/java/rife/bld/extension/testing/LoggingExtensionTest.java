@@ -34,6 +34,7 @@ import static org.mockito.Mockito.mock;
 
 @SuppressWarnings({"PMD.AvoidAccessibilityAlteration", "PMD.AvoidDuplicateLiterals"})
 class LoggingExtensionTest {
+
     @SuppressWarnings("PMD.AvoidThrowingRawExceptionTypes")
     private static Object getPrivateField(Object obj, String field) {
         try {
@@ -75,6 +76,7 @@ class LoggingExtensionTest {
     @Nested
     @DisplayName("Constructor Tests")
     class ConstructorTests {
+
         @Test
         void defaultConstructorUsesDefaultLoggerAndAllLevel() {
             var extension = new LoggingExtension();
@@ -167,6 +169,7 @@ class LoggingExtensionTest {
     @Nested
     @DisplayName("Coverage Edge Cases")
     class CoverageEdgeCases {
+
         @Test
         void afterEachWithNullAddedHandlerAndNullOriginalHandlerLevel() throws ReflectiveOperationException {
             var logger = getRandomLogger();
@@ -197,6 +200,7 @@ class LoggingExtensionTest {
     @Nested
     @DisplayName("After Each Tests")
     class afterEachTests {
+
         @Test
         void afterEachRestoresLoggerAndHandlerState() throws ReflectiveOperationException {
             var logger = getRandomLogger();
@@ -302,6 +306,7 @@ class LoggingExtensionTest {
     @Nested
     @DisplayName("Before Each Tests")
     class beforeEachTests {
+
         @Test
         void beforeEachAddsHandlerAndConfiguresLogger() throws ReflectiveOperationException {
             var logger = getRandomLogger();

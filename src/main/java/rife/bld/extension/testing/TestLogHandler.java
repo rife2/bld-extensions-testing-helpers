@@ -65,6 +65,7 @@ import java.util.regex.Pattern;
  */
 @SuppressWarnings("PMD.TestClassWithoutTestCases")
 public class TestLogHandler extends Handler {
+
     private final AtomicBoolean closed = new AtomicBoolean(false);
     private final List<LogRecord> logRecords = new CopyOnWriteArrayList<>();
 

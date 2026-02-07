@@ -26,9 +26,11 @@ import static org.junit.jupiter.api.Assertions.*;
 @ExtendWith(RandomStringResolver.class)
 @SuppressWarnings("PMD.AvoidDuplicateLiterals")
 class RandomStringTest {
+
     @Nested
     @DisplayName("Parameter Injection Integration")
     class ParameterInjectionIntegration {
+
         @Test
         @DisplayName("should inject custom character set string")
         void injectCustomCharacterSetString(

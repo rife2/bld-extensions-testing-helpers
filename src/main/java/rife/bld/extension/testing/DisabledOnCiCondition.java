@@ -36,6 +36,7 @@ import org.junit.jupiter.api.extension.ExtensionContext;
  * @since 1.0
  */
 public class DisabledOnCiCondition implements ExecutionCondition {
+
     /**
      * Evaluates whether the execution of a test should be enabled or disabled based on the CI environment.
      * <p>

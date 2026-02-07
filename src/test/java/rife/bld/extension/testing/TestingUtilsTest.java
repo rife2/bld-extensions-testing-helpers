@@ -25,9 +25,11 @@ import static org.junit.jupiter.api.Assertions.*;
 
 @SuppressWarnings("PMD.AvoidDuplicateLiterals")
 class TestingUtilsTest {
+
     @Nested
     @DisplayName("Character Set Constants")
     class CharacterSetConstants {
+
         @Test
         @DisplayName("should verify alphanumeric character set")
         void verifyAlphanumericCharacterSet() {
@@ -81,6 +83,7 @@ class TestingUtilsTest {
     @Nested
     @DisplayName("Generate Random Range Tests")
     class GenerateRandomRangeTests {
+
         @RepeatedTest(6)
         void generateRandomInt() {
             var randomInt = TestingUtils.generateRandomInt(0, 100);
@@ -100,6 +103,7 @@ class TestingUtilsTest {
     @Nested
     @DisplayName("Predefined Character Sets")
     class PredefinedCharacterSets {
+
         @RepeatedTest(3)
         @DisplayName("should generate string with alphanumeric characters")
         void generateWithAlphanumericCharacters() {

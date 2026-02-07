@@ -53,6 +53,7 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 @ExtendWith(RetryExtension.class)
 public @interface RetryTest {
+
     /**
      * The number of seconds to wait between retry attempts.
      * <p>
