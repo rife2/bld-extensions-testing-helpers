@@ -16,6 +16,8 @@
 
 package rife.bld.extension.testing;
 
+import org.junit.jupiter.api.extension.ExtendWith;
+
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
@@ -112,7 +114,9 @@ import java.lang.annotation.Target;
  */
 @Target({ElementType.PARAMETER, ElementType.METHOD, ElementType.FIELD})
 @Retention(RetentionPolicy.RUNTIME)
+@ExtendWith(RandomStringResolver.class)
 public @interface RandomString {
+
     /**
      * The alphanumeric character set to use for random string generation.
      *
