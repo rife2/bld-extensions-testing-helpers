@@ -21,12 +21,13 @@ import org.junit.jupiter.api.extension.TestExecutionExceptionHandler;
 import org.opentest4j.TestAbortedException;
 
 import java.util.Optional;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
  * Extension that implements the {@code @CouldFail} annotation behavior.
  *
- * <p>This extension is automatically applied when using the {@link CaptureOutput}
+ * <p>This extension is automatically applied when using the {@link CouldFail}
  * annotation.</p>
  *
  * <h2>Execution Flow</h2>
@@ -65,6 +66,7 @@ import java.util.logging.Logger;
 public class CouldFailExtension implements TestExecutionExceptionHandler {
 
     private static final Logger LOGGER = Logger.getLogger(CouldFailExtension.class.getName());
+    private static final String TEST_ACCEPTED = "Test failure accepted by @CouldFail";
 
     @Override
     public void handleTestExecutionException(ExtensionContext context, Throwable throwable)
@@ -81,21 +83,15 @@ public class CouldFailExtension implements TestExecutionExceptionHandler {
 
         if (shouldAcceptFailure(couldFail, throwable)) {
             // Exception is accepted - abort the test
-            var message = buildAcceptedFailureMessage(throwable);
-            LOGGER.info(message);
-            throw new TestAbortedException(message, throwable);
+            LOGGER.log(Level.INFO,
+                    "{0}: {1} [{2}]",
+                    new Object[]{TEST_ACCEPTED, throwable.getMessage(), throwable.getClass().getSimpleName()}
+            );
+            throw new TestAbortedException(TEST_ACCEPTED, throwable);
         } else {
             // Exception is not accepted - fail normally
             throw throwable;
         }
-    }
-
-    private String buildAcceptedFailureMessage(Throwable originalException) {
-        return "Test failure accepted by @CouldFail" + " (Original exception: " +
-                originalException.getClass().getSimpleName() +
-                ": " +
-                originalException.getMessage() +
-                ")";
     }
 
     private Optional<CouldFail> findCouldFailAnnotation(ExtensionContext context) {
