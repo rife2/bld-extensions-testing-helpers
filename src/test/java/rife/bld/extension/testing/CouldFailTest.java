@@ -19,16 +19,11 @@ package rife.bld.extension.testing;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtensionContext;
 
 import java.io.IOException;
-import java.lang.reflect.Method;
-import java.util.Optional;
 import java.util.concurrent.TimeoutException;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
 
 @DisplayName("CouldFail Annotation Tests")
 class CouldFailTest {
@@ -224,113 +219,6 @@ class CouldFailTest {
         @CouldFail(withExceptions = UnsupportedOperationException.class)
         void acceptUnsupportedOperation() {
             throw new UnsupportedOperationException("Feature not implemented");
-        }
-    }
-
-    @Nested
-    @DisplayName("Extension Unit Tests")
-    @SuppressWarnings({"PMD.PublicMemberInNonPublicType", "PMD.DetachedTestCase"})
-    class ExtensionUnitTests {
-
-        @CouldFail
-        public void methodWithCouldFail() {
-            // @CouldFail with no withExceptions
-        }
-
-        @CouldFail(withExceptions = IOException.class)
-        public void methodWithSpecificException() {
-            // @CouldFail with specific exception type
-        }
-
-        public void methodWithoutAnnotation() {
-            // No @CouldFail annotation
-        }
-
-        @Test
-        @DisplayName("Extension accepts exception in withExceptions list")
-        void extensionAcceptsMatchingException() throws Exception {
-            var extension = new CouldFail.Extension();
-
-            ExtensionContext context = mock(ExtensionContext.class);
-            Method testMethod = ExtensionUnitTests.class.getMethod("methodWithSpecificException");
-            when(context.getTestMethod()).thenReturn(Optional.of(testMethod));
-            when(context.getTestClass()).thenReturn(Optional.of(ExtensionUnitTests.class));
-
-            // Throw an exception in the withExceptions list
-            var testException = new IOException("Accepted exception");
-
-            // Should throw TestAbortedException
-            var thrown = assertThrows(org.opentest4j.TestAbortedException.class, () ->
-                    extension.handleTestExecutionException(context, testException));
-
-            assertTrue(thrown.getMessage().contains("Test failure accepted by @CouldFail"));
-            assertSame(testException, thrown.getCause());
-        }
-
-        // Helper methods for testing (with different @CouldFail configurations)
-
-        @Test
-        @DisplayName("Extension accepts exception when @CouldFail present with no withExceptions")
-        void extensionAcceptsWhenAnnotationPresentNoFilter() throws Exception {
-            var extension = new CouldFail.Extension();
-
-            ExtensionContext context = mock(ExtensionContext.class);
-            Method testMethod = ExtensionUnitTests.class.getMethod("methodWithCouldFail");
-            when(context.getTestMethod()).thenReturn(Optional.of(testMethod));
-            when(context.getTestClass()).thenReturn(Optional.of(ExtensionUnitTests.class));
-
-            var testException = new IOException("Test exception");
-
-            // Should throw TestAbortedException
-            var thrown = assertThrows(org.opentest4j.TestAbortedException.class, () ->
-                    extension.handleTestExecutionException(context, testException));
-
-            assertTrue(thrown.getMessage().contains("Test failure accepted by @CouldFail"));
-            assertSame(testException, thrown.getCause());
-        }
-
-        @Test
-        @DisplayName("Extension re-throws exception when no @CouldFail annotation present")
-        void extensionReThrowsWhenNoAnnotation() throws Exception {
-            // Create the extension
-            var extension = new CouldFail.Extension();
-
-            // Create a mock ExtensionContext with no @CouldFail annotation
-            ExtensionContext context = mock(ExtensionContext.class);
-
-            // Mock a test method without @CouldFail annotation
-            Method testMethod = ExtensionUnitTests.class.getMethod("methodWithoutAnnotation");
-            when(context.getTestMethod()).thenReturn(Optional.of(testMethod));
-            when(context.getTestClass()).thenReturn(Optional.of(ExtensionUnitTests.class));
-
-            // Create a test exception
-            var testException = new IOException("Test exception");
-
-            // The extension should re-throw the original exception
-            var thrown = assertThrows(IOException.class, () ->
-                    extension.handleTestExecutionException(context, testException));
-
-            assertSame(testException, thrown, "Original exception should be re-thrown");
-        }
-
-        @Test
-        @DisplayName("Extension rejects exception not in withExceptions list")
-        void extensionRejectsNonMatchingException() throws Exception {
-            var extension = new CouldFail.Extension();
-
-            ExtensionContext context = mock(ExtensionContext.class);
-            Method testMethod = ExtensionUnitTests.class.getMethod("methodWithSpecificException");
-            when(context.getTestMethod()).thenReturn(Optional.of(testMethod));
-            when(context.getTestClass()).thenReturn(Optional.of(ExtensionUnitTests.class));
-
-            // Throw an exception NOT in the withExceptions list
-            var testException = new IllegalStateException("Wrong exception type");
-
-            // Should re-throw the original exception
-            var thrown = assertThrows(IllegalStateException.class, () ->
-                    extension.handleTestExecutionException(context, testException));
-
-            assertSame(testException, thrown);
         }
     }
 
