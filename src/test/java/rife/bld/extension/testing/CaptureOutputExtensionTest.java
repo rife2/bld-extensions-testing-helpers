@@ -27,6 +27,7 @@ import static org.mockito.Mockito.*;
 
 @SuppressWarnings("PMD.SystemPrintln")
 class CaptureOutputExtensionTest {
+
     // Utility method to set private fields via reflection
     @SuppressWarnings("PMD.AvoidAccessibilityAlteration")
     private static void setPrivateField(Object obj, String fieldName, Object value)
@@ -179,6 +180,7 @@ class CaptureOutputExtensionTest {
 
         // For CapturedOutput parameter
         class Dummy {
+
             @SuppressWarnings({"unused", "EmptyMethod"})
             void method(CapturedOutput output) {
                 // no-op
@@ -192,6 +194,7 @@ class CaptureOutputExtensionTest {
 
         // For a non-CapturedOutput parameter
         class Dummy2 {
+
             @SuppressWarnings({"unused", "EmptyMethod"})
             void method(String output) {
                 // no-op

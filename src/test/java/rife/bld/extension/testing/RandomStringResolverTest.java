@@ -39,13 +39,16 @@ import static org.mockito.Mockito.when;
 @ExtendWith({RandomStringResolver.class, MockitoExtension.class})
 @SuppressWarnings({"PMD.AvoidDuplicateLiterals", "PMD.AvoidAccessibilityAlteration"})
 class RandomStringResolverTest {
+
     @Nested
     @DisplayName("Field Injection Integration")
     class FieldInjection {
+
         @Test
         @DisplayName("should allow access to injected value even if field is private")
         void allowInjectedValueOnPrivateField() throws Exception {
             class TestClass {
+
                 @RandomString(length = 7)
                 private String field;
 
@@ -68,6 +71,7 @@ class RandomStringResolverTest {
         @DisplayName("should inject random string into private field")
         void injectRandomStringField() throws Exception {
             class TestClass {
+
                 @RandomString(length = 8, characters = TestingUtils.UPPERCASE_CHARACTERS)
                 private String injected;
 
@@ -89,6 +93,7 @@ class RandomStringResolverTest {
         @DisplayName("should inject list of random strings into field")
         void injectRandomStringListField() throws Exception {
             class TestClass {
+
                 @RandomString(size = 5, length = 6, characters = TestingUtils.NUMERIC_CHARACTERS)
                 private List<String> stringList;
 
@@ -114,6 +119,7 @@ class RandomStringResolverTest {
         @DisplayName("should inject random string into multiple annotated fields including inherited ones")
         void injectRandomStringMultipleAndInheritedFields() throws Exception {
             class SubClass extends SuperClass {
+
                 @RandomString(length = 12)
                 private String subField;
 
@@ -141,6 +147,7 @@ class RandomStringResolverTest {
         @DisplayName("should inject set of unique random strings into field")
         void injectRandomStringSetField() throws Exception {
             class TestClass {
+
                 @RandomString(size = 4, length = 8)
                 private Set<String> stringSet;
 
@@ -166,6 +173,7 @@ class RandomStringResolverTest {
         @DisplayName("should not inject into fields that aren't String or not annotated")
         void skipNonStringOrUnannotatedFields() throws Exception {
             class TestClass {
+
                 @SuppressWarnings("PMD.UnusedPrivateField")
                 private static final int notAString = 123;
 
@@ -204,6 +212,7 @@ class RandomStringResolverTest {
         }
 
         static class SuperClass {
+
             @RandomString(length = 5, characters = TestingUtils.NUMERIC_CHARACTERS)
             private String superField;
 
@@ -216,6 +225,7 @@ class RandomStringResolverTest {
     @Nested
     @DisplayName("Method-Level Annotation Integration")
     class MethodLevelAnnotation {
+
         @RepeatedTest(3)
         @DisplayName("should inject custom character set from method-level annotation")
         @RandomString(length = 8, characters = TestingUtils.UPPERCASE_CHARACTERS)
@@ -307,6 +317,7 @@ class RandomStringResolverTest {
     @Nested
     @DisplayName("Parameter Injection Integration")
     class ParameterInjection {
+
         @RepeatedTest(3)
         @DisplayName("should inject custom character set string")
         void injectCustomCharacterSetString(
@@ -412,6 +423,7 @@ class RandomStringResolverTest {
     @Nested
     @DisplayName("Parameter Resolution")
     class ParameterResolution {
+
         @Mock
         private ExtensionContext extensionContext;
         @Mock
@@ -464,6 +476,7 @@ class RandomStringResolverTest {
             var extension = new RandomStringResolver();
 
             class TestClass {
+
                 @SuppressWarnings({"unused", "rawtypes", "EmptyMethod"})
                 void testMethod(List param) {
                     // no-op
@@ -688,6 +701,7 @@ class RandomStringResolverTest {
     @Nested
     @DisplayName("Static String Generation Methods")
     class StaticMethods {
+
         @RepeatedTest(3)
         @DisplayName("should generate default 10-character alphanumeric string")
         void generateDefaultString() {

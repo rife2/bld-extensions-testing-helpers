@@ -25,7 +25,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
- * Extension that implements the {@code @CouldFail} annotation behavior.
+ * JUnit extension that implements the {@link CouldFail} annotation.
  *
  * <p>This extension is automatically applied when using the {@link CouldFail}
  * annotation.</p>

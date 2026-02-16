@@ -24,7 +24,7 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Marks a test as allowed to fail.
+ * JUnit annotation to mark a test as allowed to fail.
  *
  * <p>When a test annotated with {@code @CouldFail} fails, the failure is accepted
  * and the test is aborted (shown as skipped). If the test passes, it continues
