@@ -49,7 +49,7 @@ public class TestingHelpersBuild extends Project {
         var junitPlatform = dependency("org.junit.platform", "junit-platform-console-standalone", junit);
         scope(compile)
                 .include(dependency("com.uwyn.rife2", "bld-extensions-tools",
-                        version(0, 9, 0, "SNAPSHOT")))
+                        version(0, 9, 0)))
                 .include(dependency("org.jetbrains", "annotations",
                         version(26, 0, 2)));
         scope(provided)
