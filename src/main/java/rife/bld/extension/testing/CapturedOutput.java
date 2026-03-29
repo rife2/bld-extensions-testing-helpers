@@ -16,24 +16,25 @@
 
 package rife.bld.extension.testing;
 
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
-
 import java.io.ByteArrayOutputStream;
+import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * Container for captured stdout and stderr output during test execution.
  * <p>
  * This class provides methods to analyze and inspect console output that was
- * captured during a test method annotated with {@link CaptureOutput}. All captured
- * output is converted using the default character encoding.
+ * captured during a test method annotated with {@link CaptureOutput}.
  * <p>
  * Instances of this class are automatically created by the {@link CaptureOutputExtension}
  * and injected into test methods as parameters. The class offers various methods to
  * access and analyze the captured output:
+ * <p>
+ * All captured output is decoded using {@code UTF-8}
  *
  * <ul>
  *     <li>String access methods: {@link #getOut()}, {@link #getErr()}, {@link #getAll()}</li>
@@ -81,8 +82,6 @@ import java.util.List;
  * @author <a href="https://erik.thauvin.net/">Erik C. Thauvin</a>
  * @see CaptureOutput
  * @see CaptureOutputExtension
- * @see OutputEntry
- * @see OutputType
  * @since 1.0
  */
 public class CapturedOutput {
@@ -232,11 +231,9 @@ public class CapturedOutput {
      * @see #getAll()
      */
     public String getChronologicalContent() {
-        var builder = new StringBuilder();
-        for (var entry : chronologicalEntries) {
-            builder.append(entry.getContent());
-        }
-        return builder.toString();
+        return chronologicalEntries.stream()
+                .map(OutputEntry::content)
+                .collect(Collectors.joining());
     }
 
     /**
@@ -278,16 +275,15 @@ public class CapturedOutput {
      * Retrieves the captured stderr content as a string.
      * <p>
      * This method converts all data written to {@code System.err} during the test
-     * execution into a string using the default character encoding. Line separators
-     * are preserved as they were originally written.
+     * execution into a string decoded as UTF-8. Line separators are preserved as
+     * they were originally written.
      *
      * @return the complete stderr content as a string, or empty string if no stderr was captured
      * @see #getOut()
      * @see #getAll()
      */
-    @SuppressFBWarnings("DM_DEFAULT_ENCODING")
     public String getErr() {
-        return stderr.toString();
+        return stderr.toString(StandardCharsets.UTF_8);
     }
 
     /**
@@ -330,16 +326,15 @@ public class CapturedOutput {
      * Retrieves the captured stdout content as a string.
      * <p>
      * This method converts all data written to {@code System.out} during the test
-     * execution into a string using the default character encoding. Line separators
-     * are preserved as they were originally written.
+     * execution into a string decoded as UTF-8.. Line separators are preserved as
+     * they were originally written.
      *
      * @return the complete stdout content as a string, or empty string if no stdout was captured
      * @see #getErr()
      * @see #getAll()
      */
-    @SuppressFBWarnings("DM_DEFAULT_ENCODING")
     public String getOut() {
-        return stdout.toString();
+        return stdout.toString(StandardCharsets.UTF_8);
     }
 
     /**
@@ -379,7 +374,7 @@ public class CapturedOutput {
     }
 
     /**
-     * Determines if any output was captured to either stdout or stderr.
+     * Determines whether no output was captured to either stdout or stderr
      * <p>
      * This method returns {@code true} only when both stdout and stderr
      * are completely empty (zero bytes captured). It's useful for verifying
@@ -417,13 +412,13 @@ public class CapturedOutput {
      * This method is used internally by the capture mechanism to record output
      * events with their timestamps and types in chronological order.
      *
-     * @param type      the type of output (STDOUT or STDERR)
-     * @param content   the content that was written
-     * @param timestamp the instant when the output occurred
+     * @param type    the type of output (STDOUT or STDERR)
+     * @param content the content that was written
      */
-    void addEntry(OutputType type, String content, Instant timestamp) {
-        chronologicalEntries.add(new OutputEntry(type, content, timestamp));
+    void addEntry(OutputType type, String content) {
+        chronologicalEntries.add(new OutputEntry(type, content, Instant.now()));
     }
+
 
     /**
      * Enumeration of output types for distinguishing between stdout and stderr.
@@ -432,7 +427,6 @@ public class CapturedOutput {
      * written to stdout or stderr. It's used in conjunction with {@link OutputEntry}
      * to provide chronological output tracking.
      *
-     * @author <a href="https://erik.thauvin.net/">Erik C. Thauvin</a>
      * @see OutputEntry
      * @see CapturedOutput#getChronologicalEntries()
      * @since 1.0
@@ -452,86 +446,21 @@ public class CapturedOutput {
     /**
      * Represents a single output entry with type, content, and timestamp.
      * <p>
-     * This class encapsulates a single piece of output that was written to either
+     * This record encapsulates a single piece of output that was written to either
      * stdout or stderr during test execution. Each entry includes the output type
      * (STDOUT or STDERR), the actual content, and the timestamp when it occurred.
      * <p>
-     * Instances of this class are immutable and are created automatically by the
+     * Instances of this record are immutable and are created automatically by the
      * capture mechanism when output occurs.
      *
-     * @author <a href="https://erik.thauvin.net/">Erik C. Thauvin</a>
+     * @param type      the {@link OutputType type} of output
+     * @param content   the content that was written
+     * @param timestamp the timestamp when the event occurred
      * @see OutputType
      * @see CapturedOutput#getChronologicalEntries()
      * @since 1.0
      */
-    public static class OutputEntry {
-
-        /**
-         * The content that was written.
-         */
-        private final String content;
-        /**
-         * The timestamp when the output occurred.
-         */
-        private final Instant timestamp;
-        /**
-         * The type of output (STDOUT or STDERR).
-         */
-        private final OutputType type;
-
-        /**
-         * Creates a new OutputEntry with the specified type, content, and timestamp.
-         *
-         * @param type      the output type (STDOUT or STDERR)
-         * @param content   the content that was written
-         * @param timestamp the timestamp when the output occurred
-         */
-        OutputEntry(OutputType type, String content, Instant timestamp) {
-            this.type = type;
-            this.content = content;
-            this.timestamp = timestamp;
-        }
-
-        /**
-         * Provides a string representation of this output entry for debugging purposes.
-         *
-         * @return a string representation of the output entry
-         */
-        @Override
-        public String toString() {
-            return "OutputEntry{" +
-                    "type=" + type +
-                    ", content='" + content + '\'' +
-                    ", timestamp=" + timestamp +
-                    '}';
-        }
-
-        /**
-         * Returns the content of this output entry.
-         *
-         * @return the content that was written
-         */
-        public String getContent() {
-            return content;
-        }
-
-        /**
-         * Returns the timestamp of this output entry.
-         *
-         * @return the instant when the output occurred
-         */
-        public Instant getTimestamp() {
-            return timestamp;
-        }
-
-        /**
-         * Returns the type of this output entry.
-         *
-         * @return the output type (STDOUT or STDERR)
-         */
-        public OutputType getType() {
-            return type;
-        }
+    public record OutputEntry(OutputType type, String content, Instant timestamp) {
 
         /**
          * Determines if this output entry is from stderr.

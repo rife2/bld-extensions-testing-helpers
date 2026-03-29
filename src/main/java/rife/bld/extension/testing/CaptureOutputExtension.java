@@ -22,7 +22,6 @@ import org.junit.jupiter.api.extension.*;
 
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
-import java.time.Instant;
 import java.util.Locale;
 
 /**
@@ -219,7 +218,7 @@ public class CaptureOutputExtension implements BeforeEachCallback, AfterEachCall
         public void print(boolean b) {
             var content = String.valueOf(b);
             super.print(content);
-            capturedOutput.addEntry(outputType, content, Instant.now());
+            capturedOutput.addEntry(outputType, content);
         }
 
         /**
@@ -231,7 +230,7 @@ public class CaptureOutputExtension implements BeforeEachCallback, AfterEachCall
         public void print(char c) {
             var content = String.valueOf(c);
             super.print(content);
-            capturedOutput.addEntry(outputType, content, Instant.now());
+            capturedOutput.addEntry(outputType, content);
         }
 
         /**
@@ -243,7 +242,7 @@ public class CaptureOutputExtension implements BeforeEachCallback, AfterEachCall
         public void print(int i) {
             var content = String.valueOf(i);
             super.print(content);
-            capturedOutput.addEntry(outputType, content, Instant.now());
+            capturedOutput.addEntry(outputType, content);
         }
 
         /**
@@ -255,7 +254,7 @@ public class CaptureOutputExtension implements BeforeEachCallback, AfterEachCall
         public void print(long l) {
             var content = String.valueOf(l);
             super.print(content);
-            capturedOutput.addEntry(outputType, content, Instant.now());
+            capturedOutput.addEntry(outputType, content);
         }
 
         /**
@@ -267,7 +266,7 @@ public class CaptureOutputExtension implements BeforeEachCallback, AfterEachCall
         public void print(float f) {
             var content = String.valueOf(f);
             super.print(content);
-            capturedOutput.addEntry(outputType, content, Instant.now());
+            capturedOutput.addEntry(outputType, content);
         }
 
         /**
@@ -279,7 +278,7 @@ public class CaptureOutputExtension implements BeforeEachCallback, AfterEachCall
         public void print(double d) {
             var content = String.valueOf(d);
             super.print(content);
-            capturedOutput.addEntry(outputType, content, Instant.now());
+            capturedOutput.addEntry(outputType, content);
         }
 
         /**
@@ -291,7 +290,7 @@ public class CaptureOutputExtension implements BeforeEachCallback, AfterEachCall
         public void print(char @NotNull [] s) {
             var content = String.valueOf(s);
             super.print(content);
-            capturedOutput.addEntry(outputType, content, Instant.now());
+            capturedOutput.addEntry(outputType, content);
         }
 
         /**
@@ -303,7 +302,7 @@ public class CaptureOutputExtension implements BeforeEachCallback, AfterEachCall
         public void print(String s) {
             super.print(s);
             if (s != null) {
-                capturedOutput.addEntry(outputType, s, Instant.now());
+                capturedOutput.addEntry(outputType, s);
             }
         }
 
@@ -316,7 +315,7 @@ public class CaptureOutputExtension implements BeforeEachCallback, AfterEachCall
         public void print(Object obj) {
             var content = String.valueOf(obj);
             super.print(content);
-            capturedOutput.addEntry(outputType, content, Instant.now());
+            capturedOutput.addEntry(outputType, content);
         }
 
         /**
@@ -326,7 +325,7 @@ public class CaptureOutputExtension implements BeforeEachCallback, AfterEachCall
         public void println() {
             var content = System.lineSeparator();
             super.print(content);
-            capturedOutput.addEntry(outputType, content, Instant.now());
+            capturedOutput.addEntry(outputType, content);
         }
 
         /**
@@ -338,7 +337,7 @@ public class CaptureOutputExtension implements BeforeEachCallback, AfterEachCall
         public void println(boolean b) {
             var content = b + System.lineSeparator();
             super.print(content);
-            capturedOutput.addEntry(outputType, content, Instant.now());
+            capturedOutput.addEntry(outputType, content);
         }
 
         /**
@@ -350,7 +349,7 @@ public class CaptureOutputExtension implements BeforeEachCallback, AfterEachCall
         public void println(char c) {
             var content = c + System.lineSeparator();
             super.print(content);
-            capturedOutput.addEntry(outputType, content, Instant.now());
+            capturedOutput.addEntry(outputType, content);
         }
 
         /**
@@ -362,7 +361,7 @@ public class CaptureOutputExtension implements BeforeEachCallback, AfterEachCall
         public void println(int i) {
             var content = i + System.lineSeparator();
             super.print(content);
-            capturedOutput.addEntry(outputType, content, Instant.now());
+            capturedOutput.addEntry(outputType, content);
         }
 
         /**
@@ -374,7 +373,7 @@ public class CaptureOutputExtension implements BeforeEachCallback, AfterEachCall
         public void println(long l) {
             var content = l + System.lineSeparator();
             super.print(content);
-            capturedOutput.addEntry(outputType, content, Instant.now());
+            capturedOutput.addEntry(outputType, content);
         }
 
         /**
@@ -386,7 +385,7 @@ public class CaptureOutputExtension implements BeforeEachCallback, AfterEachCall
         public void println(float f) {
             var content = f + System.lineSeparator();
             super.print(content);
-            capturedOutput.addEntry(outputType, content, Instant.now());
+            capturedOutput.addEntry(outputType, content);
         }
 
         /**
@@ -398,7 +397,7 @@ public class CaptureOutputExtension implements BeforeEachCallback, AfterEachCall
         public void println(double d) {
             var content = d + System.lineSeparator();
             super.print(content);
-            capturedOutput.addEntry(outputType, content, Instant.now());
+            capturedOutput.addEntry(outputType, content);
         }
 
         /**
@@ -410,7 +409,7 @@ public class CaptureOutputExtension implements BeforeEachCallback, AfterEachCall
         public void println(char @NotNull [] s) {
             var content = String.valueOf(s) + System.lineSeparator();
             super.print(content);
-            capturedOutput.addEntry(outputType, content, Instant.now());
+            capturedOutput.addEntry(outputType, content);
         }
 
         /**
@@ -422,7 +421,7 @@ public class CaptureOutputExtension implements BeforeEachCallback, AfterEachCall
         public void println(String s) {
             var content = s + System.lineSeparator();
             super.print(content);
-            capturedOutput.addEntry(outputType, content, Instant.now());
+            capturedOutput.addEntry(outputType, content);
         }
 
         /**
@@ -434,7 +433,7 @@ public class CaptureOutputExtension implements BeforeEachCallback, AfterEachCall
         public void println(Object obj) {
             var content = obj + System.lineSeparator();
             super.print(content);
-            capturedOutput.addEntry(outputType, content, Instant.now());
+            capturedOutput.addEntry(outputType, content);
         }
 
         /**
@@ -448,7 +447,7 @@ public class CaptureOutputExtension implements BeforeEachCallback, AfterEachCall
         public PrintStream printf(@NotNull String format, Object... args) {
             var content = String.format(format, args);
             super.print(content);
-            capturedOutput.addEntry(outputType, content, Instant.now());
+            capturedOutput.addEntry(outputType, content);
             return this;
         }
 
@@ -464,7 +463,7 @@ public class CaptureOutputExtension implements BeforeEachCallback, AfterEachCall
         public PrintStream printf(Locale locale, @NotNull String format, Object... args) {
             var content = String.format(locale, format, args);
             super.print(content);
-            capturedOutput.addEntry(outputType, content, Instant.now());
+            capturedOutput.addEntry(outputType, content);
             return this;
         }
 
@@ -478,7 +477,7 @@ public class CaptureOutputExtension implements BeforeEachCallback, AfterEachCall
         public PrintStream append(CharSequence csq) {
             var content = String.valueOf(csq);
             super.print(content);
-            capturedOutput.addEntry(outputType, content, Instant.now());
+            capturedOutput.addEntry(outputType, content);
             return this;
         }
 
@@ -494,7 +493,7 @@ public class CaptureOutputExtension implements BeforeEachCallback, AfterEachCall
         public PrintStream append(CharSequence csq, int start, int end) {
             var content = csq == null ? "null" : String.valueOf(csq.subSequence(start, end));
             super.print(content);
-            capturedOutput.addEntry(outputType, content, Instant.now());
+            capturedOutput.addEntry(outputType, content);
             return this;
         }
 
@@ -508,7 +507,7 @@ public class CaptureOutputExtension implements BeforeEachCallback, AfterEachCall
         public PrintStream append(char c) {
             var content = String.valueOf(c);
             super.print(content);
-            capturedOutput.addEntry(outputType, content, Instant.now());
+            capturedOutput.addEntry(outputType, content);
             return this;
         }
     }

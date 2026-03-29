@@ -71,12 +71,12 @@ class CapturedOutputTest {
 
         var entries = output.getChronologicalEntries();
 
-        var expected = "OutputEntry{type=STDOUT, content='Stdout line 1" + EOL +
-                "', timestamp=" + entries.get(0).getTimestamp() + "}";
+        var expected = "OutputEntry[type=STDOUT, content=Stdout line 1" + EOL +
+                ", timestamp=" + entries.get(0).timestamp() + ']';
         assertEquals(expected, entries.get(0).toString());
 
-        expected = "OutputEntry{type=STDERR, content='Stderr line 1" + EOL +
-                "', timestamp=" + entries.get(1).getTimestamp() + "}";
+        expected = "OutputEntry[type=STDERR, content=Stderr line 1" + EOL +
+                ", timestamp=" + entries.get(1).timestamp() + ']';
         assertEquals(expected, entries.get(1).toString());
     }
 
@@ -165,26 +165,26 @@ class CapturedOutputTest {
             assertEquals(4, entries.size());
 
             // Verify order and content
-            assertEquals(CapturedOutput.OutputType.STDOUT, entries.get(0).getType());
-            assertEquals("First stdout", entries.get(0).getContent());
+            assertEquals(CapturedOutput.OutputType.STDOUT, entries.get(0).type());
+            assertEquals("First stdout", entries.get(0).content());
             assertTrue(entries.get(0).isStdout());
             assertFalse(entries.get(0).isStderr());
 
-            assertEquals(CapturedOutput.OutputType.STDERR, entries.get(1).getType());
-            assertEquals("First stderr", entries.get(1).getContent());
+            assertEquals(CapturedOutput.OutputType.STDERR, entries.get(1).type());
+            assertEquals("First stderr", entries.get(1).content());
             assertTrue(entries.get(1).isStderr());
             assertFalse(entries.get(1).isStdout());
 
-            assertEquals(CapturedOutput.OutputType.STDOUT, entries.get(2).getType());
-            assertEquals(" - Second stdout" + EOL, entries.get(2).getContent());
+            assertEquals(CapturedOutput.OutputType.STDOUT, entries.get(2).type());
+            assertEquals(" - Second stdout" + EOL, entries.get(2).content());
 
-            assertEquals(CapturedOutput.OutputType.STDERR, entries.get(3).getType());
-            assertEquals(" - Second stderr" + EOL, entries.get(3).getContent());
+            assertEquals(CapturedOutput.OutputType.STDERR, entries.get(3).type());
+            assertEquals(" - Second stderr" + EOL, entries.get(3).content());
 
             // Verify timestamps are in order
             for (int i = 1; i < entries.size(); i++) {
-                assertTrue(entries.get(i - 1).getTimestamp().isBefore(entries.get(i).getTimestamp()) ||
-                                entries.get(i - 1).getTimestamp().equals(entries.get(i).getTimestamp()),
+                assertTrue(entries.get(i - 1).timestamp().isBefore(entries.get(i).timestamp()) ||
+                                entries.get(i - 1).timestamp().equals(entries.get(i).timestamp()),
                         "Timestamps should be in chronological order");
             }
         }
@@ -246,15 +246,15 @@ class CapturedOutputTest {
             var entries = output.getChronologicalEntries();
             assertEquals(9, entries.size());
 
-            assertEquals("String: ", entries.get(0).getContent());
-            assertEquals("text", entries.get(1).getContent());
-            assertEquals("CharSequence: ", entries.get(2).getContent());
-            assertEquals("abc", entries.get(3).getContent());
-            assertEquals("Char: ", entries.get(4).getContent());
-            assertEquals("c", entries.get(5).getContent());
-            assertEquals("CharSequence: (start, end): ", entries.get(6).getContent());
-            assertEquals("b", entries.get(7).getContent());
-            assertEquals("null", entries.get(8).getContent());
+            assertEquals("String: ", entries.get(0).content());
+            assertEquals("text", entries.get(1).content());
+            assertEquals("CharSequence: ", entries.get(2).content());
+            assertEquals("abc", entries.get(3).content());
+            assertEquals("Char: ", entries.get(4).content());
+            assertEquals("c", entries.get(5).content());
+            assertEquals("CharSequence: (start, end): ", entries.get(6).content());
+            assertEquals("b", entries.get(7).content());
+            assertEquals("null", entries.get(8).content());
         }
 
         @Test
@@ -284,24 +284,24 @@ class CapturedOutputTest {
             assertEquals(18, entries.size());
 
             // Verify content types are captured as strings
-            assertEquals("String: ", entries.get(0).getContent());
-            assertEquals("text", entries.get(1).getContent());
-            assertEquals("Integer: ", entries.get(2).getContent());
-            assertEquals("42", entries.get(3).getContent());
-            assertEquals("Boolean: ", entries.get(4).getContent());
-            assertEquals("true", entries.get(5).getContent());
-            assertEquals("Double: ", entries.get(6).getContent());
-            assertEquals("3.14", entries.get(7).getContent());
-            assertEquals("Char: ", entries.get(8).getContent());
-            assertEquals("c", entries.get(9).getContent());
-            assertEquals("Long: ", entries.get(10).getContent());
-            assertEquals("10", entries.get(11).getContent());
-            assertEquals("Float: ", entries.get(12).getContent());
-            assertEquals("1.1", entries.get(13).getContent());
-            assertEquals("Char[]: ", entries.get(14).getContent());
-            assertEquals("abc", entries.get(15).getContent());
-            assertEquals("Object: ", entries.get(16).getContent());
-            assertEquals("5", entries.get(17).getContent());
+            assertEquals("String: ", entries.get(0).content());
+            assertEquals("text", entries.get(1).content());
+            assertEquals("Integer: ", entries.get(2).content());
+            assertEquals("42", entries.get(3).content());
+            assertEquals("Boolean: ", entries.get(4).content());
+            assertEquals("true", entries.get(5).content());
+            assertEquals("Double: ", entries.get(6).content());
+            assertEquals("3.14", entries.get(7).content());
+            assertEquals("Char: ", entries.get(8).content());
+            assertEquals("c", entries.get(9).content());
+            assertEquals("Long: ", entries.get(10).content());
+            assertEquals("10", entries.get(11).content());
+            assertEquals("Float: ", entries.get(12).content());
+            assertEquals("1.1", entries.get(13).content());
+            assertEquals("Char[]: ", entries.get(14).content());
+            assertEquals("abc", entries.get(15).content());
+            assertEquals("Object: ", entries.get(16).content());
+            assertEquals("5", entries.get(17).content());
         }
 
         @Test
@@ -331,25 +331,25 @@ class CapturedOutputTest {
             assertEquals(19, entries.size());
 
             // Verify content types are captured as strings
-            assertEquals("String: ", entries.get(0).getContent());
-            assertEquals("text" + EOL, entries.get(1).getContent());
-            assertEquals("Integer: ", entries.get(2).getContent());
-            assertEquals("42" + EOL, entries.get(3).getContent());
-            assertEquals("Boolean: ", entries.get(4).getContent());
-            assertEquals("true" + EOL, entries.get(5).getContent());
-            assertEquals("Double: ", entries.get(6).getContent());
-            assertEquals("3.14" + EOL, entries.get(7).getContent());
-            assertEquals("Char: ", entries.get(8).getContent());
-            assertEquals("c" + EOL, entries.get(9).getContent());
-            assertEquals("Long: ", entries.get(10).getContent());
-            assertEquals("10" + EOL, entries.get(11).getContent());
-            assertEquals("Float: ", entries.get(12).getContent());
-            assertEquals("1.1" + EOL, entries.get(13).getContent());
-            assertEquals("Char[]: ", entries.get(14).getContent());
-            assertEquals("abc" + EOL, entries.get(15).getContent());
-            assertEquals("Object: ", entries.get(16).getContent());
-            assertEquals("5" + EOL, entries.get(17).getContent());
-            assertEquals(EOL, entries.get(18).getContent());
+            assertEquals("String: ", entries.get(0).content());
+            assertEquals("text" + EOL, entries.get(1).content());
+            assertEquals("Integer: ", entries.get(2).content());
+            assertEquals("42" + EOL, entries.get(3).content());
+            assertEquals("Boolean: ", entries.get(4).content());
+            assertEquals("true" + EOL, entries.get(5).content());
+            assertEquals("Double: ", entries.get(6).content());
+            assertEquals("3.14" + EOL, entries.get(7).content());
+            assertEquals("Char: ", entries.get(8).content());
+            assertEquals("c" + EOL, entries.get(9).content());
+            assertEquals("Long: ", entries.get(10).content());
+            assertEquals("10" + EOL, entries.get(11).content());
+            assertEquals("Float: ", entries.get(12).content());
+            assertEquals("1.1" + EOL, entries.get(13).content());
+            assertEquals("Char[]: ", entries.get(14).content());
+            assertEquals("abc" + EOL, entries.get(15).content());
+            assertEquals("Object: ", entries.get(16).content());
+            assertEquals("5" + EOL, entries.get(17).content());
+            assertEquals(EOL, entries.get(18).content());
         }
 
         @Test
@@ -359,7 +359,7 @@ class CapturedOutputTest {
 
             var entries = output.getChronologicalEntries();
 
-            assertEquals("5 3.14", entries.get(0).getContent());
+            assertEquals("5 3.14", entries.get(0).content());
         }
 
         @Test
@@ -368,7 +368,7 @@ class CapturedOutputTest {
             System.out.printf(Locale.FRANCE, "%+10.4f", Math.E);
 
             var entries = output.getChronologicalEntries();
-            assertEquals("   +2,7183", entries.get(0).getContent());
+            assertEquals("   +2,7183", entries.get(0).content());
         }
     }
 
@@ -435,35 +435,35 @@ class CapturedOutputTest {
 
             // Filter out setup entries for cleaner testing
             var dataEntries = entries.stream()
-                    .filter(entry -> !entry.getContent().contains("Setting up test"))
+                    .filter(entry -> !entry.content().contains("Setting up test"))
                     .toList();
 
             assertEquals(8, dataEntries.size());
 
             // Verify content and types
-            assertEquals("String: ", dataEntries.get(0).getContent());
-            assertEquals(CapturedOutput.OutputType.STDOUT, dataEntries.get(0).getType());
+            assertEquals("String: ", dataEntries.get(0).content());
+            assertEquals(CapturedOutput.OutputType.STDOUT, dataEntries.get(0).type());
 
-            assertEquals("text" + EOL, dataEntries.get(1).getContent());
-            assertEquals(CapturedOutput.OutputType.STDOUT, dataEntries.get(1).getType());
+            assertEquals("text" + EOL, dataEntries.get(1).content());
+            assertEquals(CapturedOutput.OutputType.STDOUT, dataEntries.get(1).type());
 
-            assertEquals("Integer: ", dataEntries.get(2).getContent());
-            assertEquals(CapturedOutput.OutputType.STDOUT, dataEntries.get(2).getType());
+            assertEquals("Integer: ", dataEntries.get(2).content());
+            assertEquals(CapturedOutput.OutputType.STDOUT, dataEntries.get(2).type());
 
-            assertEquals("42" + EOL, dataEntries.get(3).getContent());
-            assertEquals(CapturedOutput.OutputType.STDOUT, dataEntries.get(3).getType());
+            assertEquals("42" + EOL, dataEntries.get(3).content());
+            assertEquals(CapturedOutput.OutputType.STDOUT, dataEntries.get(3).type());
 
-            assertEquals("Boolean: ", dataEntries.get(4).getContent());
-            assertEquals(CapturedOutput.OutputType.STDERR, dataEntries.get(4).getType());
+            assertEquals("Boolean: ", dataEntries.get(4).content());
+            assertEquals(CapturedOutput.OutputType.STDERR, dataEntries.get(4).type());
 
-            assertEquals("true" + EOL, dataEntries.get(5).getContent());
-            assertEquals(CapturedOutput.OutputType.STDERR, dataEntries.get(5).getType());
+            assertEquals("true" + EOL, dataEntries.get(5).content());
+            assertEquals(CapturedOutput.OutputType.STDERR, dataEntries.get(5).type());
 
             // Verify timestamps are in chronological order
             for (int i = 1; i < dataEntries.size(); i++) {
                 assertTrue(
-                        dataEntries.get(i - 1).getTimestamp().isBefore(dataEntries.get(i).getTimestamp()) ||
-                                dataEntries.get(i - 1).getTimestamp().equals(dataEntries.get(i).getTimestamp()),
+                        dataEntries.get(i - 1).timestamp().isBefore(dataEntries.get(i).timestamp()) ||
+                                dataEntries.get(i - 1).timestamp().equals(dataEntries.get(i).timestamp()),
                         "Timestamps should be in chronological order"
                 );
             }
@@ -537,14 +537,14 @@ class CapturedOutputTest {
             // Verify chronological order
             var entries = output.getChronologicalEntries();
             var nonSetupEntries = entries.stream()
-                    .filter(entry -> !entry.getContent().contains("Setting up test"))
+                    .filter(entry -> !entry.content().contains("Setting up test"))
                     .toList();
 
             assertEquals(4, nonSetupEntries.size());
-            assertEquals(CapturedOutput.OutputType.STDOUT, nonSetupEntries.get(0).getType());
-            assertEquals(CapturedOutput.OutputType.STDERR, nonSetupEntries.get(1).getType());
-            assertEquals(CapturedOutput.OutputType.STDOUT, nonSetupEntries.get(2).getType());
-            assertEquals(CapturedOutput.OutputType.STDERR, nonSetupEntries.get(3).getType());
+            assertEquals(CapturedOutput.OutputType.STDOUT, nonSetupEntries.get(0).type());
+            assertEquals(CapturedOutput.OutputType.STDERR, nonSetupEntries.get(1).type());
+            assertEquals(CapturedOutput.OutputType.STDOUT, nonSetupEntries.get(2).type());
+            assertEquals(CapturedOutput.OutputType.STDERR, nonSetupEntries.get(3).type());
 
             // Verify chronological content
             var chronological = output.getChronologicalContent();
@@ -587,9 +587,9 @@ class CapturedOutputTest {
 
             var entries = output.getChronologicalEntries();
             var hasSetup = entries.stream().anyMatch(entry ->
-                    entry.getContent().contains("Setting up test #"));
+                    entry.content().contains("Setting up test #"));
             var hasMainContent = entries.stream().anyMatch(entry ->
-                    entry.getContent().contains("Main test content"));
+                    entry.content().contains("Main test content"));
 
             assertTrue(hasSetup, "Should contain setup output");
             assertTrue(hasMainContent, "Should contain main test content");
@@ -610,8 +610,8 @@ class CapturedOutputTest {
             // Verify chronological tracking
             var entries = output.getChronologicalEntries();
             assertTrue(entries.stream().anyMatch(entry ->
-                    entry.getType() == CapturedOutput.OutputType.STDERR &&
-                            entry.getContent().contains(errorMessage)));
+                    entry.type() == CapturedOutput.OutputType.STDERR &&
+                            entry.content().contains(errorMessage)));
         }
 
         @Test
@@ -629,8 +629,8 @@ class CapturedOutputTest {
             // Verify chronological tracking
             var entries = output.getChronologicalEntries();
             assertTrue(entries.stream().anyMatch(entry ->
-                    entry.getType() == CapturedOutput.OutputType.STDOUT &&
-                            entry.getContent().contains(message)));
+                    entry.type() == CapturedOutput.OutputType.STDOUT &&
+                            entry.content().contains(message)));
 
             // Should contain setup output as well
             assertTrue(output.outContains("Setting up test #"));
