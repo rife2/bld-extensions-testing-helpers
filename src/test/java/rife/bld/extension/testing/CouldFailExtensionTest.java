@@ -64,7 +64,7 @@ class CouldFailExtensionTest {
         var thrown = assertThrows(org.opentest4j.TestAbortedException.class, () ->
                 extension.handleTestExecutionException(context, testException));
 
-        assertTrue(thrown.getMessage().contains("Test failure accepted by @CouldFail"));
+        assertTrue(thrown.getMessage().contains("Test marked @CouldFail — accepted as non-fatal"));
         assertSame(testException, thrown.getCause());
     }
 
@@ -84,7 +84,7 @@ class CouldFailExtensionTest {
         var thrown = assertThrows(org.opentest4j.TestAbortedException.class, () ->
                 extension.handleTestExecutionException(context, testException));
 
-        assertTrue(thrown.getMessage().contains("Test failure accepted by @CouldFail"));
+        assertTrue(thrown.getMessage().contains("Test marked @CouldFail — accepted as non-fatal"));
         assertSame(testException, thrown.getCause());
     }
 

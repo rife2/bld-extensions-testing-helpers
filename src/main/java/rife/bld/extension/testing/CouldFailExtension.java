@@ -27,8 +27,8 @@ import java.util.logging.Logger;
 /**
  * JUnit extension that implements the {@link CouldFail} annotation.
  *
- * <p>This extension is automatically applied when using the {@link CouldFail}
- * annotation.</p>
+ * <p>This extension is automatically applied when {@link CouldFail} is present,
+ * via {@code @ExtendWith(CouldFailExtension.class)} declared on that annotation.</p>
  *
  * <h2>Execution Flow</h2>
  * <ol>
@@ -50,7 +50,8 @@ import java.util.logging.Logger;
  * <p>An exception is considered "accepted" if:</p>
  * <ul>
  *   <li>{@code withExceptions} is empty (accepts any exception), OR</li>
- *   <li>The thrown exception is an instance of any class in {@code withExceptions}</li>
+ *   <li>The thrown exception, or any exception in its cause chain, is an instance
+ *       of any class in {@code withExceptions}</li>
  * </ul>
  *
  * <h2>Logging</h2>
@@ -58,6 +59,7 @@ import java.util.logging.Logger;
  * <pre>
  * Test failure accepted by @CouldFail (Original exception: IOException: Connection timeout)
  * </pre>
+ * <p>The full stack trace of the original failure is logged at FINE level for debugging.</p>
  *
  * @see CouldFail
  * @see TestExecutionExceptionHandler
@@ -65,8 +67,9 @@ import java.util.logging.Logger;
  */
 public class CouldFailExtension implements TestExecutionExceptionHandler {
 
+    private static final String ABORT_MESSAGE = "Test marked @CouldFail — accepted as non-fatal";
     private static final Logger LOGGER = Logger.getLogger(CouldFailExtension.class.getName());
-    private static final String TEST_ACCEPTED = "Test failure accepted by @CouldFail";
+    private static final String LOG_PREFIX = "Test failure accepted by @CouldFail";
 
     @Override
     public void handleTestExecutionException(ExtensionContext context, Throwable throwable)
@@ -82,14 +85,15 @@ public class CouldFailExtension implements TestExecutionExceptionHandler {
         var couldFail = annotation.get();
 
         if (shouldAcceptFailure(couldFail, throwable)) {
-            // Exception is accepted - abort the test
+            var message = throwable.getMessage() != null ? throwable.getMessage() : "(no message)";
             LOGGER.log(Level.INFO,
                     "{0}: {1} [{2}]",
-                    new Object[]{TEST_ACCEPTED, throwable.getMessage(), throwable.getClass().getSimpleName()}
+                    new Object[]{LOG_PREFIX, message, throwable.getClass().getSimpleName()}
             );
-            throw new TestAbortedException(TEST_ACCEPTED, throwable);
+            LOGGER.log(Level.FINE, "Original failure stack trace", throwable);
+            throw new TestAbortedException(ABORT_MESSAGE, throwable);
         } else {
-            // Exception is not accepted - fail normally
+            // Exception type not accepted — fail normally
             throw throwable;
         }
     }
@@ -102,6 +106,28 @@ public class CouldFailExtension implements TestExecutionExceptionHandler {
                         .flatMap(clazz -> Optional.ofNullable(clazz.getAnnotation(CouldFail.class))));
     }
 
+    /**
+     * Returns {@code true} if {@code throwable} or any exception in its cause chain
+     * is an instance of {@code type}.
+     *
+     * <p>This allows {@code withExceptions = IOException.class} to match even when the
+     * test throws a wrapping {@code RuntimeException} whose cause is an {@code IOException}.</p>
+     *
+     * @param type      the exception type to look for
+     * @param throwable the throwable to inspect
+     * @return {@code true} if any exception in the cause chain is an instance of {@code type}
+     */
+    private boolean matchesCauseChain(Class<? extends Throwable> type, Throwable throwable) {
+        var current = throwable;
+        while (current != null) {
+            if (type.isInstance(current)) {
+                return true;
+            }
+            current = current.getCause();
+        }
+        return false;
+    }
+
     private boolean shouldAcceptFailure(CouldFail couldFail, Throwable throwable) {
         var withExceptions = couldFail.withExceptions();
 
@@ -110,9 +136,9 @@ public class CouldFailExtension implements TestExecutionExceptionHandler {
             return true;
         }
 
-        // Check if the thrown exception matches any of the specified exception types
+        // Check if the thrown exception, or any cause in its chain, matches a specified type
         for (var exceptionType : withExceptions) {
-            if (exceptionType.isInstance(throwable)) {
+            if (matchesCauseChain(exceptionType, throwable)) {
                 return true;
             }
         }
