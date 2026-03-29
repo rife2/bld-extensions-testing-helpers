@@ -22,10 +22,8 @@ import org.junit.jupiter.api.extension.*;
 import java.lang.reflect.Modifier;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
+import java.util.logging.Logger;
 
 /**
  * Parameter and field resolver for the {@link RandomRange} annotation.
@@ -62,11 +60,13 @@ import java.util.Set;
  */
 public class RandomRangeResolver implements ParameterResolver, TestInstancePostProcessor {
 
+    private static final Logger LOGGER = Logger.getLogger(RandomRangeResolver.class.getName());
+
     /**
      * Processes fields of the test instance annotated with {@link RandomRange}.
      * <p>
      * Enables field injection for random ints. The field must be of type {@code int}, {@code List<Integer>},
-     * or {@code Set<Integer>}.
+     * or {@code Set<Integer>}. Fields of unsupported types are skipped with a warning.
      *
      * @param testInstance the test class instance
      * @param context      the current extension context
@@ -91,6 +91,10 @@ public class RandomRangeResolver implements ParameterResolver, TestInstancePostP
                     } else if (field.getType() == Set.class) {
                         randomValue = generateRandomIntSet(annotation.size(), annotation.min(), annotation.max());
                     } else {
+                        var declaringClass = clazz;
+                        LOGGER.warning(() -> ("@RandomRange on field '%s' in %s is ignored: unsupported type %s. " +
+                                "Supported types are int, Integer, List<Integer>, and Set<Integer>.")
+                                .formatted(field.getName(), declaringClass.getName(), field.getType().getName()));
                         continue;
                     }
 
@@ -137,12 +141,15 @@ public class RandomRangeResolver implements ParameterResolver, TestInstancePostP
     /**
      * Resolves a parameter by generating a random integer within the specified range.
      * <p>
-     * Priority: Parameter-level > Method-level > Default (0-100, for safety).
+     * Priority: Parameter-level &gt; Method-level &gt; Default (0–100, for safety).
+     * <p>
+     * Note: the default (0–100) fallback is a safety net; in practice it is unreachable because
+     * {@link #supportsParameter} requires at least one {@code @RandomRange} annotation to be present.
      *
      * @param parameterContext the context for the parameter to be resolved
      * @param extensionContext the extension context for the test being executed
      * @return a random integer, list, or set within the specified range
-     * @throws ParameterResolutionException if {@code min} > {@code max}
+     * @throws ParameterResolutionException if {@code min} &gt; {@code max}
      * @see TestingUtils#generateRandomInt(int, int)
      */
     @Override
@@ -171,25 +178,14 @@ public class RandomRangeResolver implements ParameterResolver, TestInstancePostP
     }
 
     /**
-     * Generates a random integer value based on the annotation configuration.
+     * Generates a list of random integers within [min, max].
+     * <p>
+     * Values are not guaranteed to be unique; use {@link #generateRandomIntSet} for uniqueness.
      *
-     * @param annotation the RandomRange annotation containing min and max values
-     * @return a random integer within the specified range
-     * @throws ParameterResolutionException if min > max
+     * @throws ParameterResolutionException if min &gt; max
      */
-    private static int generateRandomValue(RandomRange annotation) {
-        int min = annotation.min();
-        int max = annotation.max();
-        if (min > max) {
-            throw new ParameterResolutionException(
-                    String.format("The minimum value (%d) cannot be greater than maximum value (%d)", min, max)
-            );
-        }
-        return TestingUtils.generateRandomInt(min, max);
-    }
-
-    // Generates a list of random integers.
-    private List<Integer> generateRandomIntList(int size, int min, int max) {
+    private static List<Integer> generateRandomIntList(int size, int min, int max) {
+        validateRange(min, max);
         var list = new ArrayList<Integer>(size);
         for (int i = 0; i < size; i++) {
             list.add(TestingUtils.generateRandomInt(min, max));
@@ -197,42 +193,78 @@ public class RandomRangeResolver implements ParameterResolver, TestInstancePostP
         return list;
     }
 
-    // Generates a set of unique random integers.
-    private Set<Integer> generateRandomIntSet(int size, int min, int max) {
-        // Calculate the range of possible values
+    /**
+     * Generates a set of unique random integers within [min, max].
+     * <p>
+     * For ranges up to 10,000 values, a Fisher-Yates shuffle on the full range is used to guarantee
+     * completion in O(range) time regardless of how close {@code size} is to the range width.
+     * For larger ranges where {@code size} is small relative to the range, a retry loop is used instead,
+     * which is efficient when collision probability stays low.
+     *
+     * @throws IllegalArgumentException     if {@code size} exceeds the number of distinct values in [min, max]
+     * @throws ParameterResolutionException if min &gt; max
+     */
+    private static Set<Integer> generateRandomIntSet(int size, int min, int max) {
+        validateRange(min, max);
+
+        // range fits in a long safely: Integer.MAX_VALUE - Integer.MIN_VALUE + 1 = 2^32, within long range.
         long range = (long) max - min + 1;
 
         if (size > range) {
             throw new IllegalArgumentException(
-                    String.format("Cannot generate %d unique integers in range [%d, %d]. " +
-                                    "Maximum possible unique integers: %d",
-                            size, min, max, range));
+                    ("Cannot generate %d unique integers in range [%d, %d]. " +
+                            "Maximum possible unique integers: %d").formatted(size, min, max, range));
         }
 
+        // For small-to-medium ranges, use Fisher-Yates shuffle to guarantee O(range) completion
+        // with no collision risk ? critical when size is close to range.
+        if (range <= 10_000) {
+            var pool = new ArrayList<Integer>((int) range);
+            for (int i = min; i <= max; i++) {
+                pool.add(i);
+            }
+            Collections.shuffle(pool);
+            return new HashSet<>(pool.subList(0, size));
+        }
+
+        // For large ranges where size << range, collision probability stays low and the retry
+        // loop is efficient.
         var set = new HashSet<Integer>(size);
-        int maxAttempts = size * 100; // Reasonable limit
+        int maxAttempts = size * 100;
         int attempts = 0;
 
         while (set.size() < size) {
             if (attempts++ > maxAttempts) {
                 throw new IllegalStateException(
-                        String.format("Failed to generate %d unique integers after %d attempts. " +
-                                        "Consider using a larger range.",
-                                size, maxAttempts));
+                        ("Failed to generate %d unique integers after %d attempts. " +
+                                "Consider using a larger range.").formatted(size, maxAttempts));
             }
             set.add(TestingUtils.generateRandomInt(min, max));
         }
         return set;
     }
 
+    /**
+     * Generates a random integer value based on the annotation configuration.
+     *
+     * @param annotation the RandomRange annotation containing min and max values
+     * @return a random integer within the specified range
+     * @throws ParameterResolutionException if min &gt; max
+     */
+    private static int generateRandomValue(RandomRange annotation) {
+        int min = annotation.min();
+        int max = annotation.max();
+        validateRange(min, max);
+        return TestingUtils.generateRandomInt(min, max);
+    }
+
     // Generates the appropriate value based on the parameter type.
+    // Note: validateRange is intentionally called here as a fail-fast guard before any
+    // allocation occurs. The delegate methods (generateRandomIntList, generateRandomIntSet)
+    // also call validateRange independently for defence-in-depth when invoked directly.
     @SuppressFBWarnings("URV_UNRELATED_RETURN_VALUES")
-    private Object generateValue(Class<?> parameterType, int size, int min, int max) {
-        if (min > max) {
-            throw new ParameterResolutionException(
-                    String.format("The minimum value (%d) cannot be greater than maximum value (%d)", min, max)
-            );
-        }
+    private static Object generateValue(Class<?> parameterType, int size, int min, int max) {
+        validateRange(min, max);
 
         if (parameterType == int.class || parameterType == Integer.class) {
             return TestingUtils.generateRandomInt(min, max);
@@ -245,11 +277,26 @@ public class RandomRangeResolver implements ParameterResolver, TestInstancePostP
     }
 
     // Checks if a parameterized type is a collection of integers.
-    private boolean isIntegerCollection(Type type) {
+    private static boolean isIntegerCollection(Type type) {
         if (type instanceof ParameterizedType parameterizedType) {
             var typeArguments = parameterizedType.getActualTypeArguments();
             return typeArguments.length == 1 && typeArguments[0] == Integer.class;
         }
         return false;
+    }
+
+    /**
+     * Validates that {@code min} does not exceed {@code max}.
+     *
+     * @param min the minimum value of the range
+     * @param max the maximum value of the range
+     * @throws ParameterResolutionException if {@code min > max}
+     */
+    private static void validateRange(int min, int max) {
+        if (min > max) {
+            throw new ParameterResolutionException(
+                    "The minimum value (%d) cannot be greater than maximum value (%d)".formatted(min, max)
+            );
+        }
     }
 }
