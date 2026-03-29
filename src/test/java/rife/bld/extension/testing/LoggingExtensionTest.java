@@ -22,7 +22,6 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtensionContext;
 
-import java.lang.reflect.Field;
 import java.util.Arrays;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -58,10 +57,17 @@ class LoggingExtensionTest {
         return configs.getOrDefault(testClass, new ConcurrentHashMap<>());
     }
 
+    /**
+     * Creates a mock ExtensionContext that returns {@code testClass} from getRequiredTestClass()
+     * and a stable unique ID derived from the class name so that beforeEach and afterEach
+     * lookups always use the same key.
+     */
     private static ExtensionContext mockExtensionContext(Class<?> testClass) {
         var context = mock(ExtensionContext.class);
         // ExtensionContext.getRequiredTestClass() is a final method, so use doReturn...when... syntax
         doReturn(testClass).when(context).getRequiredTestClass();
+        // Stub getUniqueId() with a stable value so beforeEach and afterEach use the same map key
+        doReturn("[test:" + testClass.getName() + "]").when(context).getUniqueId();
         return context;
     }
 
@@ -182,14 +188,14 @@ class LoggingExtensionTest {
             ctor.setAccessible(true);
             Object loggerState = ctor.newInstance(logger, null);
 
-            // Insert into TEST_METHOD_CONFIGS
+            // Insert into TEST_METHOD_CONFIGS using the same key that afterEach will look up
             var field = LoggingExtension.class.getDeclaredField("TEST_METHOD_CONFIGS");
             field.setAccessible(true);
             @SuppressWarnings("unchecked")
             var configs = (Map<Class<?>, Map<String, Object>>) field.get(null);
 
             Map<String, Object> map = new ConcurrentHashMap<>();
-            map.put(logger.getName(), loggerState);
+            map.put(context.getUniqueId(), loggerState);  // key must match getUniqueId()
             configs.put(this.getClass(), map);
 
             // Should not throw, covers (addedHandler == null) and (originalHandlerLevel == null)
@@ -200,6 +206,12 @@ class LoggingExtensionTest {
     @Nested
     @DisplayName("After Each Tests")
     class afterEachTests {
+
+        private static Object invokeAccessor(Object record, String name) throws ReflectiveOperationException {
+            var method = record.getClass().getDeclaredMethod(name);
+            method.setAccessible(true);
+            return method.invoke(record);
+        }
 
         @Test
         void afterEachRestoresLoggerAndHandlerState() throws ReflectiveOperationException {
@@ -258,8 +270,9 @@ class LoggingExtensionTest {
             var extension = new LoggingExtension(nullNameLogger);
             var context = mockExtensionContext(this.getClass());
 
-            extension.beforeEach(context); // This creates a configKey starting with null-logger-
-            // Should take the 'true' branch: use this.logger in afterEach
+            // beforeEach stores state under context.getUniqueId(); afterEach retrieves it the same way,
+            // so a null logger name is no longer a special case
+            extension.beforeEach(context);
             assertDoesNotThrow(() -> extension.afterEach(context));
         }
 
@@ -268,18 +281,37 @@ class LoggingExtensionTest {
             var logger = getRandomLogger();
             var extension = new LoggingExtension(logger);
             var context = mockExtensionContext(this.getClass());
-
             extension.beforeEach(context);
 
-            // Simulate state with null originalHandlerLevel
+            // Replace the stored state with a copy that has originalHandlerLevel = null
             var configs = getTestConfigsForTestClass(this.getClass());
-            for (Object stateObj : configs.values()) {
-                Field stateField = stateObj.getClass().getDeclaredField("originalHandlerLevel");
-                stateField.setAccessible(true);
-                stateField.set(stateObj, null);
-            }
+            var configKey = context.getUniqueId();
+            var existingState = configs.get(configKey);
 
-            // Should take the else branch (do nothing)
+            // Get the canonical record constructor via reflection
+            var stateClass = existingState.getClass();
+            var ctor = stateClass.getDeclaredConstructors()[1];
+            ctor.setAccessible(true);
+
+            // Read current field values from the existing state
+            var targetLogger = invokeAccessor(existingState, "targetLogger");
+            var originalLevel = invokeAccessor(existingState, "originalLevel");
+            var useParent = invokeAccessor(existingState, "originalUseParentHandlers");
+            var origHandlers = invokeAccessor(existingState, "originalHandlers");
+            var addedHandler = invokeAccessor(existingState, "addedHandler");
+
+            // Construct a new state with originalHandlerLevel = null
+            var patchedState = ctor.newInstance(
+                    targetLogger,
+                    originalLevel,
+                    (boolean) useParent,
+                    origHandlers,
+                    addedHandler,
+                    null);
+            //noinspection unchecked
+            ((Map<String, Object>) configs).put(configKey, patchedState);
+
+            // Should take the else branch (do nothing) without throwing
             assertDoesNotThrow(() -> extension.afterEach(context));
         }
 

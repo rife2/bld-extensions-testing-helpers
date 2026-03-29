@@ -22,6 +22,7 @@ import org.junit.jupiter.api.extension.BeforeEachCallback;
 import org.junit.jupiter.api.extension.ExtensionContext;
 
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.ConsoleHandler;
 import java.util.logging.Handler;
@@ -84,25 +85,33 @@ import java.util.logging.Logger;
  * @see TestLogHandler
  * @since 1.0
  */
-@SuppressWarnings({"PMD.MoreThanOneLogger"})
+@SuppressWarnings("PMD.MoreThanOneLogger") // two loggers are intentional: default + injected
 public class LoggingExtension implements BeforeEachCallback, AfterEachCallback {
 
     /**
      * Default logger instance used when no custom logger is specified.
      */
     private static final Logger DEFAULT_LOGGER = Logger.getLogger(LoggingExtension.class.getName());
+
     /**
-     * Store configurations per test method to allow proper cleanup after each test.
+     * Stores logger state per test invocation, keyed by class then unique test ID.
+     * Using the full unique test ID (rather than just logger name) prevents races
+     * when tests within the same class run concurrently.
      */
     private static final Map<Class<?>, Map<String, LoggerState>> TEST_METHOD_CONFIGS = new ConcurrentHashMap<>();
+
     /**
-     * The handler to use for logging output. If null, a ConsoleHandler will be created.
+     * The handler to use for logging output. If {@code null}, a {@link ConsoleHandler} will be created.
+     * Stored directly (not copied) because the caller intentionally shares the same handler instance.
      */
+    @SuppressFBWarnings("EI_EXPOSE_REP2") // intentional: caller owns the handler instance
     private final Handler handler;
+
     /**
      * The logging level to set for both the logger and console handler.
      */
     private final Level level;
+
     /**
      * The logger instance to configure.
      */
@@ -142,14 +151,16 @@ public class LoggingExtension implements BeforeEachCallback, AfterEachCallback {
     /**
      * Creates a LoggingExtension with a custom logger and existing handler.
      * <p>
-     * The handler's existing level will be preserved unless overridden by constructor parameters.
+     * The handler's existing level will be preserved. If the handler has no level explicitly set
+     * (i.e. {@link Handler#getLevel()} returns {@code null}), {@link Level#ALL} is used.
      *
      * @param logger  the logger to configure for output
      * @param handler the existing handler to use for logging output
      * @throws NullPointerException if logger or handler is {@code null}
      */
     public LoggingExtension(Logger logger, Handler handler) {
-        this(logger, handler, handler != null ? handler.getLevel() : Level.ALL);
+        this(logger, handler,
+                handler != null && handler.getLevel() != null ? handler.getLevel() : Level.ALL);
     }
 
     /**
@@ -159,15 +170,15 @@ public class LoggingExtension implements BeforeEachCallback, AfterEachCallback {
      * level configuration.
      *
      * @param logger  the logger to configure for output
-     * @param handler the existing handler to use for logging output
+     * @param handler the existing handler to use for logging output (may be {@code null} to auto-create a
+     *                {@link ConsoleHandler})
      * @param level   the logging level to set for both logger and handler
      * @throws NullPointerException if logger or level is {@code null}
      */
-    @SuppressFBWarnings({"EI_EXPOSE_REP"})
     public LoggingExtension(Logger logger, Handler handler, Level level) {
-        this.logger = logger;
+        this.logger = Objects.requireNonNull(logger, "logger must not be null");
+        this.level = Objects.requireNonNull(level, "level must not be null");
         this.handler = handler;
-        this.level = level;
     }
 
     /**
@@ -192,7 +203,8 @@ public class LoggingExtension implements BeforeEachCallback, AfterEachCallback {
     /**
      * Creates a LoggingExtension with a custom logger name and existing handler.
      * <p>
-     * The handler's existing level will be preserved.
+     * The handler's existing level will be preserved. If the handler has no level explicitly set
+     * (i.e. {@link Handler#getLevel()} returns {@code null}), {@link Level#ALL} is used.
      *
      * @param loggerName the fully qualified logger name to configure for output
      * @param handler    the existing handler to use for logging output
@@ -222,7 +234,7 @@ public class LoggingExtension implements BeforeEachCallback, AfterEachCallback {
      * is a {@link TestLogHandler}, it also clears its captured log records. This ensures that both logger and
      * handler state don't leak between individual test methods.
      *
-     * @param context the extension context providing access to the test class
+     * @param context the extension context providing access to the test class and unique test ID
      */
     @Override
     public void afterEach(ExtensionContext context) {
@@ -230,44 +242,40 @@ public class LoggingExtension implements BeforeEachCallback, AfterEachCallback {
         var methodConfigs = TEST_METHOD_CONFIGS.get(testClass);
 
         if (methodConfigs != null) {
-            for (var entry : methodConfigs.entrySet()) {
-                var configKey = entry.getKey();
-                var state = entry.getValue();
+            // Key by the full unique test ID so concurrent tests within the same class don't collide
+            var configKey = context.getUniqueId();
+            var state = methodConfigs.remove(configKey);
 
-                var targetLogger = configKey.startsWith("null-logger-")
-                        ? this.logger
-                        : Logger.getLogger(configKey);
-
+            if (state != null) {
                 // If the handler is a TestLogHandler, clear its captured records
                 if (state.addedHandler instanceof TestLogHandler testLogHandler) {
                     testLogHandler.clear();
                 }
 
-                // Remove our added handler from the logger
-                targetLogger.removeHandler(state.addedHandler);
+                // Remove all current handlers before restoring originals to avoid duplicates
+                for (var h : state.targetLogger.getHandlers()) {
+                    state.targetLogger.removeHandler(h);
+                }
 
-                // If we modified an existing handler, restore its original level
+                // If we modified an existing handler's level, restore it
                 if (state.originalHandlerLevel != null) {
                     state.addedHandler.setLevel(state.originalHandlerLevel);
                 }
 
-                // If we created a new ConsoleHandler, close it to clean up resources
+                // If this extension created the ConsoleHandler, close it to release resources
                 if (handler == null && state.addedHandler instanceof ConsoleHandler consoleHandler) {
                     consoleHandler.close();
                 }
 
                 // Restore original handlers
                 for (var originalHandler : state.originalHandlers) {
-                    targetLogger.addHandler(originalHandler);
+                    state.targetLogger.addHandler(originalHandler);
                 }
 
                 // Restore original logger configuration
-                targetLogger.setLevel(state.originalLevel);
-                targetLogger.setUseParentHandlers(state.originalUseParentHandlers);
+                state.targetLogger.setLevel(state.originalLevel);
+                state.targetLogger.setUseParentHandlers(state.originalUseParentHandlers);
             }
-
-            // Clear the configuration for the next test method
-            methodConfigs.clear();
         }
     }
 
@@ -284,23 +292,20 @@ public class LoggingExtension implements BeforeEachCallback, AfterEachCallback {
      *   <li>Stores the original logger and handler state for restoration after the test method completes</li>
      * </ul>
      *
-     * @param context the extension context providing access to the test class
+     * @param context the extension context providing access to the test class and unique test ID
      */
     @Override
     public void beforeEach(ExtensionContext context) {
         var testClass = context.getRequiredTestClass();
-        var loggerName = logger.getName();
-        var configKey = loggerName != null ? loggerName : "null-logger-" + System.identityHashCode(logger);
 
-        // Get or create a configuration map for this test method
-        var methodConfigs = TEST_METHOD_CONFIGS.computeIfAbsent(testClass, k ->
-                new ConcurrentHashMap<>());
+        // computeIfAbsent is safe here: ConcurrentHashMap guarantees at-most-once initialisation per key
+        var methodConfigs = TEST_METHOD_CONFIGS.computeIfAbsent(testClass, k -> new ConcurrentHashMap<>());
 
-        // Configure for each test method (always store fresh state)
         var handlerToUse = handler != null ? handler : new ConsoleHandler();
         handlerToUse.setLevel(level);
 
-        // Store the original state before modification (this captures the original handler level too)
+        // Key by the full unique test ID so concurrent tests within the same class don't overwrite each other
+        var configKey = context.getUniqueId();
         methodConfigs.put(configKey, new LoggerState(logger, handlerToUse));
 
         logger.addHandler(handlerToUse);
@@ -312,21 +317,24 @@ public class LoggingExtension implements BeforeEachCallback, AfterEachCallback {
      * Holds the original state of a logger and its handlers before modification, allowing complete restoration
      * after tests complete.
      */
-    private static class LoggerState {
-
-        final Handler addedHandler;
-        final Level originalHandlerLevel; // Store original handler level if using existing handler
-        final Handler[] originalHandlers;
-        final Level originalLevel;
-        final boolean originalUseParentHandlers;
+    private record LoggerState(
+            Logger targetLogger,
+            Level originalLevel,
+            boolean originalUseParentHandlers,
+            Handler[] originalHandlers,
+            Handler addedHandler,
+            Level originalHandlerLevel
+    ) {
 
         LoggerState(Logger logger, Handler addedHandler) {
-            this.originalLevel = logger.getLevel();
-            this.originalUseParentHandlers = logger.getUseParentHandlers();
-            this.originalHandlers = logger.getHandlers().clone();
-            this.addedHandler = addedHandler;
-            // If we're reusing an existing handler, store its original level
-            this.originalHandlerLevel = (addedHandler != null) ? addedHandler.getLevel() : null;
+            this(
+                    logger,
+                    logger.getLevel(),
+                    logger.getUseParentHandlers(),
+                    logger.getHandlers().clone(),
+                    addedHandler,
+                    addedHandler != null ? addedHandler.getLevel() : null
+            );
         }
     }
 }
