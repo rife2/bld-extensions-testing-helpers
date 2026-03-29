@@ -77,10 +77,10 @@ class RetryExtensionTest {
         var runtimeException = new RuntimeException("Simulated failure");
         doThrow(new InvocationTargetException(runtimeException)).when(mockTestMethod).invoke(mockTestInstance);
 
-        var thrown = assertThrows(RuntimeException.class, () ->
+        var thrown = assertThrows(InvocationTargetException.class, () ->
                 retryExtension.handleTestExecutionException(mockExtensionContext, new RuntimeException("Initial failure")));
 
-        assertSame(runtimeException, thrown);
+        assertSame(runtimeException, thrown.getTargetException());
         verify(mockTestMethod, times(2)).invoke(mockTestInstance);
     }
 
@@ -130,10 +130,10 @@ class RetryExtensionTest {
         var checkedException = new IOException("Simulated failure");
         doThrow(new InvocationTargetException(checkedException)).when(mockTestMethod).invoke(mockTestInstance);
 
-        var thrown = assertThrows(IOException.class, () ->
+        var thrown = assertThrows(InvocationTargetException.class, () ->
                 retryExtension.handleTestExecutionException(mockExtensionContext, new RuntimeException("Initial failure")));
 
-        assertSame(checkedException, thrown);
+        assertSame(checkedException, thrown.getTargetException());
         verify(mockTestMethod, times(2)).invoke(mockTestInstance);
     }
 
@@ -146,11 +146,11 @@ class RetryExtensionTest {
         doThrow(new InvocationTargetException(runtimeException)).when(mockTestMethod).invoke(mockTestInstance);
 
         var startTime = System.currentTimeMillis();
-        var thrown = assertThrows(RuntimeException.class, () ->
+        var thrown = assertThrows(InvocationTargetException.class, () ->
                 retryExtension.handleTestExecutionException(mockExtensionContext, new RuntimeException("Initial failure")));
         var duration = System.currentTimeMillis() - startTime;
 
-        assertSame(runtimeException, thrown);
+        assertSame(runtimeException, thrown.getTargetException());
         verify(mockTestMethod, times(1)).invoke(mockTestInstance);
         assertTrue(duration >= 1000, "Expected delay of at least 1000ms, but was " + duration + "ms");
     }
@@ -213,11 +213,12 @@ class RetryExtensionTest {
     void retryWithNonInvocationTargetException() throws Throwable {
         when(mockRetryTest.value()).thenReturn(3);
 
-        var runtimeException = new RuntimeException("Simulated direct failure");
+        var runtimeException = new IllegalArgumentException("Simulated direct failure");
         doThrow(runtimeException).when(mockTestMethod).invoke(mockTestInstance);
 
-        var thrown = assertThrows(RuntimeException.class, () ->
-                retryExtension.handleTestExecutionException(mockExtensionContext, new RuntimeException("Initial failure")));
+        var thrown = assertThrows(IllegalArgumentException.class, () ->
+                retryExtension.handleTestExecutionException(mockExtensionContext,
+                        new IllegalArgumentException("Initial failure")));
 
         assertSame(runtimeException, thrown);
         verify(mockTestMethod, times(2)).invoke(mockTestInstance);

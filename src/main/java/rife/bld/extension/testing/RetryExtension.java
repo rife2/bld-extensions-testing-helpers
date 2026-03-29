@@ -16,7 +16,6 @@
 
 package rife.bld.extension.testing;
 
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.junit.jupiter.api.extension.ExtensionContext;
 import org.junit.jupiter.api.extension.TestExecutionExceptionHandler;
 
@@ -76,9 +75,7 @@ public class RetryExtension implements TestExecutionExceptionHandler {
      * @throws Throwable if the test exhausts all retry attempts or is not eligible for retry
      */
     @Override
-    @SuppressWarnings({"PMD.AvoidInstanceofChecksInCatchClause", "PMD.DoNotUseThreads",
-            "PMD.AvoidCatchingGenericException"})
-    @SuppressFBWarnings("LEST_LOST_EXCEPTION_STACK_TRACE")
+    @SuppressWarnings("PMD.DoNotUseThreads")
     public void handleTestExecutionException(ExtensionContext extensionContext, Throwable throwable) throws Throwable {
         var testMethodOpt = extensionContext.getTestMethod();
         if (testMethodOpt.isEmpty()) {
@@ -112,18 +109,29 @@ public class RetryExtension implements TestExecutionExceptionHandler {
                 method.invoke(extensionContext.getRequiredTestInstance());
                 // Succeeded, so return and mark the test as passed.
                 return;
-            } catch (Throwable t) {
-                lastThrown = t instanceof InvocationTargetException ? t.getCause() : t;
+            } catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
+                lastThrown = e;
             }
+
         }
 
         printError(lastThrown, maxExecutions);
         throw lastThrown;
     }
 
+    private String getMessageRecursively(Throwable e) {
+        if (e == null) {
+            return "Unknown error";
+        }
+        if (e.getMessage() != null) {
+            return e.getMessage() + " [" + e.getClass().getName() + "]";
+        }
+        return getMessageRecursively(e.getCause());
+    }
+
     @SuppressWarnings("PMD.SystemPrintln")
     private void printError(Throwable e, int count) {
-        System.err.printf(
-                "Retry #%d failed (%s thrown): %s%n", count, e.getClass().getName(), e.getMessage());
+        String message = getMessageRecursively(e);
+        System.err.printf("Retry #%d failed (%s thrown): %s%n", count, e.getClass().getName(), message);
     }
 }
