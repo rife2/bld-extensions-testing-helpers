@@ -42,14 +42,14 @@ public class TestingHelpersBuild extends Project {
         downloadSources = true;
         autoDownloadPurge = true;
 
-        repositories = List.of(MAVEN_CENTRAL, RIFE2_RELEASES);
+        repositories = List.of(MAVEN_CENTRAL, RIFE2_RELEASES, RIFE2_SNAPSHOTS);
 
         var junit = version(6, 0, 3);
         var junitJupiter = dependency("org.junit.jupiter", "junit-jupiter", junit);
         var junitPlatform = dependency("org.junit.platform", "junit-platform-console-standalone", junit);
         scope(compile)
                 .include(dependency("com.uwyn.rife2", "bld-extensions-tools",
-                        version(0, 9, 0)))
+                        version(1, 0, 1)))
                 .include(dependency("org.jetbrains", "annotations",
                         version(26, 1, 0)));
         scope(provided)
