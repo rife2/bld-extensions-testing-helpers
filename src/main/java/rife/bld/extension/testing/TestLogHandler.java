@@ -175,7 +175,7 @@ public class TestLogHandler extends Handler {
      *
      * @param message the text to check for
      * @return an {@link Optional} containing the first log record with the given text,
-     *         or {@link Optional#empty()} if not found or message is empty
+     * or {@link Optional#empty()} if not found or message is empty
      */
     public Optional<LogRecord> getFirstRecordContaining(String message) {
         if (TextTools.isNotEmpty(message)) {
@@ -191,7 +191,7 @@ public class TestLogHandler extends Handler {
      * Gets the most recent log record, if any.
      *
      * @return an {@link Optional} containing the most recent log record,
-     *         or {@link Optional#empty()} if no records exist
+     * or {@link Optional#empty()} if no records exist
      */
     public Optional<LogRecord> getLastRecord() {
         var snapshot = List.copyOf(logRecords);
@@ -205,7 +205,7 @@ public class TestLogHandler extends Handler {
      *
      * @param message the text to check for
      * @return an {@link Optional} containing the last log record with the given text,
-     *         or {@link Optional#empty()} if not found or message is empty
+     * or {@link Optional#empty()} if not found or message is empty
      */
     public Optional<LogRecord> getLastRecordContaining(String message) {
         if (TextTools.isEmpty(message)) {

@@ -57,3 +57,4 @@ atlassian-ide-plugin.xml
 
 # Local Properties
 local.properties
+.claude/
