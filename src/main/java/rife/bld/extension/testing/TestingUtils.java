@@ -23,6 +23,9 @@ import java.security.SecureRandom;
 /**
  * Provides static methods for generating random values and predefined character sets.
  *
+ * <p>This class is thread-safe. The shared {@link SecureRandom} instance is safe for concurrent
+ * use, making this utility suitable for parallel test frameworks (e.g. JUnit 5 parallel execution).
+ *
  * @author <a href="https://erik.thauvin.net/">Erik C. Thauvin</a>
  * @since 1.0
  */
@@ -65,6 +68,9 @@ public final class TestingUtils {
     /**
      * Generates a random integer within the specified range.
      *
+     * <p>Note: {@code max} must not be {@link Integer#MAX_VALUE}, as {@code max + 1} would
+     * overflow. Passing {@code Integer.MAX_VALUE} as {@code max} results in undefined behavior.
+     *
      * @param min the minimum value (inclusive) of the random number
      * @param max the maximum value (inclusive) of the random number
      * @return a random integer between {@code min} and {@code max}, inclusive
@@ -73,18 +79,25 @@ public final class TestingUtils {
     public static int generateRandomInt(int min, int max) {
         if (min > max) {
             throw new IllegalArgumentException(
-                    String.format("The minimum value (%d) cannot be greater than maximum value (%d)", min, max));
+                    "The minimum value (%d) cannot be greater than maximum value (%d)".formatted(min, max));
         }
-        return SECURE_RANDOM.nextInt((max - min) + 1) + min;
+        return SECURE_RANDOM.nextInt(min, max + 1);
     }
 
     /**
      * Generates a random string with specified parameters.
      *
+     * <p>Each character in the set is chosen with equal probability. Note that duplicate
+     * characters in the {@code characters} argument will increase their relative selection
+     * probability proportionally. The predefined character set constants in this class
+     * contain no duplicates.
+     *
      * @param length     the desired length of the generated string
-     * @param characters the character set to use
+     * @param characters the character set to use; duplicate characters increase their selection
+     *                   probability
      * @return a randomly generated string of the specified length
-     * @throws IllegalArgumentException if the length is non-positive or the character set is {@code null} or empty
+     * @throws IllegalArgumentException if the length is non-positive or the character set is
+     *                                  {@code null} or empty
      */
     public static String generateRandomString(int length, String characters) {
         if (length <= 0) {
@@ -96,20 +109,17 @@ public final class TestingUtils {
 
         var result = new StringBuilder(length);
         var charLen = characters.length();
-        var randomBytes = new byte[length];
-
-        SECURE_RANDOM.nextBytes(randomBytes);
 
         for (int i = 0; i < length; i++) {
-            // Mask to byte range [0,255], then reduce to [0, charLen)
-            int idx = (randomBytes[i] & 0xFF) % charLen;
-            result.append(characters.charAt(idx));
+            result.append(characters.charAt(SECURE_RANDOM.nextInt(charLen)));
         }
         return result.toString();
     }
 
     /**
      * Generates a random string with default parameters.
+     *
+     * <p>Equivalent to {@code generateRandomString(10, ALPHANUMERIC_CHARACTERS)}.
      *
      * @return a 10-character random alphanumeric string
      */
@@ -119,6 +129,8 @@ public final class TestingUtils {
 
     /**
      * Generates a random string with a specified length.
+     *
+     * <p>Equivalent to {@code generateRandomString(length, ALPHANUMERIC_CHARACTERS)}.
      *
      * @param length the desired length of the generated string
      * @return a random alphanumeric string of the specified length
