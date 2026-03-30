@@ -100,7 +100,6 @@ public class TestLogHandler extends Handler {
     @Override
     public void close() {
         closed.set(true);
-        logRecords.clear();
     }
 
     /**
