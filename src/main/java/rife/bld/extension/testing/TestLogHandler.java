@@ -18,8 +18,8 @@ package rife.bld.extension.testing;
 
 import rife.bld.extension.tools.TextTools;
 
-import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.logging.Handler;
@@ -95,6 +95,9 @@ public class TestLogHandler extends Handler {
     /**
      * Closes this log handler and prevents further logging.
      * <p>
+     * Captured records are retained after closing and can still be read.
+     * Use {@link #clear()} to discard them explicitly.
+     * <p>
      * Thread-safe operation.
      */
     @Override
@@ -151,8 +154,9 @@ public class TestLogHandler extends Handler {
      */
     public long countMessagesContaining(String message) {
         return TextTools.isEmpty(message) ? 0 :
-                logRecords.stream().filter(record ->
-                        record.getMessage() != null && record.getMessage().contains(message)).count();
+                logRecords.stream().filter(
+                        record -> record.getMessage() != null
+                                  && record.getMessage().contains(message)).count();
     }
 
     /**
@@ -170,59 +174,65 @@ public class TestLogHandler extends Handler {
      * Gets the first log record containing the given text.
      *
      * @param message the text to check for
-     * @return the first log record containing the given text, or {@code null} if not found
+     * @return an {@link Optional} containing the first log record with the given text,
+     *         or {@link Optional#empty()} if not found or message is empty
      */
-    public LogRecord getFirstRecordContaining(String message) {
+    public Optional<LogRecord> getFirstRecordContaining(String message) {
         if (TextTools.isNotEmpty(message)) {
             return logRecords.stream()
                     .filter(record -> record.getMessage() != null && record.getMessage().contains(message))
-                    .findFirst()
-                    .orElse(null);
+                    .findFirst();
         } else {
-            return null;
+            return Optional.empty();
         }
     }
 
     /**
      * Gets the most recent log record, if any.
      *
-     * @return the most recent log record, or {@code null} if no records exist
+     * @return an {@link Optional} containing the most recent log record,
+     *         or {@link Optional#empty()} if no records exist
      */
-    public LogRecord getLastRecord() {
-        int size = logRecords.size();
-        return size == 0 ? null : logRecords.get(size - 1);
+    public Optional<LogRecord> getLastRecord() {
+        var snapshot = List.copyOf(logRecords);
+        return snapshot.isEmpty() ? Optional.empty() : Optional.of(snapshot.get(snapshot.size() - 1));
     }
 
     /**
      * Gets the last log record containing the given text.
+     * <p>
+     * Uses a snapshot of the current records to avoid race conditions during concurrent access.
      *
      * @param message the text to check for
-     * @return the last log record containing the given text, or {@code null} if not found
+     * @return an {@link Optional} containing the last log record with the given text,
+     *         or {@link Optional#empty()} if not found or message is empty
      */
-    public LogRecord getLastRecordContaining(String message) {
+    public Optional<LogRecord> getLastRecordContaining(String message) {
         if (TextTools.isEmpty(message)) {
-            return null;
+            return Optional.empty();
         }
-        // Iterate backwards for efficiency
-        for (int i = logRecords.size() - 1; i >= 0; i--) {
-            LogRecord record = logRecords.get(i);
+        // Snapshot first to avoid TOCTOU race between size() and get(i) on the live list
+        var snapshot = List.copyOf(logRecords);
+        for (int i = snapshot.size() - 1; i >= 0; i--) {
+            LogRecord record = snapshot.get(i);
             if (record.getMessage() != null && record.getMessage().contains(message)) {
-                return record;
+                return Optional.of(record);
             }
         }
-        return null;
+        return Optional.empty();
     }
 
     /**
      * Gets all captured log messages as strings.
      * <p>
-     * Returns an immutable snapshot of current messages.
+     * Returns an immutable snapshot of current messages. Records with a {@code null} message
+     * are represented as empty strings.
      *
      * @return immutable list of log messages
      */
     public List<String> getLogMessages() {
         return logRecords.stream()
-                .map(LogRecord::getMessage)
+                .map(record -> record.getMessage() != null ? record.getMessage() : "")
                 .toList();
     }
 
@@ -254,12 +264,12 @@ public class TestLogHandler extends Handler {
      */
     public List<LogRecord> getRecordsAtOrAboveLevel(Level level) {
         if (level == null) {
-            return Collections.emptyList();
-        } else {
-            return logRecords.stream()
-                    .filter(record -> record.getLevel().intValue() >= level.intValue())
-                    .toList();
+            return List.of();
         }
+        return logRecords.stream()
+                .filter(record -> record.getLevel() != null
+                        && record.getLevel().intValue() >= level.intValue())
+                .toList();
     }
 
     /**
@@ -294,22 +304,23 @@ public class TestLogHandler extends Handler {
      * Prints all captured log messages to standard output.
      * <p>
      * Each message is printed on a separate line in the order it was logged.
+     * Records with a {@code null} message are printed as empty lines.
      */
-    @SuppressWarnings("PMD.SystemPrintln")
     public void printLogMessages() {
-        logRecords.forEach(record -> System.out.println(record.getMessage()));
+        getLogMessages().forEach(System.out::println);
     }
 
     /**
      * Prints all captured log messages to the specified output stream.
      * <p>
      * Each message is printed on a separate line in the order it was logged.
+     * Records with a {@code null} message are printed as empty lines.
      *
      * @param out the output stream to print to
      */
     public void printLogMessages(java.io.PrintStream out) {
         if (out != null) {
-            logRecords.forEach(record -> out.println(record.getMessage()));
+            getLogMessages().forEach(out::println);
         }
     }
 
