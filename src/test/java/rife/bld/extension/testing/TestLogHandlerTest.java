@@ -24,6 +24,7 @@ import org.junit.jupiter.params.provider.*;
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -181,11 +182,11 @@ class TestLogHandlerTest {
             handler.publish(middleRecord);
             handler.publish(lastRecord);
 
-            LogRecord result = handler.getLastRecord();
+            var result = handler.getLastRecord();
 
-            assertNotNull(result);
-            assertEquals("Last message", result.getMessage());
-            assertEquals(Level.SEVERE, result.getLevel());
+            assertTrue(result.isPresent());
+            assertEquals("Last message", result.get().getMessage());
+            assertEquals(Level.SEVERE, result.get().getLevel());
         }
 
         @Test
@@ -199,11 +200,11 @@ class TestLogHandlerTest {
             handler.publish(differentRecord);
             handler.publish(lastHelloRecord);
 
-            LogRecord result = handler.getLastRecordContaining("hello");
+            var result = handler.getLastRecordContaining("hello");
 
-            assertNotNull(result);
-            assertEquals("Last hello message", result.getMessage());
-            assertEquals(Level.SEVERE, result.getLevel());
+            assertTrue(result.isPresent());
+            assertEquals("Last hello message", result.get().getMessage());
+            assertEquals(Level.SEVERE, result.get().getLevel());
         }
 
         @Test
@@ -211,7 +212,7 @@ class TestLogHandlerTest {
         void shouldHandleEmptySearchInGetLastRecordContaining() {
             var testRecord = new LogRecord(Level.INFO, "Test message");
             handler.publish(testRecord);
-            assertNull(handler.getLastRecordContaining(""));
+            assertEquals(Optional.empty(), handler.getLastRecordContaining(""));
         }
 
         @ParameterizedTest(name = "Should get last record containing ''{0}''")
@@ -228,9 +229,9 @@ class TestLogHandlerTest {
 
             var result = handler.getLastRecordContaining("bar");
 
-            assertNotNull(result);
-            assertEquals("bar", result.getMessage());
-            assertEquals(Level.FINE, result.getLevel());
+            assertTrue(result.isPresent());
+            assertEquals("bar", result.get().getMessage());
+            assertEquals(Level.FINE, result.get().getLevel());
         }
 
         @Test
@@ -238,13 +239,13 @@ class TestLogHandlerTest {
         void shouldHandleNullSearchInGetLastRecordContaining() {
             var testRecord = new LogRecord(Level.INFO, "Test message");
             handler.publish(testRecord);
-            assertNull(handler.getLastRecordContaining(null));
+            assertEquals(Optional.empty(), handler.getLastRecordContaining(null));
         }
 
         @Test
         @DisplayName("Should return null for last record on empty handler")
         void shouldReturnNullForLastRecordOnEmptyHandler() {
-            assertNull(handler.getLastRecord());
+            assertEquals(Optional.empty(), handler.getLastRecord());
         }
 
         @Test
@@ -252,7 +253,7 @@ class TestLogHandlerTest {
         void shouldReturnNullWhenNoRecordContainsText() {
             var someRecord = new LogRecord(Level.INFO, "Some message");
             handler.publish(someRecord);
-            assertNull(handler.getLastRecordContaining("nonexistent"));
+            assertEquals(Optional.empty(), handler.getLastRecordContaining("nonexistent"));
         }
     }
 
@@ -290,8 +291,8 @@ class TestLogHandlerTest {
     class HandlerStateManagementTests {
 
         @Test
-        @DisplayName("Should handle closed state correctly")
-        void shouldHandleClosedStateCorrectly() {
+        @DisplayName("Should handle clear state correctly")
+        void shouldHandleClearStateCorrectly() {
             assertFalse(handler.isClosed());
 
             var beforeCloseRecord = new LogRecord(Level.INFO, "Before close");
@@ -300,7 +301,8 @@ class TestLogHandlerTest {
 
             handler.close();
             assertTrue(handler.isClosed());
-            assertEquals(0, handler.getRecordCount()); // Should clear on close
+
+            handler.clear();
 
             // Should not accept new records when closed
             var afterCloseRecord = new LogRecord(Level.WARNING, "After close");
@@ -310,13 +312,12 @@ class TestLogHandlerTest {
 
         @Test
         @DisplayName("Should handle multiple close calls")
-        void shouldHandleMultipleCloseCalls() {
+        void shouldHandleMultipleClearCalls() {
             var testRecord = new LogRecord(Level.INFO, "Test message");
             handler.publish(testRecord);
 
             handler.close();
             assertTrue(handler.isClosed());
-            assertEquals(0, handler.getRecordCount());
 
             // Multiple close calls should be safe
             assertDoesNotThrow(() -> handler.close());
@@ -412,7 +413,7 @@ class TestLogHandlerTest {
             // Start with the empty handler
             assertTrue(handler.isEmpty());
             assertEquals(0, handler.getRecordCount());
-            assertNull(handler.getLastRecord());
+            assertEquals(Optional.empty(), handler.getLastRecord());
 
             // Add the first record
             var record1 = new LogRecord(Level.INFO, "First message");
@@ -420,35 +421,41 @@ class TestLogHandlerTest {
 
             assertFalse(handler.isEmpty());
             assertEquals(1, handler.getRecordCount());
-            assertEquals(record1.getMessage(), handler.getLastRecord().getMessage());
+            assertTrue(handler.getLastRecord().isPresent());
+            assertEquals(record1.getMessage(), handler.getLastRecord().get().getMessage());
             assertTrue(handler.containsMessage("First"));
             assertTrue(handler.containsExactMessage("First message"));
             assertEquals(1, handler.countMessagesContaining("First"));
-            assertEquals(record1.getMessage(), handler.getFirstRecordContaining("First").getMessage());
-            assertEquals(record1.getMessage(), handler.getLastRecordContaining("First").getMessage());
+            assertTrue(handler.getFirstRecordContaining("First").isPresent());
+            assertEquals(record1.getMessage(), handler.getFirstRecordContaining("First").get().getMessage());
+            assertTrue(handler.getLastRecordContaining("First").isPresent());
+            assertEquals(record1.getMessage(), handler.getLastRecordContaining("First").get().getMessage());
 
             // Add the second record
             var record2 = new LogRecord(Level.WARNING, "Second message");
             handler.publish(record2);
 
             assertEquals(2, handler.getRecordCount());
-            assertEquals(record2.getMessage(), handler.getLastRecord().getMessage());
+            assertTrue(handler.getLastRecord().isPresent());
+            assertEquals(record2.getMessage(), handler.getLastRecord().get().getMessage());
             assertTrue(handler.containsMessage("Second"));
             assertEquals(1, handler.countMessagesContaining("Second"));
-            assertEquals(record1.getMessage(), handler.getFirstRecordContaining("message").getMessage());
-            assertEquals(record2.getMessage(), handler.getLastRecordContaining("message").getMessage());
+            assertTrue(handler.getFirstRecordContaining("message").isPresent());
+            assertEquals(record1.getMessage(), handler.getFirstRecordContaining("message").get().getMessage());
+            assertTrue(handler.getLastRecordContaining("message").isPresent());
+            assertEquals(record2.getMessage(), handler.getLastRecordContaining("message").get().getMessage());
 
             // Clear and verify
             handler.clear();
 
             assertTrue(handler.isEmpty());
             assertEquals(0, handler.getRecordCount());
-            assertNull(handler.getLastRecord());
+            assertEquals(Optional.empty(), handler.getLastRecord());
             assertFalse(handler.containsMessage("First"));
             assertFalse(handler.containsMessage("Second"));
             assertEquals(0, handler.countMessagesContaining("message"));
-            assertNull(handler.getFirstRecordContaining("message"));
-            assertNull(handler.getLastRecordContaining("message"));
+            assertEquals(Optional.empty(), handler.getFirstRecordContaining("message"));
+            assertEquals(Optional.empty(), handler.getLastRecordContaining("message"));
         }
 
         @Test
@@ -772,11 +779,11 @@ class TestLogHandlerTest {
             handler.publish(NULL_SEVERE_RECORD);
 
             var result = handler.getFirstRecordContaining("Find");
-            assertNotNull(result);
-            assertEquals("Find me", result.getMessage());
+            assertTrue(result.isPresent());
+            assertEquals("Find me", result.get().getMessage());
 
             var nullResult = handler.getFirstRecordContaining("nonexistent");
-            assertNull(nullResult);
+            assertEquals(Optional.empty(), nullResult);
         }
 
         @Test
@@ -786,7 +793,7 @@ class TestLogHandlerTest {
 
             assertEquals(1, handler.getLogRecords().size());
             assertEquals(1, handler.getLogMessages().size());
-            assertNull(handler.getLogMessages().get(0));
+            assertEquals("", handler.getLogMessages().get(0));
         }
 
         @Test
@@ -804,9 +811,9 @@ class TestLogHandlerTest {
             assertEquals(4, handler.getLogMessages().size());
 
             // Check null messages are handled correctly
-            assertNull(handler.getLogMessages().get(0));
+            assertEquals("", handler.getLogMessages().get(0));
             assertEquals("Valid message", handler.getLogMessages().get(1));
-            assertNull(handler.getLogMessages().get(2));
+            assertEquals("", handler.getLogMessages().get(2));
             assertEquals("Another valid message", handler.getLogMessages().get(3));
 
             // Search should still work with non-null messages
@@ -886,7 +893,7 @@ class TestLogHandlerTest {
 
             assertDoesNotThrow(() -> {
                 var result = handler.getFirstRecordContaining(nullSearchTerm);
-                assertNull(result);
+                assertEquals(Optional.empty(), result);
             });
         }
     }
@@ -1340,9 +1347,9 @@ class TestLogHandlerTest {
 
             var result = handler.getFirstRecordContaining(searchText);
 
-            assertNotNull(result);
-            assertEquals(expectedMessage, result.getMessage());
-            assertEquals(expectedLevel, result.getLevel());
+            assertTrue(result.isPresent());
+            assertEquals(expectedMessage, result.get().getMessage());
+            assertEquals(expectedLevel, result.get().getLevel());
         }
 
         @ParameterizedTest
@@ -1354,7 +1361,7 @@ class TestLogHandlerTest {
 
             var result = handler.getFirstRecordContaining(searchTerm);
 
-            assertNull(result);
+            assertFalse(result.isPresent());
         }
 
         @Test
@@ -1367,8 +1374,8 @@ class TestLogHandlerTest {
 
             var result = handler.getFirstRecordContaining("Valid");
 
-            assertNotNull(result);
-            assertEquals(validRecord.getMessage(), result.getMessage());
+            assertTrue(result.isPresent());
+            assertEquals(validRecord.getMessage(), result.get().getMessage());
         }
 
         @Test
@@ -1404,9 +1411,9 @@ class TestLogHandlerTest {
             handler.publish(anotherNullMessageRecord);
 
             // No non-null message should always return null for any search
-            assertNull(handler.getLastRecordContaining("anything"));
-            assertNull(handler.getLastRecordContaining(""));
-            assertNull(handler.getLastRecordContaining(null));
+            assertEquals(Optional.empty(), handler.getLastRecordContaining("anything"));
+            assertEquals(Optional.empty(), handler.getLastRecordContaining(""));
+            assertEquals(Optional.empty(), handler.getLastRecordContaining(null));
         }
 
         @ParameterizedTest
@@ -1418,7 +1425,7 @@ class TestLogHandlerTest {
 
             var result = handler.getFirstRecordContaining(searchText);
 
-            assertNull(result);
+            assertEquals(Optional.empty(), result);
         }
     }
 
