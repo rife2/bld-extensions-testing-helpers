@@ -25,10 +25,7 @@ import org.junit.jupiter.api.extension.TestInstancePostProcessor;
 import java.lang.reflect.Modifier;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 /**
  * Parameter and field resolver for the {@link RandomString} annotation.
@@ -72,17 +69,22 @@ public class RandomStringResolver implements ParameterResolver, TestInstancePost
      * Processes fields of the test instance annotated with {@link RandomString}.
      * <p>
      * Enables field injection for random strings. Field must be of type {@code String}, {@code List<String>},
-     * or {@code Set<String>}.
+     * or {@code Set<String>}. Fields of unsupported types annotated with {@code @RandomString} will cause an
+     * {@link IllegalArgumentException} to be thrown.
      *
      * @param testInstance the test class instance
      * @param context      the current extension context
+     * @throws IllegalArgumentException if a {@code @RandomString}-annotated field has an unsupported type
      */
     @Override
     @SuppressWarnings("PMD.AvoidAccessibilityAlteration")
     @SuppressFBWarnings("RFI_SET_ACCESSIBLE")
     public void postProcessTestInstance(Object testInstance, ExtensionContext context) throws Exception {
-        for (var clazz = testInstance.getClass(); clazz != Object.class; clazz = clazz.getSuperclass()) {
-            for (var field : clazz.getDeclaredFields()) {
+        Objects.requireNonNull(testInstance, "testInstance must not be null");
+
+        for (var currentClass = testInstance.getClass(); currentClass != Object.class;
+             currentClass = currentClass.getSuperclass()) {
+            for (var field : currentClass.getDeclaredFields()) {
                 if (Modifier.isStatic(field.getModifiers())) {
                     continue;
                 }
@@ -99,13 +101,14 @@ public class RandomStringResolver implements ParameterResolver, TestInstancePost
                         randomValue = generateRandomStringSet(annotation.size(), annotation.length(),
                                 annotation.characters());
                     } else {
-                        continue;
+                        throw new IllegalArgumentException(
+                                "Unsupported field type for @RandomString: %s on field '%s'. "
+                                        .formatted(field.getType().getName(), field.getName()) +
+                                        "Supported types are String, List<String>, and Set<String>.");
                     }
 
-                    boolean wasAccessible = field.canAccess(testInstance);
                     field.setAccessible(true);
                     field.set(testInstance, randomValue);
-                    field.setAccessible(wasAccessible);
                 }
             }
         }
@@ -142,6 +145,9 @@ public class RandomStringResolver implements ParameterResolver, TestInstancePost
      * Resolves the parameter by generating a random string, list, or set based on annotation configuration.
      * <p>
      * Priority: Parameter-level > Method-level > Default (10, alphanumeric, size 0).
+     * <p>
+     * Note: The type has already been validated by {@link #supportsParameter}, so the final branch in
+     * {@link #generateValue} is a defensive guard that should not be reachable in normal usage.
      *
      * @param parameterContext information about the parameter to be resolved
      * @param extensionContext the current extension context
@@ -181,26 +187,29 @@ public class RandomStringResolver implements ParameterResolver, TestInstancePost
 
     // Generates a set of unique random strings.
     private Set<String> generateRandomStringSet(int size, int length, String characters) {
-        // Calculate theoretical maximum unique strings possible
-        long maxPossibleStrings = (long) Math.pow(characters.length(), length);
-
-        if (size > maxPossibleStrings) {
-            throw new IllegalArgumentException(
-                    String.format("Cannot generate %d unique strings of length %d from %d characters. " +
-                                    "Maximum possible unique strings: %d",
-                            size, length, characters.length(), maxPossibleStrings));
+        if (characters.length() <= 62 && length <= 18) {
+            long maxPossibleStrings = (long) Math.pow(characters.length(), length);
+            if (size > maxPossibleStrings) {
+                throw new IllegalArgumentException(
+                        "Cannot generate %d unique strings of length %d from %d characters. "
+                                .formatted(size, length, characters.length()) +
+                                "Maximum possible unique strings: %d".formatted(maxPossibleStrings));
+            }
         }
 
-        var set = new HashSet<String>(size);
-        int maxAttempts = size * 100; // Reasonable limit
-        int attempts = 0;
+        // When size is large, maxAttempts can exceed Integer.MAX_VALUE causing the guard to
+        // never trigger. Both variables are now long to ensure correct comparison.
+        // FIX (Improvement): Use properly sized initial capacity to avoid HashSet rehashing at 75% fill.
+        var set = new HashSet<String>(size * 4 / 3 + 1);
+        long maxAttempts = (long) size * 100;
+        long attempts = 0;
 
         while (set.size() < size) {
             if (attempts++ > maxAttempts) {
                 throw new IllegalStateException(
-                        String.format("Failed to generate %d unique strings after %d attempts. " +
-                                        "Consider using longer strings or more characters.",
-                                size, maxAttempts));
+                        "Failed to generate %d unique strings after %d attempts. "
+                                .formatted(size, maxAttempts) +
+                                "Consider using longer strings or more characters.");
             }
             set.add(TestingUtils.generateRandomString(length, characters));
         }
@@ -208,6 +217,8 @@ public class RandomStringResolver implements ParameterResolver, TestInstancePost
     }
 
     // Generates the appropriate value based on the parameter type.
+    // Note: this method is only called after supportsParameter() has already validated the type,
+    // so the final throw branch is a defensive guard and should not be reachable in normal usage.
     @SuppressFBWarnings("URV_UNRELATED_RETURN_VALUES")
     private Object generateValue(Class<?> parameterType, int size, int length, String characters) {
         if (parameterType == String.class) {
@@ -217,7 +228,9 @@ public class RandomStringResolver implements ParameterResolver, TestInstancePost
         } else if (parameterType == Set.class) {
             return generateRandomStringSet(size, length, characters);
         }
-        throw new IllegalArgumentException("Unsupported parameter type: " + parameterType);
+        throw new IllegalArgumentException(
+                "Unsupported parameter type: %s. Supported types are String, List, and Set."
+                        .formatted(parameterType));
     }
 
     // Checks if a parameterized type is a collection of strings.
