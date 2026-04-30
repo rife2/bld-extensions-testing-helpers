@@ -79,7 +79,7 @@ public class RandomStringResolver implements ParameterResolver, TestInstancePost
     @Override
     @SuppressWarnings("PMD.AvoidAccessibilityAlteration")
     @SuppressFBWarnings("RFI_SET_ACCESSIBLE")
-    public void postProcessTestInstance(Object testInstance, ExtensionContext context) throws Exception {
+    public void postProcessTestInstance(Object testInstance, ExtensionContext context) throws IllegalAccessException {
         Objects.requireNonNull(testInstance, "testInstance must not be null");
 
         for (var currentClass = testInstance.getClass(); currentClass != Object.class;
