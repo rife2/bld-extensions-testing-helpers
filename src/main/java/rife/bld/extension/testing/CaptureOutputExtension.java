@@ -18,7 +18,6 @@ package rife.bld.extension.testing;
 
 import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
-import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.extension.*;
 
 import java.io.ByteArrayOutputStream;

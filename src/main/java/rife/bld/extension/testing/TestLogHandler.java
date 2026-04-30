@@ -32,14 +32,14 @@ import java.util.regex.Pattern;
  *
  * <blockquote><pre>
  * // Using the LoggingExtension
- * private static final Logger LOGGER = Logger.getLogger(MyClass.class.getName());
- * private static final TestLogHandler TEST_LOG_HANDLER = new TestLogHandler();
+ * private static final Logger logger = Logger.getLogger(MyClass.class.getName());
+ * private static final TestLogHandler testLogHandler = new TestLogHandler();
  *
  * &#64;RegisterExtension
  * &#64;SuppressWarnings("unused")
- * private static final LoggingExtension LOGGING_EXTENSION = new LoggingExtension(
- *     LOGGER,
- *     TEST_LOG_HANDLER,
+ * private static final LoggingExtension loggingExtension = new LoggingExtension(
+ *     logger,
+ *     testLogHandler,
  *     Level.ALL
  * );
  *
@@ -154,7 +154,7 @@ public class TestLogHandler extends Handler {
         return TestingUtils.isEmpty(message) ? 0 :
                 logRecords.stream().filter(
                         record -> record.getMessage() != null
-                                  && record.getMessage().contains(message)).count();
+                                && record.getMessage().contains(message)).count();
     }
 
     /**

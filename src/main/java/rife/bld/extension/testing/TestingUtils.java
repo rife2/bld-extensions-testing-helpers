@@ -58,7 +58,7 @@ public final class TestingUtils {
      */
     public static final String URL_SAFE_CHARACTERS =
             "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_";
-    private static final SecureRandom SECURE_RANDOM = new SecureRandom();
+    private static final SecureRandom secureRandom = new SecureRandom();
 
     private TestingUtils() {
     }
@@ -79,7 +79,7 @@ public final class TestingUtils {
             throw new IllegalArgumentException(
                     "The minimum value (%d) cannot be greater than maximum value (%d)".formatted(min, max));
         }
-        return SECURE_RANDOM.nextInt(min, max + 1);
+        return secureRandom.nextInt(min, max + 1);
     }
 
     /**
@@ -109,7 +109,7 @@ public final class TestingUtils {
         var charLen = characters.length();
 
         for (int i = 0; i < length; i++) {
-            result.append(characters.charAt(SECURE_RANDOM.nextInt(charLen)));
+            result.append(characters.charAt(secureRandom.nextInt(charLen)));
         }
         return result.toString();
     }
@@ -140,6 +140,7 @@ public final class TestingUtils {
 
     /**
      * Determines if a string is null or empty
+     *
      * @param s the string to check
      * @return {@code true} if the string is null or empty, {@code false} otherwise
      */

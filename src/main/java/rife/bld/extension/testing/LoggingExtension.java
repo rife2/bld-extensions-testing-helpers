@@ -49,28 +49,28 @@ import java.util.logging.Logger;
  *
  *     // Custom logger with default level
  *     &#64;RegisterExtension
- *     private static final LoggingExtension LOGGING_EXTENSION = new LoggingExtension("MyCustomLogger");
+ *     private static final LoggingExtension loggingExtension = new LoggingExtension("MyCustomLogger");
  *
  *     // Custom logger and level
  *     &#64;RegisterExtension
- *     private static final LoggingExtension LOGGING_EXTENSION = new LoggingExtension(
+ *     private static final LoggingExtension loggingExtension = new LoggingExtension(
  *         MyClass.getLogger(),
  *         Level.INFO
  *     );
  *
  *     // Custom logger with test log handler
- *     private static final Logger LOGGER = Logger.getLogger(MyClass.class.getName());
- *     private static final TestLogHandler TEST_LOG_HANDLER = new TestLogHandler();
+ *     private static final Logger logger = Logger.getLogger(MyClass.class.getName());
+ *     private static final TestLogHandler testLogHandler = new TestLogHandler();
  *
  *     &#64;RegisterExtension
- *     private static final LoggingExtension LOGGING_EXTENSION = new LoggingExtension(
- *         LOGGER,
- *         TEST_LOG_HANDLER
+ *     private static final LoggingExtension loggingExtension = new LoggingExtension(
+ *         logger,
+ *         testLogHandler
  *     );
  *
  *     // Custom logger with existing handler and level override
  *     &#64;RegisterExtension
- *     private static final LoggingExtension LOGGING_EXTENSION = new LoggingExtension(
+ *     private static final LoggingExtension loggingExtension = new LoggingExtension(
  *         MyClass.getLogger(),
  *         myExistingHandler,
  *         Level.WARNING
@@ -91,14 +91,14 @@ public class LoggingExtension implements BeforeEachCallback, AfterEachCallback {
     /**
      * Default logger instance used when no custom logger is specified.
      */
-    private static final Logger DEFAULT_LOGGER = Logger.getLogger(LoggingExtension.class.getName());
+    private static final Logger defaultLogger = Logger.getLogger(LoggingExtension.class.getName());
 
     /**
      * Stores logger state per test invocation, keyed by class then unique test ID.
      * Using the full unique test ID (rather than just logger name) prevents races
      * when tests within the same class run concurrently.
      */
-    private static final Map<Class<?>, Map<String, LoggerState>> TEST_METHOD_CONFIGS = new ConcurrentHashMap<>();
+    private static final Map<Class<?>, Map<String, LoggerState>> testMethodConfigs = new ConcurrentHashMap<>();
 
     /**
      * The handler to use for logging output. If {@code null}, a {@link ConsoleHandler} will be created.
@@ -124,7 +124,7 @@ public class LoggingExtension implements BeforeEachCallback, AfterEachCallback {
      * {@link rife.bld.extension.testing.LoggingExtension this class}.
      */
     public LoggingExtension() {
-        this(DEFAULT_LOGGER, null, Level.ALL);
+        this(defaultLogger, null, Level.ALL);
     }
 
     /**
@@ -239,7 +239,7 @@ public class LoggingExtension implements BeforeEachCallback, AfterEachCallback {
     @Override
     public void afterEach(ExtensionContext context) {
         var testClass = context.getRequiredTestClass();
-        var methodConfigs = TEST_METHOD_CONFIGS.get(testClass);
+        var methodConfigs = testMethodConfigs.get(testClass);
 
         if (methodConfigs != null) {
             // Key by the full unique test ID so concurrent tests within the same class don't collide
@@ -299,7 +299,7 @@ public class LoggingExtension implements BeforeEachCallback, AfterEachCallback {
         var testClass = context.getRequiredTestClass();
 
         // computeIfAbsent is safe here: ConcurrentHashMap guarantees at-most-once initialisation per key
-        var methodConfigs = TEST_METHOD_CONFIGS.computeIfAbsent(testClass, k -> new ConcurrentHashMap<>());
+        var methodConfigs = testMethodConfigs.computeIfAbsent(testClass, k -> new ConcurrentHashMap<>());
 
         var handlerToUse = handler != null ? handler : new ConsoleHandler();
         handlerToUse.setLevel(level);

@@ -51,7 +51,7 @@ class LoggingExtensionTest {
 
     @SuppressWarnings("unchecked")
     private static Map<String, ?> getTestConfigsForTestClass(Class<?> testClass) throws ReflectiveOperationException {
-        var field = LoggingExtension.class.getDeclaredField("TEST_METHOD_CONFIGS");
+        var field = LoggingExtension.class.getDeclaredField("testMethodConfigs");
         field.setAccessible(true);
         var configs = (Map<Class<?>, Map<String, ?>>) field.get(null);
         return configs.getOrDefault(testClass, new ConcurrentHashMap<>());
@@ -73,7 +73,7 @@ class LoggingExtensionTest {
 
     @BeforeEach
     void beforeEach() throws ReflectiveOperationException {
-        var field = LoggingExtension.class.getDeclaredField("TEST_METHOD_CONFIGS");
+        var field = LoggingExtension.class.getDeclaredField("testMethodConfigs");
         field.setAccessible(true);
         var configs = (Map<?, ?>) field.get(null);
         configs.clear();
@@ -189,7 +189,7 @@ class LoggingExtensionTest {
             Object loggerState = ctor.newInstance(logger, null);
 
             // Insert into TEST_METHOD_CONFIGS using the same key that afterEach will look up
-            var field = LoggingExtension.class.getDeclaredField("TEST_METHOD_CONFIGS");
+            var field = LoggingExtension.class.getDeclaredField("testMethodConfigs");
             field.setAccessible(true);
             @SuppressWarnings("unchecked")
             var configs = (Map<Class<?>, Map<String, Object>>) field.get(null);

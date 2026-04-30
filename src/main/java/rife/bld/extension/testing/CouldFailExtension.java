@@ -68,8 +68,8 @@ import java.util.logging.Logger;
 public class CouldFailExtension implements TestExecutionExceptionHandler {
 
     private static final String ABORT_MESSAGE = "Test marked @CouldFail — accepted as non-fatal";
-    private static final Logger LOGGER = Logger.getLogger(CouldFailExtension.class.getName());
     private static final String LOG_PREFIX = "Test failure accepted by @CouldFail";
+    private static final Logger logger = Logger.getLogger(CouldFailExtension.class.getName());
 
     @Override
     public void handleTestExecutionException(ExtensionContext context, Throwable throwable)
@@ -86,11 +86,11 @@ public class CouldFailExtension implements TestExecutionExceptionHandler {
 
         if (shouldAcceptFailure(couldFail, throwable)) {
             var message = throwable.getMessage() != null ? throwable.getMessage() : "(no message)";
-            LOGGER.log(Level.INFO,
+            logger.log(Level.INFO,
                     "{0}: {1} [{2}]",
                     new Object[]{LOG_PREFIX, message, throwable.getClass().getSimpleName()}
             );
-            LOGGER.log(Level.FINE, "Original failure stack trace", throwable);
+            logger.log(Level.FINE, "Original failure stack trace", throwable);
             throw new TestAbortedException(ABORT_MESSAGE, throwable);
         } else {
             // Exception type not accepted — fail normally
