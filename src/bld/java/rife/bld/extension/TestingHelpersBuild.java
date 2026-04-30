@@ -64,7 +64,8 @@ public class TestingHelpersBuild extends Project {
                 .javadocOptions()
                 .author()
                 .docLint(NO_MISSING)
-                .link("https://docs.junit.org/current/api/");
+                .link("https://docs.junit.org/current/api/")
+                .link("https://findbugs.sourceforge.net/api/");
 
         publishOperation()
                 .repository(version.isSnapshot() ?

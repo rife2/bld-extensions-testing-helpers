@@ -16,6 +16,7 @@
 
 package rife.bld.extension.testing;
 
+import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.extension.*;
@@ -287,7 +288,7 @@ public class CaptureOutputExtension implements BeforeEachCallback, AfterEachCall
          * @param s the character array to print
          */
         @Override
-        public void print(char @NotNull [] s) {
+        public void print(@NonNull char[] s) {
             var content = String.valueOf(s);
             super.print(content);
             capturedOutput.addEntry(outputType, content);
@@ -406,7 +407,7 @@ public class CaptureOutputExtension implements BeforeEachCallback, AfterEachCall
          * @param s the character array to print
          */
         @Override
-        public void println(char @NotNull [] s) {
+        public void println(@NonNull char[] s) {
             var content = String.valueOf(s) + System.lineSeparator();
             super.print(content);
             capturedOutput.addEntry(outputType, content);
@@ -444,7 +445,7 @@ public class CaptureOutputExtension implements BeforeEachCallback, AfterEachCall
          * @return this PrintStream
          */
         @Override
-        public PrintStream printf(@NotNull String format, Object... args) {
+        public PrintStream printf(@NonNull String format, Object... args) {
             var content = String.format(format, args);
             super.print(content);
             capturedOutput.addEntry(outputType, content);
@@ -460,7 +461,7 @@ public class CaptureOutputExtension implements BeforeEachCallback, AfterEachCall
          * @return this PrintStream
          */
         @Override
-        public PrintStream printf(Locale locale, @NotNull String format, Object... args) {
+        public PrintStream printf(Locale locale, @NonNull String format, Object... args) {
             var content = String.format(locale, format, args);
             super.print(content);
             capturedOutput.addEntry(outputType, content);
