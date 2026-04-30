@@ -26,7 +26,8 @@ import rife.bld.publish.PublishScm;
 import java.util.List;
 
 import static rife.bld.dependencies.Repository.*;
-import static rife.bld.dependencies.Scope.*;
+import static rife.bld.dependencies.Scope.provided;
+import static rife.bld.dependencies.Scope.test;
 import static rife.bld.operations.JavadocOptions.DocLinkOption.NO_MISSING;
 
 public class TestingHelpersBuild extends Project {
@@ -47,11 +48,7 @@ public class TestingHelpersBuild extends Project {
         var junit = version(6, 0, 3);
         var junitJupiter = dependency("org.junit.jupiter", "junit-jupiter", junit);
         var junitPlatform = dependency("org.junit.platform", "junit-platform-console-standalone", junit);
-        scope(compile)
-                .include(dependency("com.uwyn.rife2", "bld-extensions-tools",
-                        version(1, 0, 1)))
-                .include(dependency("org.jetbrains", "annotations",
-                        version(26, 1, 0)));
+
         scope(provided)
                 .include(junitJupiter)
                 .include(junitPlatform)

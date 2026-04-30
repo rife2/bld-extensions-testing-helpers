@@ -16,8 +16,6 @@
 
 package rife.bld.extension.testing;
 
-import rife.bld.extension.tools.TextTools;
-
 import java.security.SecureRandom;
 
 /**
@@ -103,7 +101,7 @@ public final class TestingUtils {
         if (length <= 0) {
             throw new IllegalArgumentException("Length must be greater than 0");
         }
-        if (TextTools.isEmpty(characters)) {
+        if (isEmpty(characters)) {
             throw new IllegalArgumentException("Characters cannot be null or empty");
         }
 
@@ -138,5 +136,14 @@ public final class TestingUtils {
      */
     public static String generateRandomString(int length) {
         return generateRandomString(length, ALPHANUMERIC_CHARACTERS);
+    }
+
+    /**
+     * Determines if a string is null or empty
+     * @param s the string to check
+     * @return {@code true} if the string is null or empty, {@code false} otherwise
+     */
+    public static boolean isEmpty(String s) {
+        return s == null || s.isEmpty();
     }
 }

@@ -16,8 +16,6 @@
 
 package rife.bld.extension.testing;
 
-import rife.bld.extension.tools.TextTools;
-
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -153,7 +151,7 @@ public class TestLogHandler extends Handler {
      * @return the number of messages containing the given text
      */
     public long countMessagesContaining(String message) {
-        return TextTools.isEmpty(message) ? 0 :
+        return TestingUtils.isEmpty(message) ? 0 :
                 logRecords.stream().filter(
                         record -> record.getMessage() != null
                                   && record.getMessage().contains(message)).count();
@@ -178,7 +176,7 @@ public class TestLogHandler extends Handler {
      * or {@link Optional#empty()} if not found or message is empty
      */
     public Optional<LogRecord> getFirstRecordContaining(String message) {
-        if (TextTools.isNotEmpty(message)) {
+        if (!TestingUtils.isEmpty(message)) {
             return logRecords.stream()
                     .filter(record -> record.getMessage() != null && record.getMessage().contains(message))
                     .findFirst();
@@ -208,7 +206,7 @@ public class TestLogHandler extends Handler {
      * or {@link Optional#empty()} if not found or message is empty
      */
     public Optional<LogRecord> getLastRecordContaining(String message) {
-        if (TextTools.isEmpty(message)) {
+        if (TestingUtils.isEmpty(message)) {
             return Optional.empty();
         }
         // Snapshot first to avoid TOCTOU race between size() and get(i) on the live list
